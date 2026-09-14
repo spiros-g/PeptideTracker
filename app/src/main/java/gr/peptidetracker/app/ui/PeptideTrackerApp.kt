@@ -1,5 +1,6 @@
 package gr.peptidetracker.app.ui
 
+import androidx.activity.compose.BackHandler
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.fadeIn
@@ -16,6 +17,7 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -72,6 +74,16 @@ fun PeptideTrackerApp(store: LocalStore) {
 
     val imageIndex by produceState<Map<String, String>>(initialValue = emptyMap()) {
         value = StoreCatalogClient.loadImageIndex()
+    }
+
+    BackHandler(
+        enabled = settingsOpen || selectedPeptide != null || selectedTab != 0
+    ) {
+        when {
+            settingsOpen -> settingsOpen = false
+            selectedPeptide != null -> selectedPeptide = null
+            selectedTab != 0 -> selectedTab = 0
+        }
     }
 
     AppTheme {
@@ -164,6 +176,7 @@ private fun PremiumBottomBar(
     Box(
         Modifier
             .fillMaxWidth()
+            .navigationBarsPadding()
             .padding(horizontal = 14.dp, vertical = 8.dp)
             .clip(RoundedCornerShape(26.dp))
             .background(
@@ -262,7 +275,7 @@ private fun SettingsSheet() {
                     color = TextPrimary
                 )
                 Text(
-                    "Ιχνηλάτης Πεπτιδίων · v2.1.0",
+                    "Ιχνηλάτης Πεπτιδίων · v2.1.1",
                     color = TextSecondary
                 )
             }
