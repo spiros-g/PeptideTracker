@@ -92,7 +92,7 @@ fun TrackerScreen(
             verticalArrangement = Arrangement.spacedBy(14.dp)
         ) {
             PremiumTopBar(
-                title = "Tracker",
+                title = "Καταγραφές",
                 subtitle = "Καταγραφές, απόθεμα και πρόοδος σε ένα μέρος.",
                 onSettings = onSettings
             )
@@ -508,7 +508,7 @@ private fun InventoryCard(
                                 )
                                 Spacer(Modifier.width(3.dp))
                                 Text(
-                                    "LOW",
+                                    "ΧΑΜΗΛΟ",
                                     color = NeonRose,
                                     style = MaterialTheme.typography.labelSmall,
                                     fontWeight = FontWeight.ExtraBold
@@ -523,7 +523,7 @@ private fun InventoryCard(
                     fontWeight = FontWeight.Bold
                 )
                 Text(
-                    row.batch.ifBlank { "Χωρίς batch / lot" },
+                    row.batch.ifBlank { "Χωρίς παρτίδα" },
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                     style = MaterialTheme.typography.bodySmall
                 )
@@ -554,7 +554,7 @@ private fun ProgressOverview(rows: List<ProgressEntry>) {
             ) {
                 Column {
                     Text(
-                        "Weight trend",
+                        "Τάση βάρους",
                         color = ElectricCyan,
                         style = MaterialTheme.typography.labelLarge,
                         fontWeight = FontWeight.ExtraBold
@@ -777,7 +777,7 @@ private fun AddInventoryDialog(
                     value = batch,
                     onValueChange = { batch = it },
                     modifier = Modifier.fillMaxWidth(),
-                    label = { Text("Batch / παρτίδα") },
+                    label = { Text("Παρτίδα / lot") },
                     singleLine = true,
                     colors = premiumTextFieldColors()
                 )
