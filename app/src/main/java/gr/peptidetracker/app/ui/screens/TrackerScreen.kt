@@ -100,7 +100,7 @@ fun TrackerScreen(
                 horizontalArrangement = Arrangement.spacedBy(7.dp)
             ) {
                 TrackerTab(
-                    text = "Logs",
+                    text = "Καταγραφές",
                     selected = section == 0,
                     modifier = Modifier.weight(1f),
                     onClick = { section = 0 }
@@ -231,7 +231,7 @@ private fun InventorySection(
         item {
             SectionHero(
                 title = "Απόθεμα",
-                subtitle = totalVials.toString() + " φιαλίδια · " + lowStock + " low stock",
+                subtitle = totalVials.toString() + " φιαλίδια · " + lowStock + " χαμηλό απόθεμα",
                 icon = Icons.Rounded.Inventory2,
                 accent = ElectricViolet,
                 buttonText = "Προσθήκη",
@@ -243,7 +243,7 @@ private fun InventorySection(
             item {
                 EmptyTrackerState(
                     title = "Το απόθεμα είναι άδειο",
-                    text = "Πρόσθεσε φιαλίδια και batch ώστε να έχεις καθαρή εικόνα.",
+                    text = "Πρόσθεσε φιαλίδια και αριθμό παρτίδας ώστε να έχεις καθαρή εικόνα.",
                     icon = Icons.Rounded.Inventory2
                 )
             }
@@ -309,7 +309,7 @@ private fun ProgressSection(store: LocalStore) {
             item {
                 EmptyTrackerState(
                     title = "Δεν υπάρχουν μετρήσεις",
-                    text = "Πρόσθεσε βάρος ή/και μέση για να δημιουργηθεί trend.",
+                    text = "Πρόσθεσε βάρος ή/και μέση για να δημιουργηθεί τάση προόδου.",
                     icon = Icons.Rounded.MonitorWeight
                 )
             }
@@ -694,7 +694,7 @@ private fun AddLogDialog(
                     value = amount,
                     onValueChange = { amount = it },
                     modifier = Modifier.fillMaxWidth(),
-                    label = { Text("Ποσότητα / μονάδα") },
+                    label = { Text("Καταγεγραμμένη ποσότητα (π.χ. 250 mcg)") },
                     singleLine = true,
                     colors = premiumTextFieldColors()
                 )
@@ -775,7 +775,7 @@ private fun AddInventoryDialog(
                     value = batch,
                     onValueChange = { batch = it },
                     modifier = Modifier.fillMaxWidth(),
-                    label = { Text("Παρτίδα / lot") },
+                    label = { Text("Αριθμός παρτίδας / lot") },
                     singleLine = true,
                     colors = premiumTextFieldColors()
                 )
