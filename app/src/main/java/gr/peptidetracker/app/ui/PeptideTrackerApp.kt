@@ -51,6 +51,7 @@ import gr.peptidetracker.app.ui.screens.HomeScreen
 import gr.peptidetracker.app.ui.screens.LibraryScreen
 import gr.peptidetracker.app.ui.screens.OnboardingScreen
 import gr.peptidetracker.app.ui.screens.PeptideDetailScreen
+import gr.peptidetracker.app.ui.screens.SettingsScreen
 import gr.peptidetracker.app.ui.screens.TrackerScreen
 
 private data class MainDestination(
@@ -65,15 +66,18 @@ fun PeptideTrackerApp(store: LocalStore) {
     var showOnboarding by remember { mutableStateOf(!store.onboardingComplete()) }
     var calculatorPreset by remember { mutableStateOf<CalculatorPreset?>(null) }
     var newLogRequest by remember { mutableIntStateOf(0) }
+    var dataToolsRequest by remember { mutableIntStateOf(0) }
     var trackerSection by remember { mutableIntStateOf(0) }
     var inventoryPreset by remember { mutableStateOf<String?>(null) }
+    var showSettings by remember { mutableStateOf(false) }
 
     val imageIndex = emptyMap<String, String>()
 
     BackHandler(
-        enabled = !showOnboarding && (selectedPeptide != null || selectedTab != 0)
+        enabled = !showOnboarding && (showSettings || selectedPeptide != null || selectedTab != 0)
     ) {
         when {
+            showSettings -> showSettings = false
             selectedPeptide != null -> selectedPeptide = null
             selectedTab != 0 -> selectedTab = 0
         }
@@ -94,7 +98,7 @@ fun PeptideTrackerApp(store: LocalStore) {
                     containerColor = Color.Transparent,
                     contentColor = TextPrimary,
                     bottomBar = {
-                        if (selectedPeptide == null) {
+                        if (selectedPeptide == null && !showSettings) {
                             PremiumBottomBar(
                                 selected = selectedTab,
                                 onSelected = { tab ->
@@ -106,14 +110,28 @@ fun PeptideTrackerApp(store: LocalStore) {
                     }
                 ) { padding ->
                     AnimatedContent(
-                        targetState = selectedTab to selectedPeptide,
+                        targetState = Triple(selectedTab, selectedPeptide, showSettings),
                         transitionSpec = {
                             fadeIn(tween(210)) togetherWith fadeOut(tween(145))
                         },
                         label = "screenTransition",
                         modifier = Modifier.padding(padding)
-                    ) { (tab, peptide) ->
-                        if (peptide != null) {
+                    ) { (tab, peptide, settings) ->
+                        if (settings) {
+                            SettingsScreen(
+                                store = store,
+                                onBack = { showSettings = false },
+                                onReplayOnboarding = {
+                                    showSettings = false
+                                    showOnboarding = true
+                                },
+                                onOpenDataTools = {
+                                    showSettings = false
+                                    dataToolsRequest += 1
+                                    selectedTab = 3
+                                }
+                            )
+                        } else if (peptide != null) {
                             PeptideDetailScreen(
                                 peptide = peptide,
                                 store = store,
@@ -146,6 +164,9 @@ fun PeptideTrackerApp(store: LocalStore) {
                                     onOpenInventory = {
                                         trackerSection = 1
                                         selectedTab = 3
+                                    },
+                                    onOpenSettings = {
+                                        showSettings = true
                                     }
                                 )
 
@@ -158,6 +179,7 @@ fun PeptideTrackerApp(store: LocalStore) {
                                 2 -> CalculatorScreen(
                                     imageIndex = imageIndex,
                                     preset = calculatorPreset,
+                                    defaultSyringeUnitsPerMl = store.defaultSyringeUnitsPerMl(),
                                     onPresetConsumed = { calculatorPreset = null }
                                 )
 
@@ -167,8 +189,10 @@ fun PeptideTrackerApp(store: LocalStore) {
                                     initialSection = trackerSection,
                                     newLogRequest = newLogRequest,
                                     inventoryPeptidePreset = inventoryPreset,
+                                    dataToolsRequest = dataToolsRequest,
                                     onConsumeNewLogRequest = { newLogRequest = 0 },
                                     onConsumeInventoryPreset = { inventoryPreset = null },
+                                    onConsumeDataToolsRequest = { dataToolsRequest = 0 },
                                     onOpenCalculator = { row ->
                                         calculatorPreset = CalculatorPreset(
                                             peptideName = row.peptide,
