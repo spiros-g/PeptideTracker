@@ -63,6 +63,12 @@ import gr.peptidetracker.app.ui.GlassCard
 import gr.peptidetracker.app.ui.NeonRose
 import gr.peptidetracker.app.ui.PremiumTopBar
 import gr.peptidetracker.app.ui.StoreVialImage
+import gr.peptidetracker.app.ui.GlassSurfaceStrong
+import gr.peptidetracker.app.ui.TextPrimary
+import gr.peptidetracker.app.ui.premiumButtonColors
+import gr.peptidetracker.app.ui.premiumFilterChipColors
+import gr.peptidetracker.app.ui.premiumTextButtonColors
+import gr.peptidetracker.app.ui.premiumTextFieldColors
 import java.text.DateFormat
 import java.util.Date
 import kotlin.math.max
@@ -143,7 +149,8 @@ private fun TrackerTab(
                 fontWeight = if (selected) FontWeight.ExtraBold else FontWeight.Medium
             )
         },
-        modifier = modifier
+        modifier = modifier,
+        colors = premiumFilterChipColors()
     )
 }
 
@@ -367,7 +374,7 @@ private fun SectionHero(
                     style = MaterialTheme.typography.bodySmall
                 )
             }
-            Button(onClick = onAdd) {
+            Button(onClick = onAdd, colors = premiumButtonColors()) {
                 Icon(
                     Icons.Rounded.Add,
                     contentDescription = null,
@@ -671,6 +678,9 @@ private fun AddLogDialog(
 
     AlertDialog(
         onDismissRequest = onDismiss,
+        containerColor = GlassSurfaceStrong,
+        titleContentColor = TextPrimary,
+        textContentColor = TextPrimary,
         title = { Text("Νέα καταγραφή") },
         text = {
             Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
@@ -679,33 +689,37 @@ private fun AddLogDialog(
                     onValueChange = { peptide = it },
                     modifier = Modifier.fillMaxWidth(),
                     label = { Text("Πεπτίδιο") },
-                    singleLine = true
+                    singleLine = true,
+                    colors = premiumTextFieldColors()
                 )
                 OutlinedTextField(
                     value = amount,
                     onValueChange = { amount = it },
                     modifier = Modifier.fillMaxWidth(),
                     label = { Text("Ποσότητα / μονάδα") },
-                    singleLine = true
+                    singleLine = true,
+                    colors = premiumTextFieldColors()
                 )
                 OutlinedTextField(
                     value = note,
                     onValueChange = { note = it },
                     modifier = Modifier.fillMaxWidth(),
-                    label = { Text("Σημείωση") }
+                    label = { Text("Σημείωση") },
+                    colors = premiumTextFieldColors()
                 )
             }
         },
         confirmButton = {
             Button(
                 onClick = { onSave(peptide.trim(), amount.trim(), note.trim()) },
-                enabled = peptide.isNotBlank() && amount.isNotBlank()
+                enabled = peptide.isNotBlank() && amount.isNotBlank(),
+                colors = premiumButtonColors()
             ) {
                 Text("Αποθήκευση")
             }
         },
         dismissButton = {
-            TextButton(onClick = onDismiss) {
+            TextButton(onClick = onDismiss, colors = premiumTextButtonColors()) {
                 Text("Άκυρο")
             }
         }
@@ -727,6 +741,9 @@ private fun AddInventoryDialog(
 
     AlertDialog(
         onDismissRequest = onDismiss,
+        containerColor = GlassSurfaceStrong,
+        titleContentColor = TextPrimary,
+        textContentColor = TextPrimary,
         title = { Text("Προσθήκη στο απόθεμα") },
         text = {
             Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
@@ -735,7 +752,8 @@ private fun AddInventoryDialog(
                     onValueChange = { peptide = it },
                     modifier = Modifier.fillMaxWidth(),
                     label = { Text("Πεπτίδιο") },
-                    singleLine = true
+                    singleLine = true,
+                    colors = premiumTextFieldColors()
                 )
                 OutlinedTextField(
                     value = vial,
@@ -743,7 +761,8 @@ private fun AddInventoryDialog(
                     modifier = Modifier.fillMaxWidth(),
                     label = { Text("Φιαλίδιο (mg)") },
                     singleLine = true,
-                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal)
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
+                    colors = premiumTextFieldColors()
                 )
                 OutlinedTextField(
                     value = quantity,
@@ -751,14 +770,16 @@ private fun AddInventoryDialog(
                     modifier = Modifier.fillMaxWidth(),
                     label = { Text("Ποσότητα") },
                     singleLine = true,
-                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number)
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                    colors = premiumTextFieldColors()
                 )
                 OutlinedTextField(
                     value = batch,
                     onValueChange = { batch = it },
                     modifier = Modifier.fillMaxWidth(),
                     label = { Text("Batch / lot") },
-                    singleLine = true
+                    singleLine = true,
+                    colors = premiumTextFieldColors()
                 )
             }
         },
@@ -774,13 +795,14 @@ private fun AddInventoryDialog(
                 },
                 enabled = peptide.isNotBlank() &&
                     vialValue != null && vialValue > 0 &&
-                    quantityValue != null && quantityValue > 0
+                    quantityValue != null && quantityValue > 0,
+                colors = premiumButtonColors()
             ) {
                 Text("Προσθήκη")
             }
         },
         dismissButton = {
-            TextButton(onClick = onDismiss) {
+            TextButton(onClick = onDismiss, colors = premiumTextButtonColors()) {
                 Text("Άκυρο")
             }
         }
@@ -801,6 +823,9 @@ private fun AddProgressDialog(
 
     AlertDialog(
         onDismissRequest = onDismiss,
+        containerColor = GlassSurfaceStrong,
+        titleContentColor = TextPrimary,
+        textContentColor = TextPrimary,
         title = { Text("Νέα μέτρηση") },
         text = {
             Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
@@ -810,7 +835,8 @@ private fun AddProgressDialog(
                     modifier = Modifier.fillMaxWidth(),
                     label = { Text("Βάρος (kg)") },
                     singleLine = true,
-                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal)
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
+                    colors = premiumTextFieldColors()
                 )
                 OutlinedTextField(
                     value = waist,
@@ -818,13 +844,15 @@ private fun AddProgressDialog(
                     modifier = Modifier.fillMaxWidth(),
                     label = { Text("Μέση (cm, προαιρετικό)") },
                     singleLine = true,
-                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal)
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
+                    colors = premiumTextFieldColors()
                 )
                 OutlinedTextField(
                     value = note,
                     onValueChange = { note = it },
                     modifier = Modifier.fillMaxWidth(),
-                    label = { Text("Σημείωση") }
+                    label = { Text("Σημείωση") },
+                    colors = premiumTextFieldColors()
                 )
             }
         },
@@ -837,13 +865,14 @@ private fun AddProgressDialog(
                         note.trim()
                     )
                 },
-                enabled = weightValue != null && weightValue > 0
+                enabled = weightValue != null && weightValue > 0,
+                colors = premiumButtonColors()
             ) {
                 Text("Αποθήκευση")
             }
         },
         dismissButton = {
-            TextButton(onClick = onDismiss) {
+            TextButton(onClick = onDismiss, colors = premiumTextButtonColors()) {
                 Text("Άκυρο")
             }
         }
