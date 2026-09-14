@@ -72,8 +72,7 @@ import gr.peptidetracker.app.ui.premiumTextFieldColors
 fun LibraryScreen(
     store: LocalStore,
     imageIndex: Map<String, String>,
-    onOpenPeptide: (PeptideInfo) -> Unit,
-    onSettings: () -> Unit
+    onOpenPeptide: (PeptideInfo) -> Unit
 ) {
     var query by remember { mutableStateOf("") }
     var category by remember { mutableStateOf("Όλα") }
@@ -105,8 +104,7 @@ fun LibraryScreen(
         ) {
             PremiumTopBar(
                 title = "Βιβλιοθήκη",
-                subtitle = "Προφίλ, μηχανισμοί και επιστημονικές πηγές.",
-                onSettings = onSettings
+                subtitle = "Προφίλ, μηχανισμοί και επιστημονικές πηγές."
             )
 
             OutlinedTextField(
