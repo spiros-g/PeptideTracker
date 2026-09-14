@@ -19,9 +19,9 @@ import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.rounded.ArrowForward
+import androidx.compose.material.icons.automirrored.rounded.ArrowForward
 import androidx.compose.material.icons.rounded.Calculate
-import androidx.compose.material.icons.rounded.EventNote
+import androidx.compose.material.icons.automirrored.rounded.EventNote
 import androidx.compose.material.icons.rounded.Inventory2
 import androidx.compose.material.icons.rounded.Science
 import androidx.compose.material3.Icon
@@ -126,7 +126,7 @@ fun HomeScreen(
                             )
                             Spacer(Modifier.width(5.dp))
                             Icon(
-                                Icons.Rounded.ArrowForward,
+                                Icons.AutoMirrored.Rounded.ArrowForward,
                                 contentDescription = null,
                                 tint = ElectricBlue,
                                 modifier = Modifier.size(18.dp)
@@ -188,7 +188,7 @@ fun HomeScreen(
                 QuickActionCard(
                     title = "Tracker",
                     subtitle = entries.size.toString() + " καταγραφές",
-                    icon = Icons.Rounded.EventNote,
+                    icon = Icons.AutoMirrored.Rounded.EventNote,
                     accent = ElectricCyan,
                     modifier = Modifier.weight(1f),
                     onClick = { onNavigate(3) }
@@ -237,7 +237,7 @@ fun HomeScreen(
                         verticalAlignment = Alignment.CenterVertically
                     ) {
                         Icon(
-                            Icons.Rounded.EventNote,
+                            Icons.AutoMirrored.Rounded.EventNote,
                             contentDescription = null,
                             tint = ElectricBlue,
                             modifier = Modifier.size(34.dp)
@@ -281,7 +281,7 @@ fun HomeScreen(
                             }
                         }
                         Icon(
-                            Icons.Rounded.ArrowForward,
+                            Icons.AutoMirrored.Rounded.ArrowForward,
                             contentDescription = null,
                             tint = MaterialTheme.colorScheme.onSurfaceVariant
                         )
