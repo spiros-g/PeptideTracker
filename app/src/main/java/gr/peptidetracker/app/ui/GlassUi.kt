@@ -1,7 +1,5 @@
 package gr.peptidetracker.app.ui
 
-import android.graphics.Bitmap
-import androidx.compose.animation.Crossfade
 import androidx.compose.animation.core.RepeatMode
 import androidx.compose.animation.core.animateFloat
 import androidx.compose.animation.core.animateFloatAsState
@@ -25,17 +23,12 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.outlined.ImageNotSupported
 import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.FilterChipDefaults
-import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.produceState
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -44,20 +37,12 @@ import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
-import gr.peptidetracker.app.data.StoreCatalogClient
-import gr.peptidetracker.app.data.StoreImageLoader
+import gr.peptidetracker.app.R
 import kotlin.math.ceil
-
-private sealed class StoreImageState {
-    object Loading : StoreImageState()
-    data class Ready(val bitmap: Bitmap) : StoreImageState()
-    object Error : StoreImageState()
-}
 
 @Composable
 fun PremiumBackground(
@@ -295,6 +280,7 @@ fun premiumTextFieldColors() = OutlinedTextFieldDefaults.colors(
     unfocusedPlaceholderColor = TextMuted
 )
 
+@Suppress("UNUSED_PARAMETER")
 @Composable
 fun StoreVialImage(
     productKey: String,
@@ -302,107 +288,31 @@ fun StoreVialImage(
     modifier: Modifier = Modifier,
     contentDescription: String? = null
 ) {
-    val context = LocalContext.current
-    val imageUrl = remember(productKey, imageIndex) {
-        StoreCatalogClient.resolveImage(imageIndex, productKey)
-    }
-
-    if (imageUrl == null) {
-        StoreImagePlaceholder(
-            modifier = modifier,
-            loading = imageIndex.isEmpty(),
-            contentDescription = contentDescription
-        )
-        return
-    }
-
-    val state by produceState<StoreImageState>(
-        initialValue = StoreImageState.Loading,
-        key1 = imageUrl
+    Box(
+        modifier = modifier,
+        contentAlignment = Alignment.Center
     ) {
-        val bitmap = StoreImageLoader.load(context.applicationContext, imageUrl)
-        value = if (bitmap != null) {
-            StoreImageState.Ready(bitmap)
-        } else {
-            StoreImageState.Error
-        }
-    }
-
-    Crossfade(
-        targetState = state,
-        animationSpec = tween(260),
-        label = "stockVialImage",
-        modifier = modifier
-    ) { imageState ->
         Box(
-            Modifier.fillMaxSize(),
-            contentAlignment = Alignment.Center
-        ) {
-            Box(
-                Modifier
-                    .fillMaxSize(0.82f)
-                    .background(
-                        Brush.radialGradient(
-                            listOf(
-                                ElectricBlue.copy(alpha = 0.12f),
-                                Color.Transparent
-                            )
-                        ),
-                        CircleShape
-                    )
-            )
+            Modifier
+                .fillMaxSize(0.88f)
+                .background(
+                    Brush.radialGradient(
+                        listOf(
+                            ElectricBlue.copy(alpha = 0.12f),
+                            ElectricCyan.copy(alpha = 0.035f),
+                            Color.Transparent
+                        )
+                    ),
+                    CircleShape
+                )
+        )
 
-            when (imageState) {
-                is StoreImageState.Ready -> {
-                    Image(
-                        bitmap = imageState.bitmap.asImageBitmap(),
-                        contentDescription = contentDescription,
-                        contentScale = ContentScale.Fit,
-                        modifier = Modifier.fillMaxSize()
-                    )
-                }
-
-                StoreImageState.Loading -> {
-                    StoreImagePlaceholder(
-                        modifier = Modifier.fillMaxSize(),
-                        loading = true,
-                        contentDescription = contentDescription
-                    )
-                }
-
-                StoreImageState.Error -> {
-                    StoreImagePlaceholder(
-                        modifier = Modifier.fillMaxSize(),
-                        loading = false,
-                        contentDescription = contentDescription
-                    )
-                }
-            }
-        }
-    }
-}
-
-@Composable
-private fun StoreImagePlaceholder(
-    modifier: Modifier,
-    loading: Boolean,
-    contentDescription: String?
-) {
-    Box(modifier, contentAlignment = Alignment.Center) {
-        if (loading) {
-            CircularProgressIndicator(
-                modifier = Modifier.size(24.dp),
-                strokeWidth = 2.dp,
-                color = ElectricBlue.copy(alpha = 0.75f)
-            )
-        } else {
-            Icon(
-                imageVector = Icons.Outlined.ImageNotSupported,
-                contentDescription = contentDescription,
-                tint = TextMuted,
-                modifier = Modifier.size(30.dp)
-            )
-        }
+        Image(
+            painter = painterResource(R.drawable.peptide_vial),
+            contentDescription = contentDescription,
+            contentScale = ContentScale.Fit,
+            modifier = Modifier.fillMaxSize()
+        )
     }
 }
 
