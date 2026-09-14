@@ -9,7 +9,6 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.ArrowBack
-import androidx.compose.material.icons.rounded.Settings
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -18,14 +17,12 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 
 @Composable
 fun PremiumTopBar(
     title: String,
     subtitle: String? = null,
-    onSettings: (() -> Unit)? = null,
     onBack: (() -> Unit)? = null
 ) {
     Row(
@@ -39,7 +36,11 @@ fun PremiumTopBar(
                     .size(42.dp)
                     .background(Color.White.copy(alpha = 0.08f), CircleShape)
             ) {
-                Icon(Icons.AutoMirrored.Rounded.ArrowBack, contentDescription = "Πίσω")
+                Icon(
+                    Icons.AutoMirrored.Rounded.ArrowBack,
+                    contentDescription = "Πίσω",
+                    tint = TextPrimary
+                )
             }
             Spacer(Modifier.size(12.dp))
         }
@@ -48,28 +49,13 @@ fun PremiumTopBar(
             Text(
                 title,
                 style = MaterialTheme.typography.headlineMedium,
-                fontWeight = FontWeight.ExtraBold
+                color = TextPrimary
             )
             if (!subtitle.isNullOrBlank()) {
                 Text(
                     subtitle,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    color = TextSecondary,
                     style = MaterialTheme.typography.bodyMedium
-                )
-            }
-        }
-
-        if (onSettings != null) {
-            IconButton(
-                onClick = onSettings,
-                modifier = Modifier
-                    .size(42.dp)
-                    .background(Color.White.copy(alpha = 0.08f), CircleShape)
-            ) {
-                Icon(
-                    Icons.Rounded.Settings,
-                    contentDescription = "Ρυθμίσεις",
-                    tint = MaterialTheme.colorScheme.onSurface
                 )
             }
         }
