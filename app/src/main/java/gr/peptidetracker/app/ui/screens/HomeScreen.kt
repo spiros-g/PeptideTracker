@@ -101,13 +101,13 @@ fun HomeScreen(
                         verticalArrangement = Arrangement.spacedBy(8.dp)
                     ) {
                         Text(
-                            "ΓΡΗΓΟΡΟΣ ΥΠΟΛΟΓΙΣΤΗΣ",
+                            "ΥΠΟΛΟΓΙΣΤΗΣ ΑΝΑΣΥΣΤΑΣΗΣ",
                             color = ElectricCyan,
                             style = MaterialTheme.typography.labelLarge,
                             fontWeight = FontWeight.ExtraBold
                         )
                         Text(
-                            "Υπολογισμοί χωρίς χάος.",
+                            "Ανασύσταση & μετατροπή δόσης.",
                             style = MaterialTheme.typography.headlineLarge
                         )
                         Text(
@@ -168,7 +168,7 @@ fun HomeScreen(
             ) {
                 QuickActionCard(
                     title = "Πεπτίδια",
-                    subtitle = peptideCatalog.size.toString() + " profiles",
+                    subtitle = peptideCatalog.size.toString() + " προφίλ",
                     icon = Icons.Rounded.Science,
                     accent = ElectricViolet,
                     modifier = Modifier.weight(1f),
