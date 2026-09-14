@@ -105,7 +105,7 @@ fun LibraryScreen(
         ) {
             PremiumTopBar(
                 title = "Βιβλιοθήκη",
-                subtitle = "Profiles, μηχανισμοί και επιστημονικές πηγές.",
+                subtitle = "Προφίλ, μηχανισμοί και επιστημονικές πηγές.",
                 onSettings = onSettings
             )
 
