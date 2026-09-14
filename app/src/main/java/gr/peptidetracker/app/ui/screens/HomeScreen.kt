@@ -121,7 +121,7 @@ fun HomeScreen(
                         )
 
                         Text(
-                            "Βάλε τι έχει το φιαλίδιο και πόσο διαλύτη πρόσθεσες. Ο υπολογιστής σου δείχνει συγκέντρωση, όγκο και μονάδες U-100.",
+                            "Βάλε τι έχει το φιαλίδιο και πόσο διαλύτη πρόσθεσες. Ο υπολογιστής σου δείχνει συγκέντρωση, όγκο και μονάδες U-100 ή U-40.",
                             color = MaterialTheme.colorScheme.onSurfaceVariant,
                             style = MaterialTheme.typography.bodyMedium,
                             maxLines = 3,
@@ -272,6 +272,16 @@ fun HomeScreen(
                                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                                 style = MaterialTheme.typography.bodySmall
                             )
+                            if (activeVial.isReconstituted) {
+                                Text(
+                                    (activeVial.diluentMl?.toString() ?: "") + " mL · U-" +
+                                        activeVial.syringeUnitsPerMl +
+                                        (activeVial.mcgPerSyringeUnit?.let { " · " + it.toString() + " mcg/U" } ?: ""),
+                                    color = ElectricViolet,
+                                    style = MaterialTheme.typography.bodySmall,
+                                    fontWeight = FontWeight.Bold
+                                )
+                            }
                         }
                         Icon(
                             Icons.AutoMirrored.Rounded.ArrowForward,
