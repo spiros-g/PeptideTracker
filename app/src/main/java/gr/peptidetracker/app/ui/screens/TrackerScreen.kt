@@ -39,6 +39,7 @@ import androidx.compose.material.icons.rounded.CheckCircle
 import androidx.compose.material.icons.rounded.Inventory2
 import androidx.compose.material.icons.rounded.MonitorWeight
 import androidx.compose.material.icons.rounded.QueryStats
+import androidx.compose.material.icons.rounded.Replay
 import androidx.compose.material.icons.rounded.Restore
 import androidx.compose.material.icons.rounded.Save
 import androidx.compose.material.icons.rounded.WarningAmber
@@ -53,6 +54,9 @@ import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
+import androidx.compose.material3.SnackbarResult
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -62,6 +66,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -77,8 +82,10 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import gr.peptidetracker.app.data.BackupCrypto
 import gr.peptidetracker.app.data.BackupSummary
 import gr.peptidetracker.app.data.InventoryEntry
 import gr.peptidetracker.app.data.LocalStore
@@ -102,6 +109,9 @@ import java.text.SimpleDateFormat
 import java.util.Calendar
 import java.util.Date
 import java.util.Locale
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import kotlin.math.max
 
 @Composable
@@ -124,6 +134,7 @@ fun TrackerScreen(
     val peptideNames = store.peptideNames()
 
     var editingLog by remember { mutableStateOf<TrackerEntry?>(null) }
+    var repeatLogTemplate by remember { mutableStateOf<TrackerEntry?>(null) }
     var showLogDialog by remember { mutableStateOf(false) }
     var editingInventory by remember { mutableStateOf<InventoryEntry?>(null) }
     var inventoryPreset by remember { mutableStateOf<String?>(null) }
@@ -137,14 +148,33 @@ fun TrackerScreen(
     var pendingDeleteLog by remember { mutableStateOf<TrackerEntry?>(null) }
     var pendingDeleteInventory by remember { mutableStateOf<InventoryEntry?>(null) }
     var pendingDeleteProgress by remember { mutableStateOf<ProgressEntry?>(null) }
+    var encryptedBackupPassword by remember { mutableStateOf("") }
+    var showEncryptedBackupPassword by remember { mutableStateOf(false) }
+    var pendingEncryptedRestore by remember { mutableStateOf<ByteArray?>(null) }
+    var encryptedRestorePassword by remember { mutableStateOf("") }
+    var showEncryptedRestorePassword by remember { mutableStateOf(false) }
 
     val context = LocalContext.current
     val haptics = LocalHapticFeedback.current
+    val scope = rememberCoroutineScope()
+    val snackbarHostState = remember { SnackbarHostState() }
 
     fun reloadAll() {
         logs = store.entries()
         inventory = store.inventory()
         progress = store.progress()
+    }
+
+    fun queueRestore(raw: String) {
+        val summary = store.inspectBackup(raw)
+        if (summary == null) {
+            pendingRestoreRaw = null
+            pendingRestoreSummary = null
+            dataMessage = "Το αρχείο backup δεν είναι έγκυρο."
+        } else {
+            pendingRestoreRaw = raw
+            pendingRestoreSummary = summary
+        }
     }
 
     val backupLauncher = rememberLauncherForActivityResult(
@@ -159,6 +189,32 @@ fun TrackerScreen(
                 dataMessage = "Το backup αποθηκεύτηκε."
             }.onFailure {
                 dataMessage = "Αποτυχία αποθήκευσης backup."
+            }
+        }
+    }
+
+    val encryptedBackupLauncher = rememberLauncherForActivityResult(
+        ActivityResultContracts.CreateDocument("application/octet-stream")
+    ) { uri ->
+        val password = encryptedBackupPassword
+        encryptedBackupPassword = ""
+        if (uri != null && password.length >= 6) {
+            scope.launch {
+                val result = runCatching {
+                    val bytes = withContext(Dispatchers.Default) {
+                        BackupCrypto.encrypt(store.exportJson(), password.toCharArray())
+                    }
+                    withContext(Dispatchers.IO) {
+                        context.contentResolver.openOutputStream(uri)?.use {
+                            it.write(bytes)
+                        } ?: error("Δεν ήταν δυνατή η εγγραφή του αρχείου.")
+                    }
+                }
+                dataMessage = if (result.isSuccess) {
+                    "Το κρυπτογραφημένο backup αποθηκεύτηκε."
+                } else {
+                    "Αποτυχία κρυπτογραφημένου backup."
+                }
             }
         }
     }
@@ -184,11 +240,16 @@ fun TrackerScreen(
     ) { uri ->
         if (uri != null) {
             runCatching {
-                val raw = context.contentResolver.openInputStream(uri)?.bufferedReader()?.use { it.readText() }
+                context.contentResolver.openInputStream(uri)?.use { it.readBytes() }
                     ?: error("Κενό αρχείο.")
-                val summary = store.inspectBackup(raw) ?: error("Μη έγκυρο backup.")
-                pendingRestoreRaw = raw
-                pendingRestoreSummary = summary
+            }.onSuccess { bytes ->
+                if (BackupCrypto.isEncrypted(bytes)) {
+                    pendingEncryptedRestore = bytes
+                    encryptedRestorePassword = ""
+                    showEncryptedRestorePassword = true
+                } else {
+                    queueRestore(bytes.toString(Charsets.UTF_8))
+                }
             }.onFailure {
                 pendingRestoreRaw = null
                 pendingRestoreSummary = null
@@ -227,11 +288,12 @@ fun TrackerScreen(
         }
     }
 
-    Column(
-        Modifier
-            .fillMaxSize()
-            .padding(top = 18.dp)
-    ) {
+    Box(Modifier.fillMaxSize()) {
+        Column(
+            Modifier
+                .fillMaxSize()
+                .padding(top = 18.dp)
+        ) {
         Column(
             Modifier.padding(horizontal = 18.dp),
             verticalArrangement = Arrangement.spacedBy(12.dp)
@@ -264,7 +326,7 @@ fun TrackerScreen(
             ) {
                 Icon(Icons.Rounded.Backup, contentDescription = null, modifier = Modifier.size(18.dp))
                 Spacer(Modifier.width(6.dp))
-                Text("Backup, restore & export")
+                Text("Αντίγραφα ασφαλείας & εξαγωγή")
             }
 
             if (dataMessage.isNotBlank()) {
@@ -284,10 +346,17 @@ fun TrackerScreen(
                 imageIndex = imageIndex,
                 onAdd = {
                     editingLog = null
+                    repeatLogTemplate = null
                     showLogDialog = true
                 },
                 onEdit = {
                     editingLog = it
+                    repeatLogTemplate = null
+                    showLogDialog = true
+                },
+                onRepeat = {
+                    editingLog = null
+                    repeatLogTemplate = it
                     showLogDialog = true
                 },
                 onDelete = {
@@ -347,11 +416,20 @@ fun TrackerScreen(
                 progress = progress
             )
         }
+        }
+
+        SnackbarHost(
+            hostState = snackbarHostState,
+            modifier = Modifier
+                .align(Alignment.BottomCenter)
+                .padding(horizontal = 18.dp, vertical = 12.dp)
+        )
     }
 
     if (showLogDialog) {
         LogEditorDialog(
             current = editingLog,
+            template = repeatLogTemplate,
             inventory = inventory,
             peptideNames = peptideNames,
             onDismiss = { showLogDialog = false },
@@ -382,6 +460,7 @@ fun TrackerScreen(
                 if (saved) {
                     reloadAll()
                     showLogDialog = false
+                    repeatLogTemplate = null
                     dataMessage = ""
                     haptics.performHapticFeedback(HapticFeedbackType.LongPress)
                 } else {
@@ -397,7 +476,7 @@ fun TrackerScreen(
             presetPeptide = inventoryPreset,
             peptideNames = peptideNames,
             onDismiss = { showInventoryDialog = false },
-            onSave = { peptide, vial, quantity, batch, remaining, diluentMl, syringeUnitsPerMl ->
+            onSave = { peptide, vial, quantity, batch, remaining, diluentMl, syringeUnitsPerMl, vendor, note, purchaseDate, expiryDate ->
                 val current = editingInventory
                 if (current == null) {
                     store.addInventory(
@@ -406,10 +485,14 @@ fun TrackerScreen(
                         quantity = quantity,
                         batch = batch,
                         diluentMl = diluentMl,
-                        syringeUnitsPerMl = syringeUnitsPerMl
+                        syringeUnitsPerMl = syringeUnitsPerMl,
+                        vendor = vendor,
+                        note = note,
+                        purchaseDate = purchaseDate,
+                        expiryDate = expiryDate
                     )
                 } else {
-                    store.updateInventory(
+                    store.updateInventoryDetails(
                         id = current.id,
                         peptide = peptide,
                         vialMg = vial,
@@ -417,7 +500,11 @@ fun TrackerScreen(
                         batch = batch,
                         remainingMg = remaining,
                         diluentMl = diluentMl,
-                        syringeUnitsPerMl = syringeUnitsPerMl
+                        syringeUnitsPerMl = syringeUnitsPerMl,
+                        vendor = vendor,
+                        note = note,
+                        purchaseDate = purchaseDate,
+                        expiryDate = expiryDate
                     )
                 }
                 inventory = store.inventory()
@@ -472,7 +559,17 @@ fun TrackerScreen(
                     OutlinedButton(
                         onClick = {
                             showDataTools = false
-                            restoreLauncher.launch(arrayOf("application/json", "text/plain"))
+                            encryptedBackupPassword = ""
+                            showEncryptedBackupPassword = true
+                        },
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Text("Κρυπτογραφημένο backup")
+                    }
+                    OutlinedButton(
+                        onClick = {
+                            showDataTools = false
+                            restoreLauncher.launch(arrayOf("application/json", "application/octet-stream", "text/plain", "*/*"))
                         },
                         modifier = Modifier.fillMaxWidth()
                     ) {
@@ -495,6 +592,60 @@ fun TrackerScreen(
                 TextButton(onClick = { showDataTools = false }, colors = premiumTextButtonColors()) {
                     Text("Κλείσιμο")
                 }
+            }
+        )
+    }
+
+    if (showEncryptedBackupPassword) {
+        PasswordDialog(
+            title = "Κρυπτογραφημένο backup",
+            text = "Όρισε κωδικό τουλάχιστον 6 χαρακτήρων. Χωρίς αυτόν τον κωδικό το backup δεν μπορεί να επαναφερθεί.",
+            password = encryptedBackupPassword,
+            onPasswordChange = { encryptedBackupPassword = it },
+            confirmText = "Δημιουργία",
+            onConfirm = {
+                showEncryptedBackupPassword = false
+                encryptedBackupLauncher.launch("PeptideTrackerGR-secure.ptbackup")
+            },
+            onDismiss = {
+                encryptedBackupPassword = ""
+                showEncryptedBackupPassword = false
+            }
+        )
+    }
+
+    if (showEncryptedRestorePassword) {
+        PasswordDialog(
+            title = "Ξεκλείδωμα backup",
+            text = "Πληκτρολόγησε τον κωδικό του κρυπτογραφημένου backup.",
+            password = encryptedRestorePassword,
+            onPasswordChange = { encryptedRestorePassword = it },
+            confirmText = "Ξεκλείδωμα",
+            onConfirm = {
+                val bytes = pendingEncryptedRestore
+                val password = encryptedRestorePassword
+                encryptedRestorePassword = ""
+                scope.launch {
+                    val raw = if (bytes == null) {
+                        null
+                    } else {
+                        withContext(Dispatchers.Default) {
+                            BackupCrypto.decrypt(bytes, password.toCharArray())
+                        }
+                    }
+                    if (raw == null) {
+                        dataMessage = "Λάθος κωδικός ή κατεστραμμένο κρυπτογραφημένο backup."
+                    } else {
+                        queueRestore(raw)
+                        pendingEncryptedRestore = null
+                        showEncryptedRestorePassword = false
+                    }
+                }
+            },
+            onDismiss = {
+                pendingEncryptedRestore = null
+                encryptedRestorePassword = ""
+                showEncryptedRestorePassword = false
             }
         )
     }
@@ -522,6 +673,7 @@ fun TrackerScreen(
                     Text("Μετρήσεις: " + summary.progress)
                     Text("Υπενθυμίσεις: " + summary.reminders)
                     Text("Αποθηκευμένοι υπολογισμοί: " + summary.savedCalculations)
+                    Text("Προσαρμοσμένα πεπτίδια: " + summary.customPeptides)
                 }
             },
             confirmButton = {
@@ -567,9 +719,23 @@ fun TrackerScreen(
                 "Η καταγραφή θα διαγραφεί οριστικά."
             },
             onConfirm = {
-                store.deleteEntry(row.id)
+                val deleted = store.deleteEntry(row.id)
                 reloadAll()
                 pendingDeleteLog = null
+                if (deleted != null) {
+                    scope.launch {
+                        if (
+                            snackbarHostState.showSnackbar(
+                                message = "Η καταγραφή διαγράφηκε.",
+                                actionLabel = "ΑΝΑΙΡΕΣΗ",
+                                withDismissAction = true
+                            ) == SnackbarResult.ActionPerformed
+                        ) {
+                            store.restoreDeletedEntry(deleted)
+                            reloadAll()
+                        }
+                    }
+                }
             },
             onDismiss = { pendingDeleteLog = null }
         )
@@ -583,6 +749,18 @@ fun TrackerScreen(
                 store.deleteInventory(row.id)
                 reloadAll()
                 pendingDeleteInventory = null
+                scope.launch {
+                    if (
+                        snackbarHostState.showSnackbar(
+                            message = "Το απόθεμα διαγράφηκε.",
+                            actionLabel = "ΑΝΑΙΡΕΣΗ",
+                            withDismissAction = true
+                        ) == SnackbarResult.ActionPerformed
+                    ) {
+                        store.restoreDeletedInventory(row)
+                        reloadAll()
+                    }
+                }
             },
             onDismiss = { pendingDeleteInventory = null }
         )
@@ -596,10 +774,73 @@ fun TrackerScreen(
                 store.deleteProgress(row.id)
                 reloadAll()
                 pendingDeleteProgress = null
+                scope.launch {
+                    if (
+                        snackbarHostState.showSnackbar(
+                            message = "Η μέτρηση διαγράφηκε.",
+                            actionLabel = "ΑΝΑΙΡΕΣΗ",
+                            withDismissAction = true
+                        ) == SnackbarResult.ActionPerformed
+                    ) {
+                        store.restoreDeletedProgress(row)
+                        reloadAll()
+                    }
+                }
             },
             onDismiss = { pendingDeleteProgress = null }
         )
     }
+}
+
+@Composable
+private fun PasswordDialog(
+    title: String,
+    text: String,
+    password: String,
+    onPasswordChange: (String) -> Unit,
+    confirmText: String,
+    onConfirm: () -> Unit,
+    onDismiss: () -> Unit
+) {
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        containerColor = GlassSurfaceStrong,
+        titleContentColor = TextPrimary,
+        textContentColor = TextPrimary,
+        title = { Text(title) },
+        text = {
+            Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                Text(
+                    text,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    style = MaterialTheme.typography.bodySmall
+                )
+                OutlinedTextField(
+                    value = password,
+                    onValueChange = onPasswordChange,
+                    modifier = Modifier.fillMaxWidth(),
+                    label = { Text("Κωδικός") },
+                    singleLine = true,
+                    visualTransformation = PasswordVisualTransformation(),
+                    colors = premiumTextFieldColors()
+                )
+            }
+        },
+        confirmButton = {
+            Button(
+                onClick = onConfirm,
+                enabled = password.length >= 6,
+                colors = premiumButtonColors()
+            ) {
+                Text(confirmText)
+            }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismiss, colors = premiumTextButtonColors()) {
+                Text("Άκυρο")
+            }
+        }
+    )
 }
 
 @Composable
@@ -657,6 +898,7 @@ private fun LogsSection(
     imageIndex: Map<String, String>,
     onAdd: () -> Unit,
     onEdit: (TrackerEntry) -> Unit,
+    onRepeat: (TrackerEntry) -> Unit,
     onDelete: (TrackerEntry) -> Unit
 ) {
     var filter by rememberSaveable { mutableStateOf("Όλα") }
@@ -780,6 +1022,7 @@ private fun LogsSection(
                     row = row,
                     imageIndex = imageIndex,
                     onEdit = { onEdit(row) },
+                    onRepeat = { onRepeat(row) },
                     onDelete = { onDelete(row) }
                 )
             }
@@ -1324,6 +1567,7 @@ private fun LogCard(
     row: TrackerEntry,
     imageIndex: Map<String, String>,
     onEdit: () -> Unit,
+    onRepeat: () -> Unit,
     onDelete: () -> Unit
 ) {
     GlassCard(modifier = Modifier.fillMaxWidth(), onClick = onEdit) {
@@ -1363,6 +1607,9 @@ private fun LogCard(
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                     style = MaterialTheme.typography.labelSmall
                 )
+            }
+            IconButton(onClick = onRepeat) {
+                Icon(Icons.Rounded.Replay, contentDescription = "Επανάληψη καταγραφής")
             }
             IconButton(onClick = onEdit) {
                 Icon(Icons.Outlined.Edit, contentDescription = "Επεξεργασία")
@@ -1408,23 +1655,21 @@ private fun InventoryCard(
                             overflow = TextOverflow.Ellipsis,
                             modifier = Modifier.weight(1f, fill = false)
                         )
-                        if (row.active) {
-                            Spacer(Modifier.width(7.dp))
-                            Text(
-                                "ΕΝΕΡΓΟ",
-                                color = ElectricCyan,
-                                style = MaterialTheme.typography.labelSmall,
-                                fontWeight = FontWeight.ExtraBold
-                            )
-                        } else if (row.quantity <= 1) {
-                            Spacer(Modifier.width(7.dp))
-                            Icon(
-                                Icons.Rounded.WarningAmber,
-                                contentDescription = null,
-                                tint = NeonRose,
-                                modifier = Modifier.size(16.dp)
-                            )
-                        }
+                        Spacer(Modifier.width(7.dp))
+                        Text(
+                            when {
+                                row.active -> "ΕΝΕΡΓΟ"
+                                row.quantity <= 0 -> "ΑΔΕΙΟ"
+                                else -> "ΚΛΕΙΣΤΟ"
+                            },
+                            color = when {
+                                row.active -> ElectricCyan
+                                row.quantity <= 0 -> NeonRose
+                                else -> MaterialTheme.colorScheme.onSurfaceVariant
+                            },
+                            style = MaterialTheme.typography.labelSmall,
+                            fontWeight = FontWeight.ExtraBold
+                        )
                     }
                     Text(
                         row.quantity.toString() + " × " + formatCompact(row.vialMg) + " mg",
@@ -1436,6 +1681,30 @@ private fun InventoryCard(
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                         style = MaterialTheme.typography.bodySmall
                     )
+                    if (row.vendor.isNotBlank()) {
+                        Text(
+                            "Source: " + row.vendor,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            style = MaterialTheme.typography.bodySmall
+                        )
+                    }
+                    row.expiryDate?.let { expiry ->
+                        Text(
+                            "Λήξη: " + DateFormat.getDateInstance(DateFormat.MEDIUM).format(Date(expiry)),
+                            color = if (expiry < System.currentTimeMillis()) NeonRose else MaterialTheme.colorScheme.onSurfaceVariant,
+                            style = MaterialTheme.typography.bodySmall,
+                            fontWeight = if (expiry < System.currentTimeMillis()) FontWeight.Bold else FontWeight.Normal
+                        )
+                    }
+                    if (row.note.isNotBlank()) {
+                        Text(
+                            row.note,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            style = MaterialTheme.typography.bodySmall,
+                            maxLines = 2,
+                            overflow = TextOverflow.Ellipsis
+                        )
+                    }
                     if (row.isReconstituted) {
                         Text(
                             "Ανασύσταση: " + formatCompact(row.diluentMl ?: 0.0) + " mL · U-" + row.syringeUnitsPerMl,
@@ -1459,7 +1728,7 @@ private fun InventoryCard(
                     }
                     if (row.active) {
                         Text(
-                            "Υπόλοιπο ενεργού vial: " + formatCompact(remaining) + " mg",
+                            "Υπόλοιπο ενεργού φιαλιδίου: " + formatCompact(remaining) + " mg",
                             color = ElectricCyan,
                             style = MaterialTheme.typography.bodySmall,
                             fontWeight = FontWeight.Bold
@@ -1502,7 +1771,7 @@ private fun InventoryCard(
                 ) {
                     Icon(Icons.Rounded.Calculate, contentDescription = null, modifier = Modifier.size(17.dp))
                     Spacer(Modifier.width(4.dp))
-                    Text("Calculator")
+                    Text("Υπολογιστής")
                 }
                 IconButton(onClick = onEdit) {
                     Icon(Icons.Outlined.Edit, contentDescription = "Επεξεργασία")
@@ -1638,6 +1907,7 @@ private fun ProgressCard(
 @Composable
 private fun LogEditorDialog(
     current: TrackerEntry?,
+    template: TrackerEntry?,
     inventory: List<InventoryEntry>,
     peptideNames: List<String>,
     onDismiss: () -> Unit,
@@ -1645,6 +1915,7 @@ private fun LogEditorDialog(
 ) {
     val context = LocalContext.current
     val defaultPeptide = current?.peptide
+        ?: template?.peptide
         ?: inventory.firstOrNull { it.active }?.peptide
         ?: peptideNames.firstOrNull().orEmpty()
 
@@ -1654,6 +1925,8 @@ private fun LogEditorDialog(
         mutableStateOf(
             current?.amountValue?.let(::formatCompact)
                 ?: current?.amount?.substringBefore(" ")?.replace(',', '.')
+                ?: template?.amountValue?.let(::formatCompact)
+                ?: template?.amount?.substringBefore(" ")?.replace(',', '.')
                 ?: "100"
         )
     }
@@ -1661,11 +1934,13 @@ private fun LogEditorDialog(
         mutableStateOf(
             current?.unit?.takeIf { it.isNotBlank() }
                 ?: current?.amount?.substringAfter(" ", "")?.takeIf { it in listOf("mg", "mcg", "units") }
+                ?: template?.unit?.takeIf { it.isNotBlank() }
+                ?: template?.amount?.substringAfter(" ", "")?.takeIf { it in listOf("mg", "mcg", "units") }
                 ?: "mcg"
         )
     }
-    var note by remember(current) { mutableStateOf(current?.note.orEmpty()) }
-    var site by remember(current) { mutableStateOf(current?.site.orEmpty()) }
+    var note by remember(current, template) { mutableStateOf(current?.note ?: template?.note.orEmpty()) }
+    var site by remember(current, template) { mutableStateOf(current?.site ?: template?.site.orEmpty()) }
     var timestamp by remember(current) { mutableStateOf(current?.createdAt ?: System.currentTimeMillis()) }
     var subtractFromInventory by remember { mutableStateOf(false) }
 
@@ -1793,10 +2068,10 @@ private fun LogEditorDialog(
                             verticalAlignment = Alignment.CenterVertically
                         ) {
                             Column(Modifier.weight(1f)) {
-                                Text("Σύνδεση με ενεργό vial", fontWeight = FontWeight.Bold)
+                                Text("Σύνδεση με ενεργό φιαλίδιο", fontWeight = FontWeight.Bold)
                                 Text(
                                     if (canSubtract) {
-                                        "Προαιρετικά αφαίρεσε την ποσότητα από το ενεργό vial."
+                                        "Προαιρετικά αφαίρεσε την ποσότητα από το ενεργό φιαλίδιο."
                                     } else {
                                         "Η αυτόματη αφαίρεση γίνεται μόνο για mg ή mcg και μόνο σε νέα εγγραφή."
                                     },
@@ -1848,8 +2123,9 @@ private fun InventoryEditorDialog(
     presetPeptide: String?,
     peptideNames: List<String>,
     onDismiss: () -> Unit,
-    onSave: (String, Double, Int, String, Double?, Double?, Int) -> Unit
+    onSave: (String, Double, Int, String, Double?, Double?, Int, String, String, Long?, Long?) -> Unit
 ) {
+    val context = LocalContext.current
     var peptide by remember(current, presetPeptide) {
         mutableStateOf(current?.peptide ?: presetPeptide ?: peptideNames.firstOrNull().orEmpty())
     }
@@ -1857,6 +2133,10 @@ private fun InventoryEditorDialog(
     var vial by remember(current) { mutableStateOf(current?.vialMg?.let(::formatCompact) ?: "10") }
     var quantity by remember(current) { mutableStateOf(current?.quantity?.toString() ?: "1") }
     var batch by remember(current) { mutableStateOf(current?.batch.orEmpty()) }
+    var vendor by remember(current) { mutableStateOf(current?.vendor.orEmpty()) }
+    var inventoryNote by remember(current) { mutableStateOf(current?.note.orEmpty()) }
+    var purchaseDate by remember(current) { mutableStateOf(current?.purchaseDate) }
+    var expiryDate by remember(current) { mutableStateOf(current?.expiryDate) }
     var diluent by remember(current) {
         mutableStateOf(current?.diluentMl?.let(::formatCompact).orEmpty())
     }
@@ -1906,7 +2186,7 @@ private fun InventoryEditorDialog(
                     value = vial,
                     onValueChange = { vial = it.replace(',', '.') },
                     modifier = Modifier.fillMaxWidth(),
-                    label = { Text("Περιεκτικότητα κάθε vial (mg)") },
+                    label = { Text("Περιεκτικότητα κάθε φιαλιδίου (mg)") },
                     singleLine = true,
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
                     colors = premiumTextFieldColors()
@@ -1928,8 +2208,69 @@ private fun InventoryEditorDialog(
                     singleLine = true,
                     colors = premiumTextFieldColors()
                 )
+                OutlinedTextField(
+                    value = vendor,
+                    onValueChange = { vendor = it },
+                    modifier = Modifier.fillMaxWidth(),
+                    label = { Text("Vendor / source (προαιρετικά)") },
+                    singleLine = true,
+                    colors = premiumTextFieldColors()
+                )
+                Row(
+                    Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    OutlinedButton(
+                        onClick = {
+                            showDatePicker(
+                                context,
+                                purchaseDate ?: System.currentTimeMillis()
+                            ) { purchaseDate = it }
+                        },
+                        modifier = Modifier.weight(1f)
+                    ) {
+                        Text(
+                            purchaseDate?.let {
+                                "Αγορά: " + DateFormat.getDateInstance(DateFormat.SHORT).format(Date(it))
+                            } ?: "Ημ/νία αγοράς"
+                        )
+                    }
+                    OutlinedButton(
+                        onClick = {
+                            showDatePicker(
+                                context,
+                                expiryDate ?: System.currentTimeMillis()
+                            ) { expiryDate = it }
+                        },
+                        modifier = Modifier.weight(1f)
+                    ) {
+                        Text(
+                            expiryDate?.let {
+                                "Λήξη: " + DateFormat.getDateInstance(DateFormat.SHORT).format(Date(it))
+                            } ?: "Ημ/νία λήξης"
+                        )
+                    }
+                }
+                if (purchaseDate != null || expiryDate != null) {
+                    TextButton(
+                        onClick = {
+                            purchaseDate = null
+                            expiryDate = null
+                        },
+                        colors = premiumTextButtonColors()
+                    ) {
+                        Text("Καθαρισμός ημερομηνιών")
+                    }
+                }
+                OutlinedTextField(
+                    value = inventoryNote,
+                    onValueChange = { inventoryNote = it },
+                    modifier = Modifier.fillMaxWidth(),
+                    label = { Text("Σημειώσεις αποθέματος (προαιρετικά)") },
+                    colors = premiumTextFieldColors()
+                )
                 Text(
-                    "Ανασύσταση vial (προαιρετικά)",
+                    "Ανασύσταση φιαλιδίου (προαιρετικά)",
                     fontWeight = FontWeight.Bold
                 )
                 OutlinedTextField(
@@ -1989,7 +2330,11 @@ private fun InventoryEditorDialog(
                         batch.trim(),
                         if (current == null) null else remainingValue,
                         diluentValue,
-                        syringeUnitsPerMl
+                        syringeUnitsPerMl,
+                        vendor.trim(),
+                        inventoryNote.trim(),
+                        purchaseDate,
+                        expiryDate
                     )
                 },
                 enabled = peptide.isNotBlank() &&

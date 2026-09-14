@@ -287,7 +287,7 @@ fun SettingsScreen(
                                 style = MaterialTheme.typography.titleMedium
                             )
                             Text(
-                                "Backup JSON, επαναφορά με προεπισκόπηση και εξαγωγή ημερολογίου σε CSV.",
+                                "Απλό ή κρυπτογραφημένο backup, επαναφορά με προεπισκόπηση και εξαγωγή ημερολογίου σε CSV.",
                                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                                 style = MaterialTheme.typography.bodySmall
                             )
@@ -361,7 +361,7 @@ fun SettingsScreen(
                         fontWeight = FontWeight.Bold
                     )
                     Text(
-                        "Οι καταγραφές, το απόθεμα, οι μετρήσεις και οι υπενθυμίσεις αποθηκεύονται στη συσκευή. Το Android cloud backup της εφαρμογής είναι απενεργοποιημένο. Εξαγωγή δεδομένων γίνεται μόνο όταν το επιλέξεις.",
+                        "Οι καταγραφές, το απόθεμα, οι μετρήσεις και οι υπενθυμίσεις αποθηκεύονται στη συσκευή. Το Android cloud backup είναι απενεργοποιημένο. Για ευαίσθητα exports προτίμησε το κρυπτογραφημένο backup.",
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                         style = MaterialTheme.typography.bodySmall
                     )

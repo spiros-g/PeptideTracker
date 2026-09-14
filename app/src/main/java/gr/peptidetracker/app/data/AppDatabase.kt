@@ -10,6 +10,8 @@ import androidx.room.PrimaryKey
 import androidx.room.Query
 import androidx.room.Room
 import androidx.room.RoomDatabase
+import androidx.room.migration.Migration
+import androidx.sqlite.db.SupportSQLiteDatabase
 
 @Entity(tableName = "favorite_peptides")
 data class FavoriteEntry(
@@ -107,13 +109,22 @@ interface AppDao {
         FavoriteEntry::class,
         CustomPeptideEntry::class
     ],
-    version = 1,
+    version = 2,
     exportSchema = true
 )
 abstract class AppDatabase : RoomDatabase() {
     abstract fun dao(): AppDao
 
     companion object {
+        private val MIGRATION_1_2 = object : Migration(1, 2) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL("ALTER TABLE inventory_entries ADD COLUMN vendor TEXT NOT NULL DEFAULT ''")
+                db.execSQL("ALTER TABLE inventory_entries ADD COLUMN note TEXT NOT NULL DEFAULT ''")
+                db.execSQL("ALTER TABLE inventory_entries ADD COLUMN purchaseDate INTEGER")
+                db.execSQL("ALTER TABLE inventory_entries ADD COLUMN expiryDate INTEGER")
+            }
+        }
+
         @Volatile
         private var instance: AppDatabase? = null
 

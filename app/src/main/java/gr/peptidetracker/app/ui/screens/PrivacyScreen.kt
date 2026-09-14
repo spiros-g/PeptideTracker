@@ -58,7 +58,7 @@ fun PrivacyScreen(onBack: () -> Unit) {
                     Icon(Icons.Rounded.Security, contentDescription = null, tint = ElectricBlue)
                     Text("Backup", fontWeight = FontWeight.ExtraBold)
                     Text(
-                        "Το Android system cloud backup για τα δεδομένα της εφαρμογής είναι απενεργοποιημένο. Δημιουργείται αρχείο backup μόνο όταν επιλέξεις εσύ εξαγωγή. Ένα εξαγόμενο αρχείο μπορεί να περιέχει προσωπικές καταγραφές και πρέπει να φυλάσσεται κατάλληλα.",
+                        "Το Android system cloud backup για τα δεδομένα της εφαρμογής είναι απενεργοποιημένο. Backup δημιουργείται μόνο όταν το επιλέξεις εσύ. Υπάρχει απλή JSON εξαγωγή και κρυπτογραφημένη εξαγωγή με κωδικό· για προσωπικές καταγραφές προτείνεται η κρυπτογραφημένη επιλογή.",
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                 }

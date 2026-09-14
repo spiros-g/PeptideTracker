@@ -18,7 +18,8 @@ data class PeptideInfo(
     val research: String,
     val mechanism: String,
     val warning: String,
-    val studies: List<Study>
+    val studies: List<Study>,
+    val lastReviewed: String
 )
 
 private fun pubmed(query: String) =
@@ -37,7 +38,8 @@ private fun peptide(
     research: String,
     mechanism: String,
     warning: String,
-    searchTerm: String = name
+    searchTerm: String = name,
+    lastReviewed: String = "14/09/2026"
 ) = PeptideInfo(
     id = id,
     name = name,
@@ -49,9 +51,10 @@ private fun peptide(
     mechanism = mechanism,
     warning = warning,
     studies = listOf(
-        Study("Δημοσιευμένη βιβλιογραφία", "PubMed", pubmed(searchTerm)),
-        Study("Καταχωρημένες κλινικές μελέτες", "ClinicalTrials.gov", trials(searchTerm))
-    )
+        Study("Αναζήτηση δημοσιευμένης βιβλιογραφίας", "PubMed", pubmed(searchTerm)),
+        Study("Αναζήτηση καταχωρημένων κλινικών μελετών", "ClinicalTrials.gov", trials(searchTerm))
+    ),
+    lastReviewed = lastReviewed
 )
 
 val peptideCatalog = listOf(

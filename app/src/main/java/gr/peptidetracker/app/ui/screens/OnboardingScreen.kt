@@ -94,7 +94,7 @@ fun OnboardingScreen(
                 fontWeight = FontWeight.Black
             )
             Text(
-                "Όλα τα βασικά εργαλεία σε ένα καθαρό, offline-first app.",
+                "Όλα τα βασικά εργαλεία σε μία καθαρή εφαρμογή που λειτουργεί τοπικά στη συσκευή.",
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
         }

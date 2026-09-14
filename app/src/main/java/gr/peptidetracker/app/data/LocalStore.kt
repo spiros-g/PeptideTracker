@@ -5,6 +5,7 @@ import androidx.room.Entity
 import androidx.room.Ignore
 import androidx.room.PrimaryKey
 import gr.peptidetracker.app.domain.InventoryLedger
+import gr.peptidetracker.app.domain.ReminderCadence
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
 import org.json.JSONArray
@@ -45,7 +46,11 @@ data class InventoryEntry(
     val active: Boolean = false,
     val openedAt: Long? = null,
     val diluentMl: Double? = null,
-    val syringeUnitsPerMl: Int = 100
+    val syringeUnitsPerMl: Int = 100,
+    val vendor: String = "",
+    val note: String = "",
+    val purchaseDate: Long? = null,
+    val expiryDate: Long? = null
 ) {
     @get:Ignore
     val effectiveRemainingMg: Double
@@ -160,6 +165,8 @@ class LocalStore(context: Context) {
     fun addCustomPeptide(name: String): Boolean {
         val cleaned = safe(name.trim())
         if (cleaned.length < 2) return false
+        if (peptideCatalog.any { it.name.equals(cleaned, ignoreCase = true) }) return false
+        if (customPeptides().any { it.equals(cleaned, ignoreCase = true) }) return false
         io { dao.insertCustomPeptide(CustomPeptideEntry(cleaned, System.currentTimeMillis())) }
         return true
     }
@@ -296,6 +303,19 @@ class LocalStore(context: Context) {
         return current
     }
 
+    fun restoreDeletedEntry(entry: TrackerEntry): Boolean {
+        if (entries().any { it.id == entry.id }) return false
+        var restored = entry
+        if (entry.inventoryId != null && entry.inventoryAppliedMg != null) {
+            val applied = consumeInventory(entry.inventoryId, entry.inventoryAppliedMg)
+            if (!applied) {
+                restored = entry.copy(inventoryId = null, inventoryAppliedMg = null)
+            }
+        }
+        saveEntries(entries() + restored)
+        return true
+    }
+
     fun progress(): List<ProgressEntry> = io { dao.progressEntries() }
 
     fun addProgress(weight: Double, waist: Double?, note: String) {
@@ -324,6 +344,12 @@ class LocalStore(context: Context) {
         saveProgress(progress().filterNot { it.id == id })
     }
 
+    fun restoreDeletedProgress(row: ProgressEntry): Boolean {
+        if (progress().any { it.id == row.id }) return false
+        saveProgress(progress() + row)
+        return true
+    }
+
     fun inventory(): List<InventoryEntry> = io { dao.inventoryEntries() }
 
     fun addInventory(
@@ -332,7 +358,11 @@ class LocalStore(context: Context) {
         quantity: Int,
         batch: String,
         diluentMl: Double? = null,
-        syringeUnitsPerMl: Int = 100
+        syringeUnitsPerMl: Int = 100,
+        vendor: String = "",
+        note: String = "",
+        purchaseDate: Long? = null,
+        expiryDate: Long? = null
     ) {
         require(peptide.isNotBlank() && vial > 0 && quantity > 0)
         require(diluentMl == null || diluentMl > 0)
@@ -346,7 +376,11 @@ class LocalStore(context: Context) {
             batch = safe(batch.trim()),
             remainingMg = vial,
             diluentMl = diluentMl,
-            syringeUnitsPerMl = syringeUnitsPerMl
+            syringeUnitsPerMl = syringeUnitsPerMl,
+            vendor = safe(vendor.trim()),
+            note = safe(note.trim()),
+            purchaseDate = purchaseDate,
+            expiryDate = expiryDate
         )
         saveInventory(next)
     }
@@ -383,6 +417,46 @@ class LocalStore(context: Context) {
         )
     }
 
+    fun updateInventoryDetails(
+        id: Long,
+        peptide: String,
+        vialMg: Double,
+        quantity: Int,
+        batch: String,
+        remainingMg: Double?,
+        diluentMl: Double?,
+        syringeUnitsPerMl: Int,
+        vendor: String,
+        note: String,
+        purchaseDate: Long?,
+        expiryDate: Long?
+    ) {
+        require(peptide.isNotBlank() && vialMg > 0 && quantity >= 0)
+        require(diluentMl == null || diluentMl > 0)
+        require(syringeUnitsPerMl == 40 || syringeUnitsPerMl == 100)
+        saveInventory(
+            inventory().map {
+                if (it.id == id) {
+                    it.copy(
+                        peptide = safe(peptide.trim()),
+                        vialMg = vialMg,
+                        quantity = quantity,
+                        batch = safe(batch.trim()),
+                        remainingMg = remainingMg?.coerceIn(0.0, vialMg),
+                        diluentMl = diluentMl,
+                        syringeUnitsPerMl = syringeUnitsPerMl,
+                        vendor = safe(vendor.trim()),
+                        note = safe(note.trim()),
+                        purchaseDate = purchaseDate,
+                        expiryDate = expiryDate
+                    )
+                } else {
+                    it
+                }
+            }
+        )
+    }
+
     fun activateInventory(id: Long) {
         val rows = inventory()
         val target = rows.firstOrNull { it.id == id } ?: return
@@ -404,6 +478,12 @@ class LocalStore(context: Context) {
 
     fun deleteInventory(id: Long) {
         saveInventory(inventory().filterNot { it.id == id })
+    }
+
+    fun restoreDeletedInventory(row: InventoryEntry): Boolean {
+        if (inventory().any { it.id == row.id }) return false
+        saveInventory(inventory() + row)
+        return true
     }
 
     fun consumeInventory(id: Long, amountMg: Double): Boolean {
@@ -501,9 +581,11 @@ class LocalStore(context: Context) {
             } else if (row.repeatDays <= 0) {
                 row.copy(enabled = false).also { nextRow = it }
             } else {
-                val stepMs = row.repeatDays.toLong() * DAY_MS
-                var next = row.scheduledAt + stepMs
-                while (next <= now) next += stepMs
+                val next = ReminderCadence.nextScheduledAt(
+                    scheduledAt = row.scheduledAt,
+                    repeatDays = row.repeatDays,
+                    now = now
+                ) ?: return@map row.copy(enabled = false).also { nextRow = it }
                 row.copy(scheduledAt = next, enabled = true).also { nextRow = it }
             }
         }
@@ -554,7 +636,7 @@ class LocalStore(context: Context) {
 
     fun exportJson(): String {
         val root = JSONObject()
-            .put("schema", 8)
+            .put("schema", 9)
             .put("generatedAt", System.currentTimeMillis())
             .put("defaultSyringeUnitsPerMl", defaultSyringeUnitsPerMl())
             .put("onboardingComplete", onboardingComplete())
@@ -571,7 +653,7 @@ class LocalStore(context: Context) {
     fun inspectBackup(raw: String): BackupSummary? = runCatching {
         val root = JSONObject(raw)
         val schema = root.optInt("schema", 1)
-        require(schema in 1..8)
+        require(schema in 1..9)
         BackupSummary(
             schema = schema,
             entries = root.optJSONArray("entries")?.length() ?: 0,
@@ -586,7 +668,7 @@ class LocalStore(context: Context) {
     fun restoreJson(raw: String): Boolean = runCatching {
         val root = JSONObject(raw)
         val schema = root.optInt("schema", 1)
-        require(schema in 1..8)
+        require(schema in 1..9)
         val previousReminderIds = reminders().map { it.id }
         prefs.edit().putString(KEY_PRE_RESTORE_BACKUP, exportJson()).commit()
 
@@ -790,6 +872,10 @@ class LocalStore(context: Context) {
                     .put("openedAt", row.openedAt ?: JSONObject.NULL)
                     .put("diluentMl", row.diluentMl ?: JSONObject.NULL)
                     .put("syringeUnitsPerMl", row.syringeUnitsPerMl)
+                    .put("vendor", row.vendor)
+                    .put("note", row.note)
+                    .put("purchaseDate", row.purchaseDate ?: JSONObject.NULL)
+                    .put("expiryDate", row.expiryDate ?: JSONObject.NULL)
             )
         }
     }
@@ -808,7 +894,11 @@ class LocalStore(context: Context) {
                     active = o.optBoolean("active"),
                     openedAt = if (o.has("openedAt") && !o.isNull("openedAt")) o.optLong("openedAt") else null,
                     diluentMl = if (o.has("diluentMl") && !o.isNull("diluentMl")) o.optDouble("diluentMl") else null,
-                    syringeUnitsPerMl = o.optInt("syringeUnitsPerMl", 100).takeIf { it == 40 || it == 100 } ?: 100
+                    syringeUnitsPerMl = o.optInt("syringeUnitsPerMl", 100).takeIf { it == 40 || it == 100 } ?: 100,
+                    vendor = o.optString("vendor"),
+                    note = o.optString("note"),
+                    purchaseDate = if (o.has("purchaseDate") && !o.isNull("purchaseDate")) o.optLong("purchaseDate") else null,
+                    expiryDate = if (o.has("expiryDate") && !o.isNull("expiryDate")) o.optLong("expiryDate") else null
                 )
             )
         }
@@ -976,6 +1066,5 @@ class LocalStore(context: Context) {
         const val KEY_CALCULATIONS_V1 = "calculations_v1_json"
         const val KEY_PRE_RESTORE_BACKUP = "pre_restore_backup_json"
         const val KEY_ROOM_MIGRATED = "room_migrated_v1"
-        const val DAY_MS = 24L * 60L * 60L * 1000L
     }
 }

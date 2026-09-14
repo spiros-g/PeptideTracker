@@ -380,6 +380,11 @@ fun PeptideDetailScreen(
                         peptide.status,
                         style = MaterialTheme.typography.titleMedium
                     )
+                    Text(
+                        "Τελευταίος έλεγχος περιεχομένου: " + peptide.lastReviewed,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        style = MaterialTheme.typography.bodySmall
+                    )
                 }
             }
         }
@@ -396,7 +401,7 @@ fun PeptideDetailScreen(
                 ) {
                     Icon(Icons.Rounded.Calculate, contentDescription = null)
                     Spacer(Modifier.width(6.dp))
-                    Text("Calculator", maxLines = 1)
+                    Text("Υπολογιστής", maxLines = 1)
                 }
                 OutlinedButton(
                     onClick = { onAddInventory(peptide) },
@@ -447,7 +452,7 @@ fun PeptideDetailScreen(
 
         item {
             Text(
-                "Μελέτες & επιστημονικές πηγές",
+                "Πηγές & αναζητήσεις βιβλιογραφίας",
                 style = MaterialTheme.typography.titleLarge
             )
         }

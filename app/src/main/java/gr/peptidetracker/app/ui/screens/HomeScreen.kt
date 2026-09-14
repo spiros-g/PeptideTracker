@@ -79,8 +79,8 @@ fun HomeScreen(
     ) {
         item {
             PremiumTopBar(
-                title = "Ιχνηλάτης Πεπτιδίων",
-                subtitle = "Το κέντρο ελέγχου των πεπτιδίων σου.",
+                title = "Peptide Tracker GR",
+                subtitle = "Το κέντρο ελέγχου για ημερολόγιο, απόθεμα και υπολογισμούς.",
                 actionIcon = Icons.Rounded.Settings,
                 actionDescription = "Ρυθμίσεις",
                 onAction = onOpenSettings
@@ -339,7 +339,7 @@ fun HomeScreen(
                         Spacer(Modifier.width(12.dp))
                         Column(Modifier.weight(1f)) {
                             Text(
-                                "Ενεργό vial",
+                                "Ενεργό φιαλίδιο",
                                 color = ElectricCyan,
                                 style = MaterialTheme.typography.labelLarge,
                                 fontWeight = FontWeight.ExtraBold
@@ -347,7 +347,7 @@ fun HomeScreen(
                             Text(activeVial.peptide, fontWeight = FontWeight.ExtraBold)
                             Text(
                                 activeVial.effectiveRemainingMg.toString() + " mg υπόλοιπο · " +
-                                    activeVial.quantity + " vial συνολικά",
+                                    activeVial.quantity + " φιαλίδια συνολικά",
                                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                                 style = MaterialTheme.typography.bodySmall
                             )
