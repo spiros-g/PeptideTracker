@@ -28,7 +28,6 @@ import androidx.compose.material.icons.rounded.Science
 import androidx.compose.material.icons.rounded.Straighten
 import androidx.compose.material.icons.rounded.WaterDrop
 import androidx.compose.material3.Button
-import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.Icon
 import androidx.compose.material3.LinearProgressIndicator
@@ -57,6 +56,9 @@ import gr.peptidetracker.app.ui.ElectricViolet
 import gr.peptidetracker.app.ui.GlassCard
 import gr.peptidetracker.app.ui.PremiumTopBar
 import gr.peptidetracker.app.ui.StoreVialImage
+import gr.peptidetracker.app.ui.premiumButtonColors
+import gr.peptidetracker.app.ui.premiumFilterChipColors
+import gr.peptidetracker.app.ui.premiumTextFieldColors
 
 @Composable
 fun CalculatorScreen(
@@ -300,10 +302,7 @@ fun CalculatorScreen(
                     .fillMaxWidth()
                     .height(56.dp),
                 shape = RoundedCornerShape(20.dp),
-                colors = ButtonDefaults.buttonColors(
-                    containerColor = ElectricBlue,
-                    contentColor = Color(0xFF07101F)
-                )
+                colors = premiumButtonColors()
             ) {
                 Icon(Icons.Rounded.Calculate, contentDescription = null)
                 Spacer(Modifier.width(8.dp))
@@ -363,7 +362,8 @@ private fun ModeChip(
                 fontWeight = if (selected) FontWeight.ExtraBold else FontWeight.Medium
             )
         },
-        modifier = modifier
+        modifier = modifier,
+        colors = premiumFilterChipColors()
     )
 }
 
@@ -421,7 +421,8 @@ private fun ChoiceRow(
                 selected = selected == choice,
                 onClick = { onSelected(choice) },
                 label = { Text(choice) },
-                modifier = Modifier.weight(1f)
+                modifier = Modifier.weight(1f),
+                colors = premiumFilterChipColors()
             )
         }
     }
@@ -440,7 +441,8 @@ private fun DecimalField(
         singleLine = true,
         shape = RoundedCornerShape(18.dp),
         label = { Text(label) },
-        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal)
+        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
+        colors = premiumTextFieldColors()
     )
 }
 
