@@ -7,6 +7,7 @@ import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -31,6 +32,9 @@ import androidx.compose.material.icons.outlined.Edit
 import androidx.compose.material.icons.rounded.Add
 import androidx.compose.material.icons.rounded.Backup
 import androidx.compose.material.icons.rounded.Calculate
+import androidx.compose.material.icons.rounded.CalendarMonth
+import androidx.compose.material.icons.rounded.ChevronLeft
+import androidx.compose.material.icons.rounded.ChevronRight
 import androidx.compose.material.icons.rounded.CheckCircle
 import androidx.compose.material.icons.rounded.Inventory2
 import androidx.compose.material.icons.rounded.MonitorWeight
@@ -58,6 +62,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -79,7 +84,6 @@ import gr.peptidetracker.app.data.InventoryEntry
 import gr.peptidetracker.app.data.LocalStore
 import gr.peptidetracker.app.data.ProgressEntry
 import gr.peptidetracker.app.data.TrackerEntry
-import gr.peptidetracker.app.data.peptideCatalog
 import gr.peptidetracker.app.ui.ElectricBlue
 import gr.peptidetracker.app.ui.ElectricCyan
 import gr.peptidetracker.app.ui.ElectricViolet
@@ -94,8 +98,10 @@ import gr.peptidetracker.app.ui.premiumFilterChipColors
 import gr.peptidetracker.app.ui.premiumTextButtonColors
 import gr.peptidetracker.app.ui.premiumTextFieldColors
 import java.text.DateFormat
+import java.text.SimpleDateFormat
 import java.util.Calendar
 import java.util.Date
+import java.util.Locale
 import kotlin.math.max
 
 @Composable
@@ -115,6 +121,7 @@ fun TrackerScreen(
     var logs by remember { mutableStateOf(store.entries()) }
     var inventory by remember { mutableStateOf(store.inventory()) }
     var progress by remember { mutableStateOf(store.progress()) }
+    val peptideNames = store.peptideNames()
 
     var editingLog by remember { mutableStateOf<TrackerEntry?>(null) }
     var showLogDialog by remember { mutableStateOf(false) }
@@ -346,6 +353,7 @@ fun TrackerScreen(
         LogEditorDialog(
             current = editingLog,
             inventory = inventory,
+            peptideNames = peptideNames,
             onDismiss = { showLogDialog = false },
             onSave = { peptide, value, unit, note, site, createdAt, inventoryId, subtract ->
                 val current = editingLog
@@ -387,6 +395,7 @@ fun TrackerScreen(
         InventoryEditorDialog(
             current = editingInventory,
             presetPeptide = inventoryPreset,
+            peptideNames = peptideNames,
             onDismiss = { showInventoryDialog = false },
             onSave = { peptide, vial, quantity, batch, remaining, diluentMl, syringeUnitsPerMl ->
                 val current = editingInventory
@@ -650,13 +659,19 @@ private fun LogsSection(
     onEdit: (TrackerEntry) -> Unit,
     onDelete: (TrackerEntry) -> Unit
 ) {
-    var filter by remember { mutableStateOf("Όλα") }
+    var filter by rememberSaveable { mutableStateOf("Όλα") }
+    var calendarMode by rememberSaveable { mutableStateOf(false) }
+    var monthOffset by rememberSaveable { mutableIntStateOf(0) }
+    var selectedDayStart by rememberSaveable { mutableStateOf<Long?>(null) }
     val now = System.currentTimeMillis()
     val dayMs = 24L * 60L * 60L * 1000L
     val todayCount = rows.count { it.createdAt >= now - dayMs }
     val weekCount = rows.count { it.createdAt >= now - 7L * dayMs }
     val filters = listOf("Όλα") + rows.map { it.peptide }.distinct().sorted()
-    val visible = if (filter == "Όλα") rows else rows.filter { it.peptide == filter }
+    val filteredByPeptide = if (filter == "Όλα") rows else rows.filter { it.peptide == filter }
+    val visible = selectedDayStart?.let { start ->
+        filteredByPeptide.filter { it.createdAt >= start && it.createdAt < start + dayMs }
+    } ?: filteredByPeptide
 
     LazyColumn(
         modifier = Modifier.fillMaxSize(),
@@ -672,6 +687,60 @@ private fun LogsSection(
                 buttonText = "Νέα χρήση",
                 onAdd = onAdd
             )
+        }
+
+        item {
+            Row(
+                Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                FilterChip(
+                    selected = !calendarMode,
+                    onClick = {
+                        calendarMode = false
+                        selectedDayStart = null
+                    },
+                    label = { Text("Λίστα") },
+                    modifier = Modifier.weight(1f),
+                    colors = premiumFilterChipColors()
+                )
+                FilterChip(
+                    selected = calendarMode,
+                    onClick = { calendarMode = true },
+                    label = {
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Icon(
+                                Icons.Rounded.CalendarMonth,
+                                contentDescription = null,
+                                modifier = Modifier.size(17.dp)
+                            )
+                            Spacer(Modifier.width(5.dp))
+                            Text("Ημερολόγιο")
+                        }
+                    },
+                    modifier = Modifier.weight(1f),
+                    colors = premiumFilterChipColors()
+                )
+            }
+        }
+
+        if (calendarMode) {
+            item {
+                UsageCalendar(
+                    rows = filteredByPeptide,
+                    monthOffset = monthOffset,
+                    selectedDayStart = selectedDayStart,
+                    onPreviousMonth = {
+                        monthOffset -= 1
+                        selectedDayStart = null
+                    },
+                    onNextMonth = {
+                        monthOffset += 1
+                        selectedDayStart = null
+                    },
+                    onSelectDay = { selectedDayStart = it }
+                )
+            }
         }
 
         if (filters.size > 1) {
@@ -692,11 +761,15 @@ private fun LogsSection(
         if (visible.isEmpty()) {
             item {
                 EmptyTrackerState(
-                    title = if (rows.isEmpty()) "Δεν έχεις καταγράψει χρήση" else "Δεν υπάρχουν εγγραφές για αυτό το φίλτρο",
-                    text = if (rows.isEmpty()) {
-                        "Πρόσθεσε μια καταγραφή με πεπτίδιο, ποσότητα, μονάδα και ημερομηνία/ώρα."
-                    } else {
-                        "Διάλεξε άλλο πεπτίδιο ή επίλεξε «Όλα»."
+                    title = when {
+                        rows.isEmpty() -> "Δεν έχεις καταγράψει χρήση"
+                        selectedDayStart != null -> "Δεν υπάρχουν εγγραφές για αυτή την ημέρα"
+                        else -> "Δεν υπάρχουν εγγραφές για αυτό το φίλτρο"
+                    },
+                    text = when {
+                        rows.isEmpty() -> "Πρόσθεσε μια καταγραφή με πεπτίδιο, ποσότητα, μονάδα και ημερομηνία/ώρα."
+                        selectedDayStart != null -> "Διάλεξε άλλη ημέρα ή γύρισε στη λίστα."
+                        else -> "Διάλεξε άλλο πεπτίδιο ή επίλεξε «Όλα»."
                     },
                     icon = Icons.AutoMirrored.Rounded.EventNote
                 )
@@ -713,6 +786,124 @@ private fun LogsSection(
         }
 
         item { Spacer(Modifier.height(8.dp)) }
+    }
+}
+
+@Composable
+private fun UsageCalendar(
+    rows: List<TrackerEntry>,
+    monthOffset: Int,
+    selectedDayStart: Long?,
+    onPreviousMonth: () -> Unit,
+    onNextMonth: () -> Unit,
+    onSelectDay: (Long) -> Unit
+) {
+    val calendar = Calendar.getInstance().apply {
+        set(Calendar.DAY_OF_MONTH, 1)
+        add(Calendar.MONTH, monthOffset)
+        set(Calendar.HOUR_OF_DAY, 0)
+        set(Calendar.MINUTE, 0)
+        set(Calendar.SECOND, 0)
+        set(Calendar.MILLISECOND, 0)
+    }
+    val year = calendar.get(Calendar.YEAR)
+    val month = calendar.get(Calendar.MONTH)
+    val daysInMonth = calendar.getActualMaximum(Calendar.DAY_OF_MONTH)
+    val firstDayOfWeek = calendar.get(Calendar.DAY_OF_WEEK)
+    val leading = (firstDayOfWeek + 5) % 7
+    val totalCells = ((leading + daysInMonth + 6) / 7) * 7
+    val dayCounts = rows.groupingBy { entry ->
+        Calendar.getInstance().apply { timeInMillis = entry.createdAt }.let {
+            Triple(it.get(Calendar.YEAR), it.get(Calendar.MONTH), it.get(Calendar.DAY_OF_MONTH))
+        }
+    }.eachCount()
+    val monthLabel = SimpleDateFormat("LLLL yyyy", Locale.getDefault()).format(calendar.time)
+    val weekDays = listOf("Δ", "Τ", "Τ", "Π", "Π", "Σ", "Κ")
+
+    GlassCard(modifier = Modifier.fillMaxWidth()) {
+        Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+            Row(
+                Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.SpaceBetween
+            ) {
+                IconButton(onClick = onPreviousMonth) {
+                    Icon(Icons.Rounded.ChevronLeft, contentDescription = "Προηγούμενος μήνας")
+                }
+                Text(
+                    monthLabel.replaceFirstChar { if (it.isLowerCase()) it.titlecase(Locale.getDefault()) else it.toString() },
+                    fontWeight = FontWeight.ExtraBold
+                )
+                IconButton(onClick = onNextMonth) {
+                    Icon(Icons.Rounded.ChevronRight, contentDescription = "Επόμενος μήνας")
+                }
+            }
+
+            Row(Modifier.fillMaxWidth()) {
+                weekDays.forEach { label ->
+                    Text(
+                        label,
+                        modifier = Modifier.weight(1f),
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        style = MaterialTheme.typography.labelSmall,
+                        fontWeight = FontWeight.Bold
+                    )
+                }
+            }
+
+            for (week in 0 until totalCells / 7) {
+                Row(
+                    Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(4.dp)
+                ) {
+                    for (column in 0 until 7) {
+                        val index = week * 7 + column
+                        val day = index - leading + 1
+                        if (day !in 1..daysInMonth) {
+                            Spacer(Modifier.weight(1f).height(44.dp))
+                        } else {
+                            val dayStart = Calendar.getInstance().apply {
+                                clear()
+                                set(year, month, day, 0, 0, 0)
+                                set(Calendar.MILLISECOND, 0)
+                            }.timeInMillis
+                            val count = dayCounts[Triple(year, month, day)] ?: 0
+                            val selected = selectedDayStart == dayStart
+                            Box(
+                                modifier = Modifier
+                                    .weight(1f)
+                                    .height(44.dp)
+                                    .clip(RoundedCornerShape(12.dp))
+                                    .background(
+                                        when {
+                                            selected -> ElectricBlue.copy(alpha = 0.30f)
+                                            count > 0 -> ElectricCyan.copy(alpha = 0.10f)
+                                            else -> Color.White.copy(alpha = 0.025f)
+                                        }
+                                    )
+                                    .clickable { onSelectDay(dayStart) },
+                                contentAlignment = Alignment.Center
+                            ) {
+                                Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                                    Text(
+                                        day.toString(),
+                                        fontWeight = if (selected) FontWeight.ExtraBold else FontWeight.Medium
+                                    )
+                                    if (count > 0) {
+                                        Text(
+                                            count.toString(),
+                                            color = ElectricCyan,
+                                            style = MaterialTheme.typography.labelSmall,
+                                            fontWeight = FontWeight.Bold
+                                        )
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
     }
 }
 
@@ -1448,13 +1639,14 @@ private fun ProgressCard(
 private fun LogEditorDialog(
     current: TrackerEntry?,
     inventory: List<InventoryEntry>,
+    peptideNames: List<String>,
     onDismiss: () -> Unit,
     onSave: (String, Double, String, String, String, Long, Long?, Boolean) -> Unit
 ) {
     val context = LocalContext.current
     val defaultPeptide = current?.peptide
         ?: inventory.firstOrNull { it.active }?.peptide
-        ?: peptideCatalog.firstOrNull()?.name.orEmpty()
+        ?: peptideNames.firstOrNull().orEmpty()
 
     var peptide by remember(current) { mutableStateOf(defaultPeptide) }
     var peptideMenu by remember { mutableStateOf(false) }
@@ -1513,11 +1705,11 @@ private fun LogEditorDialog(
                             expanded = peptideMenu,
                             onDismissRequest = { peptideMenu = false }
                         ) {
-                            peptideCatalog.sortedBy { it.name }.forEach { item ->
+                            peptideNames.forEach { name ->
                                 DropdownMenuItem(
-                                    text = { Text(item.name) },
+                                    text = { Text(name) },
                                     onClick = {
-                                        peptide = item.name
+                                        peptide = name
                                         peptideMenu = false
                                         subtractFromInventory = false
                                     }
@@ -1654,11 +1846,12 @@ private fun LogEditorDialog(
 private fun InventoryEditorDialog(
     current: InventoryEntry?,
     presetPeptide: String?,
+    peptideNames: List<String>,
     onDismiss: () -> Unit,
     onSave: (String, Double, Int, String, Double?, Double?, Int) -> Unit
 ) {
     var peptide by remember(current, presetPeptide) {
-        mutableStateOf(current?.peptide ?: presetPeptide ?: peptideCatalog.firstOrNull()?.name.orEmpty())
+        mutableStateOf(current?.peptide ?: presetPeptide ?: peptideNames.firstOrNull().orEmpty())
     }
     var peptideMenu by remember { mutableStateOf(false) }
     var vial by remember(current) { mutableStateOf(current?.vialMg?.let(::formatCompact) ?: "10") }
@@ -1698,11 +1891,11 @@ private fun InventoryEditorDialog(
                         expanded = peptideMenu,
                         onDismissRequest = { peptideMenu = false }
                     ) {
-                        peptideCatalog.sortedBy { it.name }.forEach { item ->
+                        peptideNames.forEach { name ->
                             DropdownMenuItem(
-                                text = { Text(item.name) },
+                                text = { Text(name) },
                                 onClick = {
-                                    peptide = item.name
+                                    peptide = name
                                     peptideMenu = false
                                 }
                             )

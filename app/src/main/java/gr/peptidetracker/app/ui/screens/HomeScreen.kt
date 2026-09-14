@@ -10,6 +10,7 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -24,6 +25,7 @@ import androidx.compose.material.icons.rounded.AddCircle
 import androidx.compose.material.icons.rounded.CheckCircle
 import androidx.compose.material.icons.automirrored.rounded.EventNote
 import androidx.compose.material.icons.rounded.Inventory2
+import androidx.compose.material.icons.rounded.NotificationsActive
 import androidx.compose.material.icons.rounded.Science
 import androidx.compose.material.icons.rounded.Settings
 import androidx.compose.material3.Icon
@@ -47,6 +49,8 @@ import gr.peptidetracker.app.ui.ElectricViolet
 import gr.peptidetracker.app.ui.GlassCard
 import gr.peptidetracker.app.ui.PremiumTopBar
 import gr.peptidetracker.app.ui.StoreVialImage
+import java.text.DateFormat
+import java.util.Date
 
 @Composable
 fun HomeScreen(
@@ -64,6 +68,9 @@ fun HomeScreen(
     val favorites = peptideCatalog.filter { it.id in favoriteIds }
     val last = entries.firstOrNull()
     val activeVial = inventory.firstOrNull { it.active && it.quantity > 0 }
+    val nextReminder = store.reminders()
+        .filter { it.enabled && it.scheduledAt >= System.currentTimeMillis() }
+        .minByOrNull { it.scheduledAt }
 
     LazyColumn(
         modifier = Modifier.fillMaxSize(),
@@ -84,7 +91,7 @@ fun HomeScreen(
             GlassCard(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(274.dp),
+                    .heightIn(min = 274.dp),
                 contentPadding = PaddingValues(0.dp),
                 onClick = { onNavigate(2) }
             ) {
@@ -217,6 +224,17 @@ fun HomeScreen(
         }
 
         item {
+            QuickActionCard(
+                title = "Πλάνο & υπενθυμίσεις",
+                subtitle = if (nextReminder == null) "Οργάνωσε τις δικές σου υπενθυμίσεις" else "Δες ή άλλαξε την επόμενη υπενθύμιση",
+                icon = Icons.Rounded.NotificationsActive,
+                accent = ElectricCyan,
+                modifier = Modifier.fillMaxWidth(),
+                onClick = { onNavigate(4) }
+            )
+        }
+
+        item {
             Row(
                 Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.spacedBy(10.dp)
@@ -236,6 +254,62 @@ fun HomeScreen(
                     label = "Αγαπημ.",
                     modifier = Modifier.weight(1f)
                 )
+            }
+        }
+
+        if (nextReminder != null) {
+            item {
+                GlassCard(
+                    modifier = Modifier.fillMaxWidth(),
+                    onClick = { onNavigate(4) }
+                ) {
+                    Row(
+                        Modifier.fillMaxWidth(),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Box(
+                            Modifier
+                                .size(44.dp)
+                                .clip(RoundedCornerShape(14.dp))
+                                .background(ElectricBlue.copy(alpha = 0.14f)),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Icon(
+                                Icons.Rounded.NotificationsActive,
+                                contentDescription = null,
+                                tint = ElectricCyan
+                            )
+                        }
+                        Spacer(Modifier.width(12.dp))
+                        Column(Modifier.weight(1f)) {
+                            Text(
+                                "Επόμενη υπενθύμιση",
+                                color = ElectricCyan,
+                                style = MaterialTheme.typography.labelLarge,
+                                fontWeight = FontWeight.ExtraBold
+                            )
+                            Text(
+                                nextReminder.peptide,
+                                fontWeight = FontWeight.ExtraBold,
+                                maxLines = 1,
+                                overflow = TextOverflow.Ellipsis
+                            )
+                            Text(
+                                DateFormat.getDateTimeInstance(
+                                    DateFormat.MEDIUM,
+                                    DateFormat.SHORT
+                                ).format(Date(nextReminder.scheduledAt)),
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                style = MaterialTheme.typography.bodySmall
+                            )
+                        }
+                        Icon(
+                            Icons.AutoMirrored.Rounded.ArrowForward,
+                            contentDescription = null,
+                            tint = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
+                }
             }
         }
 
@@ -406,7 +480,7 @@ private fun QuickActionCard(
     onClick: () -> Unit
 ) {
     GlassCard(
-        modifier = modifier.height(134.dp),
+        modifier = modifier.heightIn(min = 134.dp),
         onClick = onClick
     ) {
         Column(
@@ -446,7 +520,7 @@ private fun MetricCard(
     modifier: Modifier = Modifier
 ) {
     GlassCard(
-        modifier = modifier.height(92.dp),
+        modifier = modifier.heightIn(min = 92.dp),
         contentPadding = PaddingValues(13.dp)
     ) {
         Column(

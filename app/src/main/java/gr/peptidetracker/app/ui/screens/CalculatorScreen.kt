@@ -68,7 +68,6 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import gr.peptidetracker.app.data.LocalStore
 import gr.peptidetracker.app.data.SavedCalculationEntry
-import gr.peptidetracker.app.data.peptideCatalog
 import gr.peptidetracker.app.domain.PeptideCalculator
 import gr.peptidetracker.app.ui.ElectricBlue
 import gr.peptidetracker.app.ui.ElectricCyan
@@ -266,11 +265,11 @@ fun CalculatorScreen(
                             expanded = peptideMenu,
                             onDismissRequest = { peptideMenu = false }
                         ) {
-                            peptideCatalog.sortedBy { it.name }.forEach { item ->
+                            store.peptideNames().forEach { name ->
                                 DropdownMenuItem(
-                                    text = { Text(item.name) },
+                                    text = { Text(name) },
                                     onClick = {
-                                        peptideName = item.name
+                                        peptideName = name
                                         peptideMenu = false
                                     }
                                 )

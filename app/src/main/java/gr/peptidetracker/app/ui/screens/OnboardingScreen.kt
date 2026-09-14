@@ -1,6 +1,8 @@
 package gr.peptidetracker.app.ui.screens
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -81,8 +83,9 @@ fun OnboardingScreen(
     Column(
         modifier = Modifier
             .fillMaxSize()
+            .verticalScroll(rememberScrollState())
             .padding(horizontal = 22.dp, vertical = 28.dp),
-        verticalArrangement = Arrangement.SpaceBetween
+        verticalArrangement = Arrangement.spacedBy(24.dp)
     ) {
         Column(verticalArrangement = Arrangement.spacedBy(18.dp)) {
             Text(

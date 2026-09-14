@@ -222,7 +222,10 @@ private object ReminderNotifications {
             PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
         )
 
-        val body = if (note.isBlank()) {
+        val detailsVisible = LocalStore(context).notificationDetailsVisible()
+        val body = if (!detailsVisible) {
+            "Έχεις προγραμματισμένη υπενθύμιση."
+        } else if (note.isBlank()) {
             peptide
         } else {
             peptide + " · " + note

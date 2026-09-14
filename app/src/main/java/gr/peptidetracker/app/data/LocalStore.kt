@@ -128,6 +128,16 @@ class LocalStore(context: Context) {
     fun setOnboardingComplete(value: Boolean) =
         prefs.edit().putBoolean("onboarding_complete", value).apply()
 
+    fun appLockEnabled() = prefs.getBoolean("app_lock_enabled", false)
+    fun setAppLockEnabled(value: Boolean) =
+        prefs.edit().putBoolean("app_lock_enabled", value).apply()
+
+    fun notificationDetailsVisible() =
+        prefs.getBoolean("notification_details_visible", false)
+
+    fun setNotificationDetailsVisible(value: Boolean) =
+        prefs.edit().putBoolean("notification_details_visible", value).apply()
+
     fun favorites(): Set<String> = io { dao.favoriteIds().toSet() }
 
     fun toggleFavorite(id: String) {

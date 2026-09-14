@@ -61,7 +61,6 @@ import androidx.compose.ui.unit.dp
 import gr.peptidetracker.app.data.LocalStore
 import gr.peptidetracker.app.data.ReminderEntry
 import gr.peptidetracker.app.data.ReminderScheduler
-import gr.peptidetracker.app.data.peptideCatalog
 import gr.peptidetracker.app.ui.ElectricBlue
 import gr.peptidetracker.app.ui.ElectricCyan
 import gr.peptidetracker.app.ui.ElectricViolet
@@ -81,9 +80,11 @@ import java.util.Date
 @Composable
 fun RemindersScreen(
     store: LocalStore,
-    imageIndex: Map<String, String>
+    imageIndex: Map<String, String>,
+    onBack: (() -> Unit)? = null
 ) {
     val context = LocalContext.current
+    val peptideNames = store.peptideNames()
     var rows by remember { mutableStateOf(store.reminders()) }
     var editing by remember { mutableStateOf<ReminderEntry?>(null) }
     var showEditor by remember { mutableStateOf(false) }
@@ -316,6 +317,7 @@ fun RemindersScreen(
     if (showEditor) {
         ReminderEditorDialog(
             current = editing,
+            peptideNames = peptideNames,
             notificationsAllowed = notificationsAllowed(),
             onDismiss = { showEditor = false },
             onSave = { peptide, note, scheduledAt, repeatDays, requestedEnabled ->
@@ -433,13 +435,14 @@ private fun ReminderCard(
 @Composable
 private fun ReminderEditorDialog(
     current: ReminderEntry?,
+    peptideNames: List<String>,
     notificationsAllowed: Boolean,
     onDismiss: () -> Unit,
     onSave: (String, String, Long, Int, Boolean) -> Unit
 ) {
     val context = LocalContext.current
     var peptide by remember(current) {
-        mutableStateOf(current?.peptide ?: peptideCatalog.firstOrNull()?.name.orEmpty())
+        mutableStateOf(current?.peptide ?: peptideNames.firstOrNull().orEmpty())
     }
     var peptideMenu by remember { mutableStateOf(false) }
     var note by remember(current) { mutableStateOf(current?.note.orEmpty()) }
@@ -483,11 +486,11 @@ private fun ReminderEditorDialog(
                         expanded = peptideMenu,
                         onDismissRequest = { peptideMenu = false }
                     ) {
-                        peptideCatalog.sortedBy { it.name }.forEach { item ->
+                        peptideNames.forEach { name ->
                             DropdownMenuItem(
-                                text = { Text(item.name) },
+                                text = { Text(name) },
                                 onClick = {
-                                    peptide = item.name
+                                    peptide = name
                                     peptideMenu = false
                                 }
                             )

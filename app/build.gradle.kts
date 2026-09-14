@@ -1,5 +1,6 @@
 import java.io.File
 import java.util.Base64
+import java.util.Properties
 import javax.imageio.ImageIO
 
 plugins {
@@ -11,6 +12,14 @@ plugins {
 
 val generatedArtworkResDir =
     layout.buildDirectory.dir("generated/artworkRes").get().asFile
+
+val keystorePropertiesFile = rootProject.file("keystore.properties")
+val keystoreProperties = Properties().apply {
+    if (keystorePropertiesFile.isFile) {
+        keystorePropertiesFile.inputStream().use(::load)
+    }
+}
+val hasReleaseKeystore = keystorePropertiesFile.isFile
 
 val generateArtwork by tasks.registering {
     val artworkSourceDir = file("src/main/assets/artwork")
@@ -82,15 +91,29 @@ android {
         applicationId = "gr.peptidetracker.app"
         minSdk = 26
         targetSdk = 36
-        versionCode = 25
-        versionName = "4.2.0"
+        versionCode = 26
+        versionName = "4.3.0"
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
 
     sourceSets["main"].res.srcDir(generatedArtworkResDir)
 
+    signingConfigs {
+        if (hasReleaseKeystore) {
+            create("release") {
+                storeFile = file(requireNotNull(keystoreProperties.getProperty("storeFile")))
+                storePassword = requireNotNull(keystoreProperties.getProperty("storePassword"))
+                keyAlias = requireNotNull(keystoreProperties.getProperty("keyAlias"))
+                keyPassword = requireNotNull(keystoreProperties.getProperty("keyPassword"))
+            }
+        }
+    }
+
     buildTypes {
         release {
+            if (hasReleaseKeystore) {
+                signingConfig = signingConfigs.getByName("release")
+            }
             isMinifyEnabled = false
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
@@ -131,6 +154,7 @@ dependencies {
 
     implementation("androidx.activity:activity-compose:1.10.1")
     implementation("androidx.compose.animation:animation")
+    implementation("androidx.compose.foundation:foundation")
     implementation("androidx.compose.material3:material3")
     implementation("androidx.compose.material:material-icons-extended")
     implementation("androidx.compose.ui:ui")
@@ -138,15 +162,16 @@ dependencies {
     debugImplementation("androidx.compose.ui:ui-tooling")
 
     implementation("androidx.lifecycle:lifecycle-runtime-compose:2.9.0")
+    implementation("androidx.lifecycle:lifecycle-viewmodel-compose:2.9.0")
     implementation("androidx.navigation:navigation-compose:2.9.0")
     implementation("androidx.work:work-runtime:2.11.2")
+    implementation("androidx.biometric:biometric:1.1.0")
+    implementation("androidx.fragment:fragment-ktx:1.9.0")
 
     implementation("androidx.room:room-runtime:2.8.5")
     implementation("androidx.room:room-ktx:2.8.5")
     ksp("androidx.room:room-compiler:2.8.5")
 
-    implementation("com.google.android.gms:play-services-ads:24.3.0")
-    implementation("com.google.android.ump:user-messaging-platform:3.2.0")
 
     testImplementation("junit:junit:4.13.2")
 }
