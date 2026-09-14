@@ -88,49 +88,49 @@ fun PeptideTrackerApp(store: LocalStore) {
                     }
                 }
             ) { padding ->
-                val target = selectedPeptide?.let { "detail:" + it.id } ?: "tab:" + selectedTab
-
                 AnimatedContent(
-                    targetState = target,
+                    targetState = selectedTab to selectedPeptide,
                     transitionSpec = {
                         fadeIn(tween(220)) togetherWith fadeOut(tween(160))
                     },
                     label = "screenTransition",
                     modifier = Modifier.padding(padding)
-                ) {
-                    selectedPeptide?.let { peptide ->
+                ) { (tab, peptide) ->
+                    if (peptide != null) {
                         PeptideDetailScreen(
                             peptide = peptide,
                             store = store,
                             imageIndex = imageIndex,
                             onBack = { selectedPeptide = null }
                         )
-                    } ?: when (selectedTab) {
-                        0 -> HomeScreen(
-                            store = store,
-                            imageIndex = imageIndex,
-                            onNavigate = { selectedTab = it },
-                            onOpenPeptide = { selectedPeptide = it },
-                            onSettings = { settingsOpen = true }
-                        )
+                    } else {
+                        when (tab) {
+                            0 -> HomeScreen(
+                                store = store,
+                                imageIndex = imageIndex,
+                                onNavigate = { selectedTab = it },
+                                onOpenPeptide = { selectedPeptide = it },
+                                onSettings = { settingsOpen = true }
+                            )
 
-                        1 -> LibraryScreen(
-                            store = store,
-                            imageIndex = imageIndex,
-                            onOpenPeptide = { selectedPeptide = it },
-                            onSettings = { settingsOpen = true }
-                        )
+                            1 -> LibraryScreen(
+                                store = store,
+                                imageIndex = imageIndex,
+                                onOpenPeptide = { selectedPeptide = it },
+                                onSettings = { settingsOpen = true }
+                            )
 
-                        2 -> CalculatorScreen(
-                            imageIndex = imageIndex,
-                            onSettings = { settingsOpen = true }
-                        )
+                            2 -> CalculatorScreen(
+                                imageIndex = imageIndex,
+                                onSettings = { settingsOpen = true }
+                            )
 
-                        else -> TrackerScreen(
-                            store = store,
-                            imageIndex = imageIndex,
-                            onSettings = { settingsOpen = true }
-                        )
+                            else -> TrackerScreen(
+                                store = store,
+                                imageIndex = imageIndex,
+                                onSettings = { settingsOpen = true }
+                            )
+                        }
                     }
                 }
             }
