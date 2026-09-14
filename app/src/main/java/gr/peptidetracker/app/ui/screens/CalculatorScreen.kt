@@ -263,7 +263,7 @@ fun CalculatorScreen(
             ) {
                 if (reverse) {
                     DecimalField(
-                        label = "Τράβηξε μέχρι τις μονάδες U-100",
+                        label = "Μονάδες που δείχνει η σύριγγα (U-100)",
                         value = syringeUnits,
                         onValueChange = { syringeUnits = it }
                     )
@@ -558,7 +558,7 @@ private fun ResultCard(
             )
             if (!reverse) {
                 ResultLine(
-                    label = "Μονάδες σύριγγας (U-100)",
+                    label = "Τράβηξε μέχρι τις μονάδες U-100",
                     value = output[0],
                     emphasize = true
                 )
@@ -589,7 +589,7 @@ private fun ResultCard(
                     value = output[2]
                 )
                 ResultLine(
-                    label = "Περιεκτικότητα ανά μονάδα U-100",
+                    label = "Ποσότητα ανά 1 μονάδα U-100",
                     value = output[3]
                 )
             }
