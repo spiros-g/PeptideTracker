@@ -139,8 +139,8 @@ private fun PremiumBottomBar(
     val destinations = listOf(
         MainDestination("Αρχική", Icons.Rounded.Home),
         MainDestination("Πεπτίδια", Icons.Rounded.Science),
-        MainDestination("Ανασύστ.", Icons.Rounded.Calculate),
-        MainDestination("Ιστορικό", Icons.Rounded.QueryStats)
+        MainDestination("Ανασύσταση", Icons.Rounded.Calculate),
+        MainDestination("Ημερολόγιο", Icons.Rounded.QueryStats)
     )
 
     Box(
