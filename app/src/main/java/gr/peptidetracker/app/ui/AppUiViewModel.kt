@@ -26,13 +26,13 @@ class AppUiViewModel(
     var calculatorPreset by mutableStateOf(readCalculatorPreset())
         private set
 
-    fun setTrackerSection(value: Int) {
+    fun updateTrackerSection(value: Int) {
         trackerSection = value.coerceIn(0, 3)
         savedStateHandle["tracker_section"] = trackerSection
     }
 
     fun requestNewLog() {
-        setTrackerSection(0)
+        updateTrackerSection(0)
         newLogRequest += 1
         savedStateHandle["new_log_request"] = newLogRequest
     }
@@ -52,14 +52,14 @@ class AppUiViewModel(
         savedStateHandle["data_tools_request"] = 0
     }
 
-    fun setInventoryPreset(value: String?) {
+    fun updateInventoryPreset(value: String?) {
         inventoryPreset = value
         savedStateHandle["inventory_preset"] = value
     }
 
-    fun consumeInventoryPreset() = setInventoryPreset(null)
+    fun consumeInventoryPreset() = updateInventoryPreset(null)
 
-    fun setCalculatorPreset(value: CalculatorPreset?) {
+    fun updateCalculatorPreset(value: CalculatorPreset?) {
         calculatorPreset = value
         savedStateHandle["calculator_peptide"] = value?.peptideName
         savedStateHandle["calculator_vial_mg"] = value?.vialMg
@@ -67,7 +67,7 @@ class AppUiViewModel(
         savedStateHandle["calculator_syringe"] = value?.syringeUnitsPerMl
     }
 
-    fun consumeCalculatorPreset() = setCalculatorPreset(null)
+    fun consumeCalculatorPreset() = updateCalculatorPreset(null)
 
     private fun readCalculatorPreset(): CalculatorPreset? {
         val peptide = savedStateHandle.get<String>("calculator_peptide") ?: return null

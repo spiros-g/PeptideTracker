@@ -156,7 +156,7 @@ fun PeptideTrackerApp(store: LocalStore) {
                                     navigateMain(Routes.Tracker)
                                 },
                                 onOpenInventory = {
-                                    uiState.setTrackerSection(1)
+                                    uiState.updateTrackerSection(1)
                                     navigateMain(Routes.Tracker)
                                 },
                                 onOpenSettings = {
@@ -185,7 +185,7 @@ fun PeptideTrackerApp(store: LocalStore) {
                                 defaultSyringeUnitsPerMl = store.defaultSyringeUnitsPerMl(),
                                 onPresetConsumed = uiState::consumeCalculatorPreset,
                                 onOpenHistory = {
-                                    uiState.setTrackerSection(0)
+                                    uiState.updateTrackerSection(0)
                                     navigateMain(Routes.Tracker)
                                 }
                             )
@@ -203,7 +203,7 @@ fun PeptideTrackerApp(store: LocalStore) {
                                 onConsumeInventoryPreset = uiState::consumeInventoryPreset,
                                 onConsumeDataToolsRequest = uiState::consumeDataToolsRequest,
                                 onOpenCalculator = { row ->
-                                    uiState.setCalculatorPreset(
+                                    uiState.updateCalculatorPreset(
                                         CalculatorPreset(
                                             peptideName = row.peptide,
                                             vialMg = row.vialMg,
@@ -261,12 +261,12 @@ fun PeptideTrackerApp(store: LocalStore) {
                                     imageIndex = imageIndex,
                                     onBack = { navController.navigateUp() },
                                     onOpenCalculator = { item ->
-                                        uiState.setCalculatorPreset(CalculatorPreset(item.name))
+                                        uiState.updateCalculatorPreset(CalculatorPreset(item.name))
                                         navigateMain(Routes.Calculator)
                                     },
                                     onAddInventory = { item ->
-                                        uiState.setTrackerSection(1)
-                                        uiState.setInventoryPreset(item.name)
+                                        uiState.updateTrackerSection(1)
+                                        uiState.updateInventoryPreset(item.name)
                                         navigateMain(Routes.Tracker)
                                     }
                                 )
