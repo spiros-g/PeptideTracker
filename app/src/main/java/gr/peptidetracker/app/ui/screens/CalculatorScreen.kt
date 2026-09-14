@@ -64,7 +64,9 @@ import gr.peptidetracker.app.ui.premiumTextFieldColors
 
 data class CalculatorPreset(
     val peptideName: String,
-    val vialMg: Double? = null
+    val vialMg: Double? = null,
+    val diluentMl: Double? = null,
+    val syringeUnitsPerMl: Int = 100
 )
 
 @Composable
@@ -74,6 +76,7 @@ fun CalculatorScreen(
     onPresetConsumed: () -> Unit = {}
 ) {
     var reverse by remember { mutableStateOf(false) }
+    var syringeUnitsPerMl by remember { mutableIntStateOf(100) }
     var syringeCapacity by remember { mutableIntStateOf(30) }
     var vialAmount by remember { mutableStateOf("5") }
     var vialUnit by remember { mutableStateOf("mg") }
@@ -90,6 +93,11 @@ fun CalculatorScreen(
                 vialUnit = "mg"
                 vialAmount = PeptideCalculator.format(it, 4)
             }
+            preset.diluentMl?.let {
+                diluentMl = PeptideCalculator.format(it, 4)
+            }
+            syringeUnitsPerMl = if (preset.syringeUnitsPerMl == 40) 40 else 100
+            syringeCapacity = if (syringeUnitsPerMl == 40) 40 else 30
             output = emptyList()
             error = ""
             onPresetConsumed()
@@ -128,6 +136,15 @@ fun CalculatorScreen(
                                 "Φιαλίδιο " + PeptideCalculator.format(preset.vialMg, 4) + " mg φορτώθηκε αυτόματα.",
                                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                                 style = MaterialTheme.typography.bodySmall
+                            )
+                        }
+                        if (preset.diluentMl != null) {
+                            Text(
+                                "Ανασύσταση " + PeptideCalculator.format(preset.diluentMl, 4) +
+                                    " mL · U-" + (if (preset.syringeUnitsPerMl == 40) 40 else 100),
+                                color = ElectricViolet,
+                                style = MaterialTheme.typography.bodySmall,
+                                fontWeight = FontWeight.Bold
                             )
                         }
                     }
@@ -172,7 +189,7 @@ fun CalculatorScreen(
                         )
 
                         Text(
-                            "mg · mcg · mL · U-100",
+                            "mg · mcg · mL · U-100 / U-40",
                             style = MaterialTheme.typography.headlineMedium,
                             fontWeight = FontWeight.ExtraBold,
                             maxLines = 2,
@@ -180,7 +197,7 @@ fun CalculatorScreen(
                         )
 
                         Text(
-                            "Μετατρέπει την ποσότητα που εισάγεις σε mL και μονάδες σύριγγας U-100 — ή το αντίστροφο.",
+                            "Μετατρέπει την ποσότητα που εισάγεις σε mL και μονάδες σύριγγας U-100 ή U-40 — ή το αντίστροφο.",
                             color = MaterialTheme.colorScheme.onSurfaceVariant,
                             style = MaterialTheme.typography.bodySmall,
                             maxLines = 3,
@@ -230,12 +247,28 @@ fun CalculatorScreen(
             CalculatorStep(
                 number = "01",
                 title = "1. Τι σύριγγα χρησιμοποιείς;",
-                subtitle = "Διάλεξε τη συνολική κλίμακα της σύριγγας U-100.",
+                subtitle = "Διάλεξε τύπο σύριγγας. U-100 = 100 μονάδες/mL, U-40 = 40 μονάδες/mL.",
                 icon = Icons.Rounded.Straighten,
                 accent = ElectricBlue
             ) {
                 ChoiceRow(
-                    choices = listOf("30", "50", "100"),
+                    choices = listOf("U-100", "U-40"),
+                    selected = "U-" + syringeUnitsPerMl,
+                    onSelected = {
+                        syringeUnitsPerMl = if (it == "U-40") 40 else 100
+                        syringeCapacity = if (syringeUnitsPerMl == 40) 40 else 30
+                        output = emptyList()
+                    }
+                )
+                Spacer(Modifier.height(8.dp))
+                Text(
+                    "Χωρητικότητα / μέγιστη ένδειξη",
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    style = MaterialTheme.typography.bodySmall
+                )
+                Spacer(Modifier.height(4.dp))
+                ChoiceRow(
+                    choices = if (syringeUnitsPerMl == 40) listOf("40") else listOf("30", "50", "100"),
                     selected = syringeCapacity.toString(),
                     onSelected = { syringeCapacity = it.toInt() }
                 )
@@ -304,13 +337,17 @@ fun CalculatorScreen(
             CalculatorStep(
                 number = "04",
                 title = if (reverse) "4. Τι δείχνει η σύριγγα;" else "4. Πόση ποσότητα θέλεις να μετρήσεις;",
-                subtitle = if (reverse) "Βάλε τις μονάδες U-100 και θα δεις σε τι ποσότητα αντιστοιχούν." else "Βάλε την ποσότητα και θα δεις πόσα mL και πόσες μονάδες U-100 αντιστοιχούν.",
+                subtitle = if (reverse) {
+                    "Βάλε τις μονάδες U-" + syringeUnitsPerMl + " και θα δεις σε τι ποσότητα αντιστοιχούν."
+                } else {
+                    "Βάλε την ποσότητα και θα δεις πόσα mL και πόσες μονάδες U-" + syringeUnitsPerMl + " αντιστοιχούν."
+                },
                 icon = Icons.Rounded.InvertColors,
                 accent = Color(0xFFFFB36B)
             ) {
                 if (reverse) {
                     DecimalField(
-                        label = "Μονάδες που δείχνει η σύριγγα (U-100)",
+                        label = "Μονάδες που δείχνει η σύριγγα (U-" + syringeUnitsPerMl + ")",
                         value = syringeUnits,
                         onValueChange = { syringeUnits = it }
                     )
@@ -355,7 +392,7 @@ fun CalculatorScreen(
                             vialAmount = vialInput,
                             vialIsMcg = vialUnit == "mcg",
                             diluentMl = water,
-                            syringeUnitsPerMl = 100
+                            syringeUnitsPerMl = syringeUnitsPerMl
                         )
 
                         output = if (!reverse) {
@@ -364,7 +401,7 @@ fun CalculatorScreen(
                                 diluentMl = water,
                                 target = targetAmount.toDouble(),
                                 targetIsMg = targetUnit == "mg",
-                                syringeUnitsPerMl = 100
+                                syringeUnitsPerMl = syringeUnitsPerMl
                             )
                             listOf(
                                 PeptideCalculator.format(result.syringeUnits, 2) + " U",
@@ -377,7 +414,7 @@ fun CalculatorScreen(
                                 vialMg = vialInMg,
                                 diluentMl = water,
                                 units = syringeUnits.toDouble(),
-                                syringeUnitsPerMl = 100
+                                syringeUnitsPerMl = syringeUnitsPerMl
                             )
                             listOf(
                                 PeptideCalculator.format(result.amountMg, 4) + " mg",
@@ -421,7 +458,12 @@ fun CalculatorScreen(
                 exit = fadeOut() + shrinkVertically()
             ) {
                 if (output.isNotEmpty()) {
-                    ResultCard(output = output, capacity = syringeCapacity, reverse = reverse)
+                    ResultCard(
+                        output = output,
+                        capacity = syringeCapacity,
+                        reverse = reverse,
+                        syringeUnitsPerMl = syringeUnitsPerMl
+                    )
                 }
             }
         }
@@ -570,7 +612,8 @@ private fun ResultLine(
 private fun ResultCard(
     output: List<String>,
     capacity: Int,
-    reverse: Boolean
+    reverse: Boolean,
+    syringeUnitsPerMl: Int
 ) {
     val units = if (!reverse) {
         output.firstOrNull()?.substringBefore(" ")?.toDoubleOrNull() ?: 0.0
@@ -605,7 +648,7 @@ private fun ResultCard(
             )
             if (!reverse) {
                 ResultLine(
-                    label = "Τράβηξε μέχρι τις μονάδες U-100",
+                    label = "Τράβηξε μέχρι τις μονάδες U-" + syringeUnitsPerMl,
                     value = output[0],
                     emphasize = true
                 )
@@ -618,7 +661,7 @@ private fun ResultCard(
                     value = output[2]
                 )
                 ResultLine(
-                    label = "Ποσότητα ανά 1 μονάδα U-100",
+                    label = "Ποσότητα ανά 1 μονάδα U-" + syringeUnitsPerMl,
                     value = output[3]
                 )
             } else {
@@ -636,7 +679,7 @@ private fun ResultCard(
                     value = output[2]
                 )
                 ResultLine(
-                    label = "Ποσότητα ανά 1 μονάδα U-100",
+                    label = "Ποσότητα ανά 1 μονάδα U-" + syringeUnitsPerMl,
                     value = output[3]
                 )
             }
@@ -657,7 +700,7 @@ private fun ResultCard(
                     trackColor = Color.White.copy(alpha = 0.09f)
                 )
                 Text(
-                    "Κλίμακα σύριγγας: " + capacity + " U",
+                    "Σύριγγα U-" + syringeUnitsPerMl + " · μέγιστη ένδειξη " + capacity + " U",
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                     style = MaterialTheme.typography.bodySmall
                 )
