@@ -49,7 +49,7 @@ val generateArtwork by tasks.registering {
             check(image.width == expectedWidth && image.height == expectedHeight) {
                 "Unexpected artwork dimensions for $outputName: " +
                     "${image.width}x${image.height}, expected " +
-                    "${expectedWidth}x${expectedHeight}"
+                    "$expectedWidth x $expectedHeight"
             }
 
             check(output.length() > 5_000L) {
@@ -81,8 +81,8 @@ android {
         applicationId = "gr.peptidetracker.app"
         minSdk = 26
         targetSdk = 36
-        versionCode = 22
-        versionName = "3.2.0"
+        versionCode = 23
+        versionName = "4.0.0"
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
 
@@ -134,6 +134,7 @@ dependencies {
 
     implementation("androidx.lifecycle:lifecycle-runtime-compose:2.9.0")
     implementation("androidx.navigation:navigation-compose:2.9.0")
+    implementation("androidx.work:work-runtime:2.11.2")
 
     implementation("com.google.android.gms:play-services-ads:24.3.0")
     implementation("com.google.android.ump:user-messaging-platform:3.2.0")

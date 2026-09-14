@@ -50,6 +50,29 @@ data class InventoryEntry(
         get() = concentrationMgPerMl?.let { it * 1000.0 / syringeUnitsPerMl.coerceAtLeast(1) }
 }
 
+data class ReminderEntry(
+    val id: Long,
+    val peptide: String,
+    val note: String,
+    val scheduledAt: Long,
+    val repeatDays: Int = 0,
+    val enabled: Boolean = true,
+    val createdAt: Long
+)
+
+data class SavedCalculationEntry(
+    val id: Long,
+    val peptide: String,
+    val vialMg: Double,
+    val diluentMl: Double,
+    val targetAmount: Double,
+    val targetUnit: String,
+    val syringeUnitsPerMl: Int,
+    val syringeCapacity: Int,
+    val syringeUnits: Double,
+    val createdAt: Long
+)
+
 class LocalStore(context: Context) {
     private val prefs = context.getSharedPreferences("peptide_tracker", Context.MODE_PRIVATE)
 
@@ -372,9 +395,145 @@ class LocalStore(context: Context) {
         return consumed
     }
 
+    fun reminders(): List<ReminderEntry> {
+        val json = prefs.getString(KEY_REMINDERS_V1, null) ?: return emptyList()
+        return runCatching { decodeReminders(JSONArray(json)) }
+            .getOrDefault(emptyList())
+            .sortedWith(compareByDescending<ReminderEntry> { it.enabled }.thenBy { it.scheduledAt })
+    }
+
+    fun addReminder(
+        peptide: String,
+        note: String,
+        scheduledAt: Long,
+        repeatDays: Int = 0
+    ): ReminderEntry {
+        require(peptide.isNotBlank())
+        require(scheduledAt > 0)
+        require(repeatDays >= 0)
+        val now = System.currentTimeMillis()
+        val row = ReminderEntry(
+            id = uniqueId(),
+            peptide = safe(peptide.trim()),
+            note = safe(note.trim()),
+            scheduledAt = scheduledAt,
+            repeatDays = repeatDays,
+            enabled = true,
+            createdAt = now
+        )
+        saveReminders(reminders() + row)
+        return row
+    }
+
+    fun updateReminder(
+        id: Long,
+        peptide: String,
+        note: String,
+        scheduledAt: Long,
+        repeatDays: Int,
+        enabled: Boolean
+    ): ReminderEntry? {
+        require(peptide.isNotBlank())
+        require(scheduledAt > 0)
+        require(repeatDays >= 0)
+        var updated: ReminderEntry? = null
+        val rows = reminders().map { row ->
+            if (row.id == id) {
+                row.copy(
+                    peptide = safe(peptide.trim()),
+                    note = safe(note.trim()),
+                    scheduledAt = scheduledAt,
+                    repeatDays = repeatDays,
+                    enabled = enabled
+                ).also { updated = it }
+            } else {
+                row
+            }
+        }
+        saveReminders(rows)
+        return updated
+    }
+
+    fun setReminderEnabled(id: Long, enabled: Boolean): ReminderEntry? {
+        var updated: ReminderEntry? = null
+        val rows = reminders().map { row ->
+            if (row.id == id) row.copy(enabled = enabled).also { updated = it } else row
+        }
+        saveReminders(rows)
+        return updated
+    }
+
+    fun deleteReminder(id: Long) {
+        saveReminders(reminders().filterNot { it.id == id })
+    }
+
+    fun advanceReminderAfterFire(id: Long, now: Long = System.currentTimeMillis()): ReminderEntry? {
+        var nextRow: ReminderEntry? = null
+        val rows = reminders().map { row ->
+            if (row.id != id || !row.enabled) {
+                row
+            } else if (row.repeatDays <= 0) {
+                row.copy(enabled = false).also { nextRow = it }
+            } else {
+                val stepMs = row.repeatDays.toLong() * DAY_MS
+                var next = row.scheduledAt + stepMs
+                while (next <= now) next += stepMs
+                row.copy(scheduledAt = next, enabled = true).also { nextRow = it }
+            }
+        }
+        saveReminders(rows)
+        return nextRow
+    }
+
+    fun savedCalculations(): List<SavedCalculationEntry> {
+        val json = prefs.getString(KEY_CALCULATIONS_V1, null) ?: return emptyList()
+        return runCatching { decodeCalculations(JSONArray(json)) }
+            .getOrDefault(emptyList())
+            .sortedByDescending { it.createdAt }
+    }
+
+    fun addSavedCalculation(
+        peptide: String,
+        vialMg: Double,
+        diluentMl: Double,
+        targetAmount: Double,
+        targetUnit: String,
+        syringeUnitsPerMl: Int,
+        syringeCapacity: Int,
+        syringeUnits: Double
+    ): SavedCalculationEntry {
+        require(vialMg > 0 && diluentMl > 0 && targetAmount > 0 && syringeUnits > 0)
+        require(targetUnit == "mg" || targetUnit == "mcg")
+        require(syringeUnitsPerMl == 40 || syringeUnitsPerMl == 100)
+        require(syringeCapacity > 0)
+        val now = System.currentTimeMillis()
+        val row = SavedCalculationEntry(
+            id = uniqueId(),
+            peptide = safe(peptide.trim()),
+            vialMg = vialMg,
+            diluentMl = diluentMl,
+            targetAmount = targetAmount,
+            targetUnit = targetUnit,
+            syringeUnitsPerMl = syringeUnitsPerMl,
+            syringeCapacity = syringeCapacity,
+            syringeUnits = syringeUnits,
+            createdAt = now
+        )
+        saveCalculations((listOf(row) + savedCalculations()).distinctBy { it.id }.take(12))
+        return row
+    }
+
+    fun deleteSavedCalculation(id: Long) {
+        saveCalculations(savedCalculations().filterNot { it.id == id })
+    }
+
+    fun clearSavedCalculations() {
+        saveCalculations(emptyList())
+    }
+
     fun exportJson(): String {
         val root = JSONObject()
-            .put("schema", 4)
+            .put("schema", 6)
             .put("generatedAt", System.currentTimeMillis())
             .put("darkMode", darkMode())
             .put("defaultSyringeUnitsPerMl", defaultSyringeUnitsPerMl())
@@ -383,17 +542,21 @@ class LocalStore(context: Context) {
             .put("entries", encodeEntries(entries()))
             .put("inventory", encodeInventory(inventory()))
             .put("progress", encodeProgress(progress()))
+            .put("reminders", encodeReminders(reminders()))
+            .put("savedCalculations", encodeCalculations(savedCalculations()))
         return root.toString(2)
     }
 
     fun restoreJson(raw: String): Boolean = runCatching {
         val root = JSONObject(raw)
         val schema = root.optInt("schema", 1)
-        require(schema in 1..4)
+        require(schema in 1..6)
 
         val decodedEntries = decodeEntries(root.optJSONArray("entries") ?: JSONArray())
         val decodedInventory = decodeInventory(root.optJSONArray("inventory") ?: JSONArray())
         val decodedProgress = decodeProgress(root.optJSONArray("progress") ?: JSONArray())
+        val decodedReminders = decodeReminders(root.optJSONArray("reminders") ?: JSONArray())
+        val decodedCalculations = decodeCalculations(root.optJSONArray("savedCalculations") ?: JSONArray())
 
         val favoriteSet = mutableSetOf<String>()
         val favoritesJson = root.optJSONArray("favorites") ?: JSONArray()
@@ -405,6 +568,8 @@ class LocalStore(context: Context) {
             .putString(KEY_ENTRIES_V2, encodeEntries(decodedEntries).toString())
             .putString(KEY_INVENTORY_V2, encodeInventory(decodedInventory).toString())
             .putString(KEY_PROGRESS_V2, encodeProgress(decodedProgress).toString())
+            .putString(KEY_REMINDERS_V1, encodeReminders(decodedReminders).toString())
+            .putString(KEY_CALCULATIONS_V1, encodeCalculations(decodedCalculations).toString())
             .putStringSet("favorites", favoriteSet)
             .putBoolean("dark", root.optBoolean("darkMode", darkMode()))
             .putInt(
@@ -443,7 +608,9 @@ class LocalStore(context: Context) {
         var id = System.currentTimeMillis()
         val used = entries().map { it.id }.toSet() +
             progress().map { it.id }.toSet() +
-            inventory().map { it.id }.toSet()
+            inventory().map { it.id }.toSet() +
+            reminders().map { it.id }.toSet() +
+            savedCalculations().map { it.id }.toSet()
         while (id in used) id++
         return id
     }
@@ -458,6 +625,14 @@ class LocalStore(context: Context) {
 
     private fun saveInventory(rows: List<InventoryEntry>) {
         prefs.edit().putString(KEY_INVENTORY_V2, encodeInventory(rows).toString()).apply()
+    }
+
+    private fun saveReminders(rows: List<ReminderEntry>) {
+        prefs.edit().putString(KEY_REMINDERS_V1, encodeReminders(rows).toString()).apply()
+    }
+
+    private fun saveCalculations(rows: List<SavedCalculationEntry>) {
+        prefs.edit().putString(KEY_CALCULATIONS_V1, encodeCalculations(rows).toString()).apply()
     }
 
     private fun encodeEntries(rows: List<TrackerEntry>) = JSONArray().apply {
@@ -562,6 +737,83 @@ class LocalStore(context: Context) {
         }
     }
 
+    private fun encodeReminders(rows: List<ReminderEntry>) = JSONArray().apply {
+        rows.forEach { row ->
+            put(
+                JSONObject()
+                    .put("id", row.id)
+                    .put("peptide", row.peptide)
+                    .put("note", row.note)
+                    .put("scheduledAt", row.scheduledAt)
+                    .put("repeatDays", row.repeatDays)
+                    .put("enabled", row.enabled)
+                    .put("createdAt", row.createdAt)
+            )
+        }
+    }
+
+    private fun decodeReminders(array: JSONArray): List<ReminderEntry> = buildList {
+        for (i in 0 until array.length()) {
+            val o = array.optJSONObject(i) ?: continue
+            val scheduledAt = o.optLong("scheduledAt")
+            if (scheduledAt <= 0) continue
+            add(
+                ReminderEntry(
+                    id = o.optLong("id"),
+                    peptide = o.optString("peptide"),
+                    note = o.optString("note"),
+                    scheduledAt = scheduledAt,
+                    repeatDays = o.optInt("repeatDays", 0).coerceAtLeast(0),
+                    enabled = o.optBoolean("enabled", true),
+                    createdAt = o.optLong("createdAt", scheduledAt)
+                )
+            )
+        }
+    }
+
+    private fun encodeCalculations(rows: List<SavedCalculationEntry>) = JSONArray().apply {
+        rows.forEach { row ->
+            put(
+                JSONObject()
+                    .put("id", row.id)
+                    .put("peptide", row.peptide)
+                    .put("vialMg", row.vialMg)
+                    .put("diluentMl", row.diluentMl)
+                    .put("targetAmount", row.targetAmount)
+                    .put("targetUnit", row.targetUnit)
+                    .put("syringeUnitsPerMl", row.syringeUnitsPerMl)
+                    .put("syringeCapacity", row.syringeCapacity)
+                    .put("syringeUnits", row.syringeUnits)
+                    .put("createdAt", row.createdAt)
+            )
+        }
+    }
+
+    private fun decodeCalculations(array: JSONArray): List<SavedCalculationEntry> = buildList {
+        for (i in 0 until array.length()) {
+            val o = array.optJSONObject(i) ?: continue
+            val vialMg = o.optDouble("vialMg")
+            val diluentMl = o.optDouble("diluentMl")
+            val targetAmount = o.optDouble("targetAmount")
+            val syringeUnits = o.optDouble("syringeUnits")
+            if (vialMg <= 0 || diluentMl <= 0 || targetAmount <= 0 || syringeUnits <= 0) continue
+            add(
+                SavedCalculationEntry(
+                    id = o.optLong("id"),
+                    peptide = o.optString("peptide"),
+                    vialMg = vialMg,
+                    diluentMl = diluentMl,
+                    targetAmount = targetAmount,
+                    targetUnit = o.optString("targetUnit", "mg").takeIf { it == "mg" || it == "mcg" } ?: "mg",
+                    syringeUnitsPerMl = o.optInt("syringeUnitsPerMl", 100).takeIf { it == 40 || it == 100 } ?: 100,
+                    syringeCapacity = o.optInt("syringeCapacity", 30).coerceAtLeast(1),
+                    syringeUnits = syringeUnits,
+                    createdAt = o.optLong("createdAt")
+                )
+            )
+        }
+    }
+
     private fun csv(value: String): String =
         "\"" + value.replace("\"", "\"\"") + "\""
 
@@ -569,5 +821,8 @@ class LocalStore(context: Context) {
         const val KEY_ENTRIES_V2 = "entries_v2_json"
         const val KEY_INVENTORY_V2 = "inventory_v2_json"
         const val KEY_PROGRESS_V2 = "progress_v2_json"
+        const val KEY_REMINDERS_V1 = "reminders_v1_json"
+        const val KEY_CALCULATIONS_V1 = "calculations_v1_json"
+        const val DAY_MS = 24L * 60L * 60L * 1000L
     }
 }

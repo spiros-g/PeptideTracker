@@ -5,6 +5,7 @@ import androidx.compose.animation.expandVertically
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.shrinkVertically
+import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -15,23 +16,32 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.outlined.Delete
 import androidx.compose.material.icons.rounded.Calculate
+import androidx.compose.material.icons.rounded.EventNote
+import androidx.compose.material.icons.rounded.History
 import androidx.compose.material.icons.rounded.InvertColors
+import androidx.compose.material.icons.rounded.Save
 import androidx.compose.material.icons.rounded.Science
 import androidx.compose.material.icons.rounded.Straighten
 import androidx.compose.material.icons.rounded.WaterDrop
 import androidx.compose.material3.Button
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.Icon
-import androidx.compose.material3.LinearProgressIndicator
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -44,13 +54,21 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.geometry.CornerRadius
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.StrokeCap
+import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import gr.peptidetracker.app.data.LocalStore
+import gr.peptidetracker.app.data.SavedCalculationEntry
+import gr.peptidetracker.app.data.peptideCatalog
 import gr.peptidetracker.app.domain.PeptideCalculator
 import gr.peptidetracker.app.ui.ElectricBlue
 import gr.peptidetracker.app.ui.ElectricCyan
@@ -61,6 +79,8 @@ import gr.peptidetracker.app.ui.StoreVialImage
 import gr.peptidetracker.app.ui.premiumButtonColors
 import gr.peptidetracker.app.ui.premiumFilterChipColors
 import gr.peptidetracker.app.ui.premiumTextFieldColors
+import java.text.DateFormat
+import java.util.Date
 
 data class CalculatorPreset(
     val peptideName: String,
@@ -69,14 +89,26 @@ data class CalculatorPreset(
     val syringeUnitsPerMl: Int = 100
 )
 
+private data class CalculatedDose(
+    val vialMg: Double,
+    val diluentMl: Double,
+    val amountValue: Double,
+    val amountUnit: String,
+    val syringeUnits: Double
+)
+
 @Composable
 fun CalculatorScreen(
+    store: LocalStore,
     imageIndex: Map<String, String>,
     preset: CalculatorPreset? = null,
     defaultSyringeUnitsPerMl: Int = 100,
-    onPresetConsumed: () -> Unit = {}
+    onPresetConsumed: () -> Unit = {},
+    onOpenHistory: () -> Unit = {}
 ) {
     var reverse by remember { mutableStateOf(false) }
+    var peptideName by remember { mutableStateOf("") }
+    var peptideMenu by remember { mutableStateOf(false) }
     var syringeUnitsPerMl by remember(defaultSyringeUnitsPerMl) {
         mutableIntStateOf(if (defaultSyringeUnitsPerMl == 40) 40 else 100)
     }
@@ -91,9 +123,13 @@ fun CalculatorScreen(
     var syringeUnits by remember { mutableStateOf("5") }
     var output by remember { mutableStateOf<List<String>>(emptyList()) }
     var error by remember { mutableStateOf("") }
+    var infoMessage by remember { mutableStateOf("") }
+    var lastCalculation by remember { mutableStateOf<CalculatedDose?>(null) }
+    var savedCalculations by remember { mutableStateOf(store.savedCalculations()) }
 
     LaunchedEffect(preset) {
         if (preset != null) {
+            peptideName = preset.peptideName
             preset.vialMg?.let {
                 vialUnit = "mg"
                 vialAmount = PeptideCalculator.format(it, 4)
@@ -104,9 +140,31 @@ fun CalculatorScreen(
             syringeUnitsPerMl = if (preset.syringeUnitsPerMl == 40) 40 else 100
             syringeCapacity = if (syringeUnitsPerMl == 40) 40 else 30
             output = emptyList()
+            lastCalculation = null
             error = ""
+            infoMessage = ""
             onPresetConsumed()
         }
+    }
+
+    fun clearResult() {
+        output = emptyList()
+        lastCalculation = null
+        error = ""
+        infoMessage = ""
+    }
+
+    fun loadSaved(row: SavedCalculationEntry) {
+        peptideName = row.peptide
+        vialUnit = "mg"
+        vialAmount = PeptideCalculator.format(row.vialMg, 4)
+        diluentMl = PeptideCalculator.format(row.diluentMl, 4)
+        targetAmount = PeptideCalculator.format(row.targetAmount, 4)
+        targetUnit = row.targetUnit
+        syringeUnitsPerMl = row.syringeUnitsPerMl
+        syringeCapacity = row.syringeCapacity
+        reverse = false
+        clearResult()
     }
 
     LazyColumn(
@@ -116,57 +174,21 @@ fun CalculatorScreen(
     ) {
         item {
             PremiumTopBar(
-                title = "Υπολογιστής Ανασύστασης & Δοσολογίας",
-                subtitle = "Βάλε τι έχει το φιαλίδιο, πόσο διαλύτη πρόσθεσες και την ποσότητα που θέλεις να μετρήσεις."
+                title = "Υπολογιστής Ανασύστασης & Δοσομετρίας",
+                subtitle = "Βάλε τι έχει το φιαλίδιο, πόσο διαλύτη πρόσθεσες και την ποσότητα που θέλεις να μετατρέψεις."
             )
-        }
-
-        if (preset != null) {
-            item {
-                GlassCard(modifier = Modifier.fillMaxWidth()) {
-                    Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                        Text(
-                            "ΠΡΟΕΠΙΛΟΓΗ",
-                            color = ElectricCyan,
-                            style = MaterialTheme.typography.labelLarge,
-                            fontWeight = FontWeight.ExtraBold
-                        )
-                        Text(
-                            preset.peptideName,
-                            style = MaterialTheme.typography.titleMedium,
-                            fontWeight = FontWeight.ExtraBold
-                        )
-                        if (preset.vialMg != null) {
-                            Text(
-                                "Φιαλίδιο " + PeptideCalculator.format(preset.vialMg, 4) + " mg φορτώθηκε αυτόματα.",
-                                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                                style = MaterialTheme.typography.bodySmall
-                            )
-                        }
-                        if (preset.diluentMl != null) {
-                            Text(
-                                "Ανασύσταση " + PeptideCalculator.format(preset.diluentMl, 4) +
-                                    " mL · U-" + (if (preset.syringeUnitsPerMl == 40) 40 else 100),
-                                color = ElectricViolet,
-                                style = MaterialTheme.typography.bodySmall,
-                                fontWeight = FontWeight.Bold
-                            )
-                        }
-                    }
-                }
-            }
         }
 
         item {
             GlassCard(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(196.dp),
+                    .heightIn(min = 190.dp),
                 contentPadding = PaddingValues(0.dp)
             ) {
                 Row(
                     modifier = Modifier
-                        .fillMaxSize()
+                        .fillMaxWidth()
                         .background(
                             Brush.horizontalGradient(
                                 listOf(
@@ -189,33 +211,72 @@ fun CalculatorScreen(
                             color = ElectricCyan,
                             style = MaterialTheme.typography.labelLarge,
                             fontWeight = FontWeight.ExtraBold,
-                            maxLines = 2,
-                            overflow = TextOverflow.Ellipsis
+                            maxLines = 2
                         )
 
                         Text(
                             "mg · mcg · mL · U-100 / U-40",
                             style = MaterialTheme.typography.headlineMedium,
                             fontWeight = FontWeight.ExtraBold,
-                            maxLines = 2,
-                            overflow = TextOverflow.Ellipsis
+                            maxLines = 2
                         )
 
                         Text(
-                            "Μετατρέπει την ποσότητα που εισάγεις σε mL και μονάδες σύριγγας U-100 ή U-40 — ή το αντίστροφο.",
+                            "Καθαρή μαθηματική μετατροπή των τιμών που εισάγεις. Δεν επιλέγει ποσότητα ή πρόγραμμα χρήσης.",
                             color = MaterialTheme.colorScheme.onSurfaceVariant,
-                            style = MaterialTheme.typography.bodySmall,
-                            maxLines = 3,
-                            overflow = TextOverflow.Ellipsis
+                            style = MaterialTheme.typography.bodySmall
                         )
                     }
 
                     StoreVialImage(
-                        productKey = "retatrutide",
+                        productKey = peptideName.ifBlank { "retatrutide" },
                         imageIndex = imageIndex,
                         modifier = Modifier.size(width = 82.dp, height = 150.dp),
                         contentDescription = "Φιαλίδιο πεπτιδίου"
                     )
+                }
+            }
+        }
+
+        item {
+            GlassCard(modifier = Modifier.fillMaxWidth()) {
+                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Text(
+                        "Πεπτίδιο",
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.ExtraBold
+                    )
+                    Text(
+                        "Προαιρετικό για τον υπολογισμό. Χρειάζεται μόνο αν θέλεις να αποθηκεύσεις το αποτέλεσμα στο ημερολόγιο.",
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        style = MaterialTheme.typography.bodySmall
+                    )
+                    Box {
+                        OutlinedButton(
+                            onClick = { peptideMenu = true },
+                            modifier = Modifier.fillMaxWidth()
+                        ) {
+                            Text(
+                                peptideName.ifBlank { "Επίλεξε πεπτίδιο" },
+                                maxLines = 1,
+                                overflow = TextOverflow.Ellipsis
+                            )
+                        }
+                        DropdownMenu(
+                            expanded = peptideMenu,
+                            onDismissRequest = { peptideMenu = false }
+                        ) {
+                            peptideCatalog.sortedBy { it.name }.forEach { item ->
+                                DropdownMenuItem(
+                                    text = { Text(item.name) },
+                                    onClick = {
+                                        peptideName = item.name
+                                        peptideMenu = false
+                                    }
+                                )
+                            }
+                        }
+                    }
                 }
             }
         }
@@ -231,8 +292,7 @@ fun CalculatorScreen(
                     modifier = Modifier.weight(1f),
                     onClick = {
                         reverse = false
-                        output = emptyList()
-                        error = ""
+                        clearResult()
                     }
                 )
                 ModeChip(
@@ -241,8 +301,7 @@ fun CalculatorScreen(
                     modifier = Modifier.weight(1f),
                     onClick = {
                         reverse = true
-                        output = emptyList()
-                        error = ""
+                        clearResult()
                     }
                 )
             }
@@ -251,8 +310,8 @@ fun CalculatorScreen(
         item {
             CalculatorStep(
                 number = "01",
-                title = "1. Τι σύριγγα χρησιμοποιείς;",
-                subtitle = "Διάλεξε τύπο σύριγγας. U-100 = 100 μονάδες/mL, U-40 = 40 μονάδες/mL.",
+                title = "Τι σύριγγα χρησιμοποιείς;",
+                subtitle = "U-100 = 100 μονάδες/mL, U-40 = 40 μονάδες/mL.",
                 icon = Icons.Rounded.Straighten,
                 accent = ElectricBlue
             ) {
@@ -262,7 +321,7 @@ fun CalculatorScreen(
                     onSelected = {
                         syringeUnitsPerMl = if (it == "U-40") 40 else 100
                         syringeCapacity = if (syringeUnitsPerMl == 40) 40 else 30
-                        output = emptyList()
+                        clearResult()
                     }
                 )
                 Spacer(Modifier.height(8.dp))
@@ -275,7 +334,10 @@ fun CalculatorScreen(
                 ChoiceRow(
                     choices = if (syringeUnitsPerMl == 40) listOf("40") else listOf("30", "50", "100"),
                     selected = syringeCapacity.toString(),
-                    onSelected = { syringeCapacity = it.toInt() }
+                    onSelected = {
+                        syringeCapacity = it.toInt()
+                        clearResult()
+                    }
                 )
             }
         }
@@ -283,7 +345,7 @@ fun CalculatorScreen(
         item {
             CalculatorStep(
                 number = "02",
-                title = "2. Τι περιέχει το φιαλίδιο;",
+                title = "Τι περιέχει το φιαλίδιο;",
                 subtitle = "Βάλε τη συνολική ποσότητα που γράφει το φιαλίδιο πριν προσθέσεις διαλύτη.",
                 icon = Icons.Rounded.Science,
                 accent = ElectricViolet
@@ -294,7 +356,7 @@ fun CalculatorScreen(
                     onSelected = {
                         vialUnit = it
                         vialAmount = if (it == "mg") "5" else "500"
-                        output = emptyList()
+                        clearResult()
                     }
                 )
                 Spacer(Modifier.height(8.dp))
@@ -305,13 +367,19 @@ fun CalculatorScreen(
                         listOf("100", "250", "500", "1000")
                     },
                     selected = vialAmount,
-                    onSelected = { vialAmount = it }
+                    onSelected = {
+                        vialAmount = it
+                        clearResult()
+                    }
                 )
                 Spacer(Modifier.height(8.dp))
                 DecimalField(
                     label = "Ποσότητα στο φιαλίδιο (" + vialUnit + ")",
                     value = vialAmount,
-                    onValueChange = { vialAmount = it }
+                    onValueChange = {
+                        vialAmount = it
+                        clearResult()
+                    }
                 )
             }
         }
@@ -319,7 +387,7 @@ fun CalculatorScreen(
         item {
             CalculatorStep(
                 number = "03",
-                title = "3. Πόσο διαλύτη πρόσθεσες;",
+                title = "Πόσο διαλύτη πρόσθεσες;",
                 subtitle = "Βάλε τα συνολικά mL διαλύτη που πρόσθεσες στο φιαλίδιο.",
                 icon = Icons.Rounded.WaterDrop,
                 accent = ElectricCyan
@@ -327,13 +395,19 @@ fun CalculatorScreen(
                 ChoiceRow(
                     choices = listOf("1", "2", "3", "5"),
                     selected = diluentMl,
-                    onSelected = { diluentMl = it }
+                    onSelected = {
+                        diluentMl = it
+                        clearResult()
+                    }
                 )
                 Spacer(Modifier.height(8.dp))
                 DecimalField(
                     label = "Διαλύτης που πρόσθεσες (mL)",
                     value = diluentMl,
-                    onValueChange = { diluentMl = it }
+                    onValueChange = {
+                        diluentMl = it
+                        clearResult()
+                    }
                 )
             }
         }
@@ -341,7 +415,7 @@ fun CalculatorScreen(
         item {
             CalculatorStep(
                 number = "04",
-                title = if (reverse) "4. Τι δείχνει η σύριγγα;" else "4. Πόση ποσότητα θέλεις να μετρήσεις;",
+                title = if (reverse) "Τι δείχνει η σύριγγα;" else "Ποια ποσότητα θέλεις να μετατρέψεις;",
                 subtitle = if (reverse) {
                     "Βάλε τις μονάδες U-" + syringeUnitsPerMl + " και θα δεις σε τι ποσότητα αντιστοιχούν."
                 } else {
@@ -354,7 +428,10 @@ fun CalculatorScreen(
                     DecimalField(
                         label = "Μονάδες που δείχνει η σύριγγα (U-" + syringeUnitsPerMl + ")",
                         value = syringeUnits,
-                        onValueChange = { syringeUnits = it }
+                        onValueChange = {
+                            syringeUnits = it
+                            clearResult()
+                        }
                     )
                 } else {
                     ChoiceRow(
@@ -363,7 +440,7 @@ fun CalculatorScreen(
                         onSelected = {
                             targetUnit = it
                             targetAmount = if (it == "mg") "0.1" else "100"
-                            output = emptyList()
+                            clearResult()
                         }
                     )
                     Spacer(Modifier.height(8.dp))
@@ -374,13 +451,19 @@ fun CalculatorScreen(
                             listOf("50", "100", "250", "500")
                         },
                         selected = targetAmount,
-                        onSelected = { targetAmount = it }
+                        onSelected = {
+                            targetAmount = it
+                            clearResult()
+                        }
                     )
                     Spacer(Modifier.height(8.dp))
                     DecimalField(
-                        label = "Ποσότητα που θέλεις να μετρήσεις (" + targetUnit + ")",
+                        label = "Ποσότητα (" + targetUnit + ")",
                         value = targetAmount,
-                        onValueChange = { targetAmount = it }
+                        onValueChange = {
+                            targetAmount = it
+                            clearResult()
+                        }
                     )
                 }
             }
@@ -401,12 +484,20 @@ fun CalculatorScreen(
                         )
 
                         output = if (!reverse) {
+                            val requested = targetAmount.toDouble()
                             val result = PeptideCalculator.dose(
                                 vialMg = vialInMg,
                                 diluentMl = water,
-                                target = targetAmount.toDouble(),
+                                target = requested,
                                 targetIsMg = targetUnit == "mg",
                                 syringeUnitsPerMl = syringeUnitsPerMl
+                            )
+                            lastCalculation = CalculatedDose(
+                                vialMg = vialInMg,
+                                diluentMl = water,
+                                amountValue = requested,
+                                amountUnit = targetUnit,
+                                syringeUnits = result.syringeUnits
                             )
                             listOf(
                                 PeptideCalculator.format(result.syringeUnits, 2) + " U",
@@ -421,6 +512,13 @@ fun CalculatorScreen(
                                 units = syringeUnits.toDouble(),
                                 syringeUnitsPerMl = syringeUnitsPerMl
                             )
+                            lastCalculation = CalculatedDose(
+                                vialMg = vialInMg,
+                                diluentMl = water,
+                                amountValue = result.amountMg,
+                                amountUnit = "mg",
+                                syringeUnits = syringeUnits.toDouble()
+                            )
                             listOf(
                                 PeptideCalculator.format(result.amountMg, 4) + " mg",
                                 PeptideCalculator.format(result.amountMcg, 2) + " mcg",
@@ -429,8 +527,10 @@ fun CalculatorScreen(
                             )
                         }
                         error = ""
+                        infoMessage = ""
                     }.onFailure {
                         output = emptyList()
+                        lastCalculation = null
                         error = "Συμπλήρωσε έγκυρες θετικές αριθμητικές τιμές."
                     }
                 },
@@ -473,9 +573,127 @@ fun CalculatorScreen(
             }
         }
 
+        if (lastCalculation != null) {
+            item {
+                val calculation = lastCalculation!!
+                GlassCard(modifier = Modifier.fillMaxWidth()) {
+                    Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                        Text(
+                            "Ενέργειες αποτελέσματος",
+                            style = MaterialTheme.typography.titleMedium,
+                            fontWeight = FontWeight.ExtraBold
+                        )
+                        Row(
+                            Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.spacedBy(8.dp)
+                        ) {
+                            OutlinedButton(
+                                onClick = {
+                                    store.addSavedCalculation(
+                                        peptide = peptideName,
+                                        vialMg = calculation.vialMg,
+                                        diluentMl = calculation.diluentMl,
+                                        targetAmount = calculation.amountValue,
+                                        targetUnit = calculation.amountUnit,
+                                        syringeUnitsPerMl = syringeUnitsPerMl,
+                                        syringeCapacity = syringeCapacity,
+                                        syringeUnits = calculation.syringeUnits
+                                    )
+                                    savedCalculations = store.savedCalculations()
+                                    infoMessage = "Ο υπολογισμός αποθηκεύτηκε."
+                                },
+                                modifier = Modifier.weight(1f)
+                            ) {
+                                Icon(Icons.Rounded.Save, contentDescription = null, modifier = Modifier.size(18.dp))
+                                Spacer(Modifier.width(6.dp))
+                                Text("Αποθήκευση")
+                            }
+
+                            Button(
+                                onClick = {
+                                    if (peptideName.isNotBlank()) {
+                                        store.addEntry(
+                                            peptide = peptideName,
+                                            amountValue = calculation.amountValue,
+                                            unit = calculation.amountUnit,
+                                            note = "Από υπολογιστή ανασύστασης · " +
+                                                PeptideCalculator.format(calculation.syringeUnits, 2) + " U",
+                                            site = "",
+                                            createdAt = System.currentTimeMillis()
+                                        )
+                                        infoMessage = "Προστέθηκε στο ημερολόγιο."
+                                        onOpenHistory()
+                                    }
+                                },
+                                enabled = peptideName.isNotBlank(),
+                                modifier = Modifier.weight(1f),
+                                colors = premiumButtonColors()
+                            ) {
+                                Icon(Icons.Rounded.EventNote, contentDescription = null, modifier = Modifier.size(18.dp))
+                                Spacer(Modifier.width(6.dp))
+                                Text("Ημερολόγιο")
+                            }
+                        }
+                        if (peptideName.isBlank()) {
+                            Text(
+                                "Επίλεξε πεπτίδιο για να ενεργοποιηθεί η καταχώρηση στο ημερολόγιο.",
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                style = MaterialTheme.typography.bodySmall
+                            )
+                        }
+                    }
+                }
+            }
+        }
+
+        if (infoMessage.isNotBlank()) {
+            item {
+                Text(
+                    infoMessage,
+                    color = ElectricCyan,
+                    style = MaterialTheme.typography.bodySmall,
+                    modifier = Modifier.padding(horizontal = 4.dp)
+                )
+            }
+        }
+
+        if (savedCalculations.isNotEmpty()) {
+            item {
+                Row(
+                    Modifier.fillMaxWidth(),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Icon(Icons.Rounded.History, contentDescription = null, tint = ElectricViolet)
+                    Spacer(Modifier.width(8.dp))
+                    Text(
+                        "Αποθηκευμένοι υπολογισμοί",
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.ExtraBold,
+                        modifier = Modifier.weight(1f)
+                    )
+                    Text(
+                        savedCalculations.size.toString(),
+                        color = ElectricCyan,
+                        fontWeight = FontWeight.Bold
+                    )
+                }
+            }
+
+            items(savedCalculations.take(5), key = { it.id }) { row ->
+                SavedCalculationCard(
+                    row = row,
+                    onLoad = { loadSaved(row) },
+                    onDelete = {
+                        store.deleteSavedCalculation(row.id)
+                        savedCalculations = store.savedCalculations()
+                    }
+                )
+            }
+        }
+
         item {
             Text(
-                "Ο υπολογιστής κάνει μόνο μαθηματική μετατροπή από τις τιμές που βάζεις. Δεν επιλέγει για εσένα ποια ποσότητα πρέπει να χρησιμοποιήσεις.",
+                "Ο υπολογιστής κάνει μόνο μαθηματική μετατροπή από τις τιμές που βάζεις. Δεν επιλέγει για εσένα ποια ποσότητα ή συχνότητα πρέπει να χρησιμοποιήσεις.",
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                 style = MaterialTheme.typography.bodySmall,
                 modifier = Modifier.padding(horizontal = 4.dp)
@@ -483,6 +701,50 @@ fun CalculatorScreen(
         }
 
         item { Spacer(Modifier.height(8.dp)) }
+    }
+}
+
+@Composable
+private fun SavedCalculationCard(
+    row: SavedCalculationEntry,
+    onLoad: () -> Unit,
+    onDelete: () -> Unit
+) {
+    GlassCard(modifier = Modifier.fillMaxWidth(), onClick = onLoad) {
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Column(
+                Modifier.weight(1f),
+                verticalArrangement = Arrangement.spacedBy(3.dp)
+            ) {
+                Text(
+                    row.peptide.ifBlank { "Χωρίς επιλεγμένο πεπτίδιο" },
+                    fontWeight = FontWeight.ExtraBold,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis
+                )
+                Text(
+                    PeptideCalculator.format(row.vialMg, 4) + " mg / " +
+                        PeptideCalculator.format(row.diluentMl, 4) + " mL · " +
+                        PeptideCalculator.format(row.targetAmount, 4) + " " + row.targetUnit,
+                    color = ElectricCyan,
+                    style = MaterialTheme.typography.bodySmall
+                )
+                Text(
+                    PeptideCalculator.format(row.syringeUnits, 2) + " U · U-" +
+                        row.syringeUnitsPerMl + " · " +
+                        DateFormat.getDateTimeInstance(DateFormat.SHORT, DateFormat.SHORT)
+                            .format(Date(row.createdAt)),
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    style = MaterialTheme.typography.labelSmall
+                )
+            }
+            OutlinedButton(onClick = onLoad) {
+                Text("Φόρτωση")
+            }
+            IconButton(onClick = onDelete) {
+                Icon(Icons.Outlined.Delete, contentDescription = "Διαγραφή")
+            }
+        }
     }
 }
 
@@ -500,7 +762,8 @@ private fun ModeChip(
             Text(
                 text,
                 modifier = Modifier.fillMaxWidth(),
-                fontWeight = if (selected) FontWeight.ExtraBold else FontWeight.Medium
+                fontWeight = if (selected) FontWeight.ExtraBold else FontWeight.Medium,
+                maxLines = 2
             )
         },
         modifier = modifier,
@@ -561,7 +824,7 @@ private fun ChoiceRow(
             FilterChip(
                 selected = selected == choice,
                 onClick = { onSelected(choice) },
-                label = { Text(choice) },
+                label = { Text(choice, maxLines = 1) },
                 modifier = Modifier.weight(1f),
                 colors = premiumFilterChipColors()
             )
@@ -653,7 +916,7 @@ private fun ResultCard(
             )
             if (!reverse) {
                 ResultLine(
-                    label = "Τράβηξε μέχρι τις μονάδες U-" + syringeUnitsPerMl,
+                    label = "Ένδειξη σύριγγας U-" + syringeUnitsPerMl,
                     value = output[0],
                     emphasize = true
                 )
@@ -690,19 +953,10 @@ private fun ResultCard(
             }
 
             if (!reverse) {
-                Spacer(Modifier.height(3.dp))
-                LinearProgressIndicator(
-                    progress = {
-                        (units / capacity.toDouble())
-                            .coerceIn(0.0, 1.0)
-                            .toFloat()
-                    },
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(7.dp)
-                        .clip(RoundedCornerShape(99.dp)),
-                    color = ElectricCyan,
-                    trackColor = Color.White.copy(alpha = 0.09f)
+                Spacer(Modifier.height(4.dp))
+                SyringeGauge(
+                    units = units,
+                    capacity = capacity
                 )
                 Text(
                     "Σύριγγα U-" + syringeUnitsPerMl + " · μέγιστη ένδειξη " + capacity + " U",
@@ -718,5 +972,70 @@ private fun ResultCard(
                 }
             }
         }
+    }
+}
+
+@Composable
+private fun SyringeGauge(
+    units: Double,
+    capacity: Int
+) {
+    val fraction = (units / capacity.toDouble()).coerceIn(0.0, 1.0).toFloat()
+    val outline = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f)
+    val track = Color.White.copy(alpha = 0.06f)
+    val fill = ElectricCyan.copy(alpha = 0.28f)
+
+    Canvas(
+        modifier = Modifier
+            .fillMaxWidth()
+            .height(62.dp)
+    ) {
+        val left = 8.dp.toPx()
+        val right = size.width - 28.dp.toPx()
+        val top = 10.dp.toPx()
+        val barrelHeight = 30.dp.toPx()
+        val barrelWidth = right - left
+
+        drawRoundRect(
+            color = track,
+            topLeft = Offset(left, top),
+            size = Size(barrelWidth, barrelHeight),
+            cornerRadius = CornerRadius(8.dp.toPx(), 8.dp.toPx())
+        )
+
+        drawRoundRect(
+            color = fill,
+            topLeft = Offset(left, top),
+            size = Size(barrelWidth * fraction, barrelHeight),
+            cornerRadius = CornerRadius(8.dp.toPx(), 8.dp.toPx())
+        )
+
+        drawRoundRect(
+            color = outline,
+            topLeft = Offset(left, top),
+            size = Size(barrelWidth, barrelHeight),
+            cornerRadius = CornerRadius(8.dp.toPx(), 8.dp.toPx()),
+            style = Stroke(width = 1.5.dp.toPx())
+        )
+
+        for (i in 0..10) {
+            val x = left + barrelWidth * (i / 10f)
+            val tickHeight = if (i % 5 == 0) 13.dp.toPx() else 8.dp.toPx()
+            drawLine(
+                color = outline,
+                start = Offset(x, top + barrelHeight),
+                end = Offset(x, top + barrelHeight + tickHeight),
+                strokeWidth = 1.dp.toPx(),
+                cap = StrokeCap.Round
+            )
+        }
+
+        drawLine(
+            color = outline,
+            start = Offset(right, top + barrelHeight / 2f),
+            end = Offset(size.width - 5.dp.toPx(), top + barrelHeight / 2f),
+            strokeWidth = 2.dp.toPx(),
+            cap = StrokeCap.Round
+        )
     }
 }

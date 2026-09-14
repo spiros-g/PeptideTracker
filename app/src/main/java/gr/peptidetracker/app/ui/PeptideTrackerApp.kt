@@ -22,6 +22,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Calculate
 import androidx.compose.material.icons.rounded.Home
+import androidx.compose.material.icons.rounded.NotificationsActive
 import androidx.compose.material.icons.rounded.QueryStats
 import androidx.compose.material.icons.rounded.Science
 import androidx.compose.material3.Icon
@@ -51,6 +52,7 @@ import gr.peptidetracker.app.ui.screens.HomeScreen
 import gr.peptidetracker.app.ui.screens.LibraryScreen
 import gr.peptidetracker.app.ui.screens.OnboardingScreen
 import gr.peptidetracker.app.ui.screens.PeptideDetailScreen
+import gr.peptidetracker.app.ui.screens.RemindersScreen
 import gr.peptidetracker.app.ui.screens.SettingsScreen
 import gr.peptidetracker.app.ui.screens.TrackerScreen
 
@@ -177,13 +179,18 @@ fun PeptideTrackerApp(store: LocalStore) {
                                 )
 
                                 2 -> CalculatorScreen(
+                                    store = store,
                                     imageIndex = imageIndex,
                                     preset = calculatorPreset,
                                     defaultSyringeUnitsPerMl = store.defaultSyringeUnitsPerMl(),
-                                    onPresetConsumed = { calculatorPreset = null }
+                                    onPresetConsumed = { calculatorPreset = null },
+                                    onOpenHistory = {
+                                        trackerSection = 0
+                                        selectedTab = 3
+                                    }
                                 )
 
-                                else -> TrackerScreen(
+                                3 -> TrackerScreen(
                                     store = store,
                                     imageIndex = imageIndex,
                                     initialSection = trackerSection,
@@ -203,6 +210,11 @@ fun PeptideTrackerApp(store: LocalStore) {
                                         selectedTab = 2
                                     }
                                 )
+
+                                else -> RemindersScreen(
+                                    store = store,
+                                    imageIndex = imageIndex
+                                )
                             }
                         }
                     }
@@ -221,14 +233,15 @@ private fun PremiumBottomBar(
         MainDestination("Αρχική", Icons.Rounded.Home),
         MainDestination("Πεπτίδια", Icons.Rounded.Science),
         MainDestination("Ανασύσταση", Icons.Rounded.Calculate),
-        MainDestination("Ημερολόγιο", Icons.Rounded.QueryStats)
+        MainDestination("Ημερολόγιο", Icons.Rounded.QueryStats),
+        MainDestination("Πλάνο", Icons.Rounded.NotificationsActive)
     )
 
     Box(
         Modifier
             .fillMaxWidth()
             .navigationBarsPadding()
-            .padding(horizontal = 14.dp, vertical = 8.dp)
+            .padding(horizontal = 10.dp, vertical = 8.dp)
             .clip(RoundedCornerShape(26.dp))
             .background(
                 Brush.horizontalGradient(
@@ -250,7 +263,7 @@ private fun PremiumBottomBar(
                 ),
                 RoundedCornerShape(26.dp)
             )
-            .padding(horizontal = 6.dp, vertical = 6.dp)
+            .padding(horizontal = 4.dp, vertical = 6.dp)
     ) {
         Row(
             Modifier.fillMaxWidth(),
@@ -290,12 +303,12 @@ private fun PremiumBottomBar(
                         imageVector = destination.icon,
                         contentDescription = destination.label,
                         tint = if (active) ElectricCyan else tint,
-                        modifier = Modifier.size(22.dp)
+                        modifier = Modifier.size(21.dp)
                     )
                     Text(
                         destination.label,
                         color = tint,
-                        style = MaterialTheme.typography.labelSmall.copy(fontSize = 10.sp),
+                        style = MaterialTheme.typography.labelSmall.copy(fontSize = 9.sp),
                         fontWeight = if (active) FontWeight.ExtraBold else FontWeight.SemiBold,
                         maxLines = 1
                     )
