@@ -249,7 +249,7 @@ fun CalculatorScreen(
                     )
                     Spacer(Modifier.height(8.dp))
                     DecimalField(
-                        label = "Προσαρμοσμένη τιμή (mg)",
+                        label = "Επιθυμητή ποσότητα (mg)",
                         value = targetMg,
                         onValueChange = { targetMg = it }
                     )
@@ -442,6 +442,32 @@ private fun DecimalField(
         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
         colors = premiumTextFieldColors()
     )
+}
+
+@Composable
+private fun ResultLine(
+    label: String,
+    value: String,
+    emphasize: Boolean = false
+) {
+    Row(
+        Modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.SpaceBetween,
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Text(
+            label,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            style = MaterialTheme.typography.bodySmall,
+            modifier = Modifier.weight(1f)
+        )
+        Spacer(Modifier.width(12.dp))
+        Text(
+            value,
+            style = if (emphasize) MaterialTheme.typography.headlineMedium else MaterialTheme.typography.titleMedium,
+            fontWeight = FontWeight.ExtraBold
+        )
+    }
 }
 
 @Composable
