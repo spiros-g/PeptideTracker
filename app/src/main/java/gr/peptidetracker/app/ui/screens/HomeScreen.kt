@@ -52,8 +52,7 @@ fun HomeScreen(
     store: LocalStore,
     imageIndex: Map<String, String>,
     onNavigate: (Int) -> Unit,
-    onOpenPeptide: (PeptideInfo) -> Unit,
-    onSettings: () -> Unit
+    onOpenPeptide: (PeptideInfo) -> Unit
 ) {
     val entries = store.entries()
     val inventory = store.inventory()
@@ -69,8 +68,7 @@ fun HomeScreen(
         item {
             PremiumTopBar(
                 title = "Ιχνηλάτης Πεπτιδίων",
-                subtitle = "Το κέντρο ελέγχου των πεπτιδίων σου.",
-                onSettings = onSettings
+                subtitle = "Το κέντρο ελέγχου των πεπτιδίων σου."
             )
         }
 
