@@ -34,6 +34,7 @@ import androidx.compose.material.icons.rounded.Calculate
 import androidx.compose.material.icons.rounded.CheckCircle
 import androidx.compose.material.icons.rounded.Inventory2
 import androidx.compose.material.icons.rounded.MonitorWeight
+import androidx.compose.material.icons.rounded.QueryStats
 import androidx.compose.material.icons.rounded.Restore
 import androidx.compose.material.icons.rounded.Save
 import androidx.compose.material.icons.rounded.WarningAmber
@@ -107,7 +108,7 @@ fun TrackerScreen(
     onConsumeInventoryPreset: () -> Unit = {},
     onOpenCalculator: (InventoryEntry) -> Unit = {}
 ) {
-    var section by remember { mutableIntStateOf(initialSection.coerceIn(0, 2)) }
+    var section by remember { mutableIntStateOf(initialSection.coerceIn(0, 3)) }
     var logs by remember { mutableStateOf(store.entries()) }
     var inventory by remember { mutableStateOf(store.inventory()) }
     var progress by remember { mutableStateOf(store.progress()) }
@@ -182,7 +183,7 @@ fun TrackerScreen(
     }
 
     LaunchedEffect(initialSection) {
-        section = initialSection.coerceIn(0, 2)
+        section = initialSection.coerceIn(0, 3)
     }
 
     LaunchedEffect(newLogRequest) {
@@ -225,6 +226,7 @@ fun TrackerScreen(
                 TrackerTab("Χρήσεις", section == 0, Modifier.weight(1f)) { section = 0 }
                 TrackerTab("Απόθεμα", section == 1, Modifier.weight(1f)) { section = 1 }
                 TrackerTab("Μετρήσεις", section == 2, Modifier.weight(1f)) { section = 2 }
+                TrackerTab("Στατ.", section == 3, Modifier.weight(1f)) { section = 3 }
             }
 
             TextButton(
@@ -290,7 +292,7 @@ fun TrackerScreen(
                 onCalculator = onOpenCalculator
             )
 
-            else -> ProgressSection(
+            2 -> ProgressSection(
                 rows = progress,
                 onAdd = {
                     editingProgress = null
@@ -304,6 +306,12 @@ fun TrackerScreen(
                     store.deleteProgress(it.id)
                     progress = store.progress()
                 }
+            )
+
+            else -> StatisticsSection(
+                logs = logs,
+                inventory = inventory,
+                progress = progress
             )
         }
     }
@@ -645,6 +653,255 @@ private fun ProgressSection(
         }
 
         item { Spacer(Modifier.height(8.dp)) }
+    }
+}
+
+@Composable
+private fun StatisticsSection(
+    logs: List<TrackerEntry>,
+    inventory: List<InventoryEntry>,
+    progress: List<ProgressEntry>
+) {
+    val now = System.currentTimeMillis()
+    val dayMs = 24L * 60L * 60L * 1000L
+    val weekLogs = logs.count { it.createdAt >= now - 7L * dayMs }
+    val monthLogs = logs.count { it.createdAt >= now - 30L * dayMs }
+    val distinctPeptides = logs.map { it.peptide }.distinct().size
+    val usageCounts = logs
+        .groupingBy { it.peptide }
+        .eachCount()
+        .entries
+        .sortedByDescending { it.value }
+    val topUsage = usageCounts.firstOrNull()
+    val maxUsage = usageCounts.firstOrNull()?.value?.coerceAtLeast(1) ?: 1
+    val totalVials = inventory.sumOf { it.quantity }
+    val activeVials = inventory.count { it.active && it.quantity > 0 }
+    val reconstitutedVials = inventory.count { it.isReconstituted && it.quantity > 0 }
+    val estimatedInventoryMg = inventory.sumOf { row ->
+        if (row.quantity <= 0) {
+            0.0
+        } else {
+            val activeCount = if (row.active) 1 else 0
+            val unopenedCount = (row.quantity - activeCount).coerceAtLeast(0)
+            (if (row.active) row.effectiveRemainingMg else 0.0) +
+                unopenedCount * row.vialMg +
+                (if (!row.active) row.vialMg else 0.0)
+        }
+    }
+    val newestWeight = progress.firstOrNull()?.weight
+    val oldestWeight = progress.lastOrNull()?.weight
+    val weightDelta = if (newestWeight != null && oldestWeight != null && progress.size >= 2) {
+        newestWeight - oldestWeight
+    } else {
+        null
+    }
+
+    LazyColumn(
+        modifier = Modifier.fillMaxSize(),
+        contentPadding = PaddingValues(horizontal = 18.dp, vertical = 10.dp),
+        verticalArrangement = Arrangement.spacedBy(12.dp)
+    ) {
+        item {
+            SectionHero(
+                title = "Στατιστικά",
+                subtitle = "Σύνοψη από τις δικές σου καταγραφές, το απόθεμα και τις μετρήσεις.",
+                icon = Icons.Rounded.QueryStats,
+                accent = ElectricBlue,
+                buttonText = "7 ημέρες",
+                onAdd = {}
+            )
+        }
+
+        item {
+            Row(
+                Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                StatisticsMetricCard(
+                    value = weekLogs.toString(),
+                    label = "Χρήσεις 7ημ.",
+                    modifier = Modifier.weight(1f)
+                )
+                StatisticsMetricCard(
+                    value = monthLogs.toString(),
+                    label = "Χρήσεις 30ημ.",
+                    modifier = Modifier.weight(1f)
+                )
+                StatisticsMetricCard(
+                    value = distinctPeptides.toString(),
+                    label = "Πεπτίδια",
+                    modifier = Modifier.weight(1f)
+                )
+            }
+        }
+
+        item {
+            GlassCard(modifier = Modifier.fillMaxWidth()) {
+                Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                    Text(
+                        "Δραστηριότητα ανά πεπτίδιο",
+                        fontWeight = FontWeight.ExtraBold,
+                        style = MaterialTheme.typography.titleMedium
+                    )
+                    if (usageCounts.isEmpty()) {
+                        Text(
+                            "Δεν υπάρχουν ακόμη καταγραφές χρήσης.",
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            style = MaterialTheme.typography.bodySmall
+                        )
+                    } else {
+                        usageCounts.take(5).forEach { item ->
+                            Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                                Row(
+                                    Modifier.fillMaxWidth(),
+                                    horizontalArrangement = Arrangement.SpaceBetween
+                                ) {
+                                    Text(
+                                        item.key,
+                                        fontWeight = FontWeight.Bold,
+                                        maxLines = 1,
+                                        overflow = TextOverflow.Ellipsis,
+                                        modifier = Modifier.weight(1f)
+                                    )
+                                    Spacer(Modifier.width(10.dp))
+                                    Text(
+                                        item.value.toString() + " καταγραφές",
+                                        color = ElectricCyan,
+                                        style = MaterialTheme.typography.bodySmall,
+                                        fontWeight = FontWeight.Bold
+                                    )
+                                }
+                                LinearProgressIndicator(
+                                    progress = { item.value.toFloat() / maxUsage.toFloat() },
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .height(6.dp)
+                                        .clip(RoundedCornerShape(99.dp)),
+                                    color = ElectricCyan,
+                                    trackColor = Color.White.copy(alpha = 0.09f)
+                                )
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        item {
+            GlassCard(modifier = Modifier.fillMaxWidth()) {
+                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Text(
+                        "Απόθεμα",
+                        fontWeight = FontWeight.ExtraBold,
+                        style = MaterialTheme.typography.titleMedium
+                    )
+                    StatisticsRow("Συνολικά vial", totalVials.toString())
+                    StatisticsRow("Ενεργά vial", activeVials.toString())
+                    StatisticsRow("Με καταχωρημένη ανασύσταση", reconstitutedVials.toString())
+                    StatisticsRow(
+                        "Εκτιμώμενη συνολική ποσότητα",
+                        formatCompact(estimatedInventoryMg) + " mg"
+                    )
+                }
+            }
+        }
+
+        item {
+            GlassCard(modifier = Modifier.fillMaxWidth()) {
+                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Text(
+                        "Μετρήσεις σώματος",
+                        fontWeight = FontWeight.ExtraBold,
+                        style = MaterialTheme.typography.titleMedium
+                    )
+                    if (newestWeight == null) {
+                        Text(
+                            "Δεν υπάρχουν ακόμη μετρήσεις βάρους.",
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            style = MaterialTheme.typography.bodySmall
+                        )
+                    } else {
+                        StatisticsRow("Τελευταίο βάρος", formatCompact(newestWeight) + " kg")
+                        if (weightDelta != null) {
+                            StatisticsRow(
+                                "Μεταβολή από πρώτη μέτρηση",
+                                (if (weightDelta > 0) "+" else "") +
+                                    String.format("%.1f", weightDelta) + " kg"
+                            )
+                        }
+                        StatisticsRow("Αποθηκευμένες μετρήσεις", progress.size.toString())
+                    }
+                }
+            }
+        }
+
+        if (topUsage != null) {
+            item {
+                Text(
+                    "Πιο συχνά καταγεγραμμένο: " + topUsage.key +
+                        " (" + topUsage.value + " καταγραφές). Τα στατιστικά περιγράφουν μόνο τα δεδομένα που έχεις αποθηκεύσει.",
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    style = MaterialTheme.typography.bodySmall,
+                    modifier = Modifier.padding(horizontal = 4.dp)
+                )
+            }
+        }
+
+        item { Spacer(Modifier.height(8.dp)) }
+    }
+}
+
+@Composable
+private fun StatisticsMetricCard(
+    value: String,
+    label: String,
+    modifier: Modifier = Modifier
+) {
+    GlassCard(
+        modifier = modifier.height(90.dp),
+        contentPadding = PaddingValues(12.dp)
+    ) {
+        Column(
+            Modifier.fillMaxSize(),
+            verticalArrangement = Arrangement.Center
+        ) {
+            Text(
+                value,
+                style = MaterialTheme.typography.titleLarge,
+                fontWeight = FontWeight.Black
+            )
+            Text(
+                label,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                style = MaterialTheme.typography.labelSmall,
+                maxLines = 2
+            )
+        }
+    }
+}
+
+@Composable
+private fun StatisticsRow(
+    label: String,
+    value: String
+) {
+    Row(
+        Modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.SpaceBetween,
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Text(
+            label,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            style = MaterialTheme.typography.bodySmall,
+            modifier = Modifier.weight(1f)
+        )
+        Spacer(Modifier.width(12.dp))
+        Text(
+            value,
+            fontWeight = FontWeight.ExtraBold,
+            style = MaterialTheme.typography.bodyMedium
+        )
     }
 }
 
