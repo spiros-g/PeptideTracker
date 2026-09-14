@@ -80,8 +80,8 @@ fun CalculatorScreen(
     ) {
         item {
             PremiumTopBar(
-                title = "Υπολογιστής",
-                subtitle = "Καθαρή μαθηματική μετατροπή, χωρίς περιττά στοιχεία."
+                title = "Υπολογιστής Ανασύστασης & Δόσης",
+                subtitle = "Ανασύσταση, συγκέντρωση, όγκος και μονάδες σύριγγας."
             )
         }
 
@@ -112,7 +112,7 @@ fun CalculatorScreen(
                             .fillMaxWidth(0.68f)
                     ) {
                         Text(
-                            "PEPTIDE CALCULATOR",
+                            "ΑΝΑΣΥΣΤΑΣΗ & ΥΠΟΛΟΓΙΣΜΟΣ ΔΟΣΗΣ",
                             color = ElectricCyan,
                             style = MaterialTheme.typography.labelLarge,
                             fontWeight = FontWeight.ExtraBold
@@ -123,7 +123,7 @@ fun CalculatorScreen(
                             style = MaterialTheme.typography.headlineMedium
                         )
                         Text(
-                            "Δύο κατευθύνσεις μετατροπής με άμεσο αποτέλεσμα.",
+                            "Υπολογισμός από ποσότητα σε μονάδες U-100 και αντίστροφα.",
                             color = MaterialTheme.colorScheme.onSurfaceVariant,
                             style = MaterialTheme.typography.bodySmall
                         )
@@ -145,7 +145,7 @@ fun CalculatorScreen(
                 horizontalArrangement = Arrangement.spacedBy(8.dp)
             ) {
                 ModeChip(
-                    text = "Ποσότητα → U",
+                    text = "Ποσότητα → Μονάδες",
                     selected = !reverse,
                     modifier = Modifier.weight(1f),
                     onClick = {
@@ -155,7 +155,7 @@ fun CalculatorScreen(
                     }
                 )
                 ModeChip(
-                    text = "U → Ποσότητα",
+                    text = "Μονάδες → Ποσότητα",
                     selected = reverse,
                     modifier = Modifier.weight(1f),
                     onClick = {
@@ -170,8 +170,8 @@ fun CalculatorScreen(
         item {
             CalculatorStep(
                 number = "01",
-                title = "Σύριγγα",
-                subtitle = "Χωρητικότητα κλίμακας U-100",
+                title = "Σύριγγα U-100",
+                subtitle = "Επιλογή συνολικής χωρητικότητας σύριγγας",
                 icon = Icons.Rounded.Straighten,
                 accent = ElectricBlue
             ) {
@@ -186,8 +186,8 @@ fun CalculatorScreen(
         item {
             CalculatorStep(
                 number = "02",
-                title = "Φιαλίδιο",
-                subtitle = "Συνολική ποσότητα στο φιαλίδιο",
+                title = "Ποσότητα φιαλιδίου",
+                subtitle = "Συνολική ποσότητα πεπτιδίου πριν την ανασύσταση",
                 icon = Icons.Rounded.Science,
                 accent = ElectricViolet
             ) {
@@ -198,7 +198,7 @@ fun CalculatorScreen(
                 )
                 Spacer(Modifier.height(8.dp))
                 DecimalField(
-                    label = "Προσαρμοσμένη τιμή (mg)",
+                    label = "Ποσότητα φιαλιδίου (mg)",
                     value = vialMg,
                     onValueChange = { vialMg = it }
                 )
@@ -208,8 +208,8 @@ fun CalculatorScreen(
         item {
             CalculatorStep(
                 number = "03",
-                title = "Διαλύτης",
-                subtitle = "Συνολικός όγκος σε mL",
+                title = "Όγκος ανασύστασης",
+                subtitle = "Συνολικός όγκος διαλύτη που προστίθεται στο φιαλίδιο",
                 icon = Icons.Rounded.WaterDrop,
                 accent = ElectricCyan
             ) {
@@ -220,7 +220,7 @@ fun CalculatorScreen(
                 )
                 Spacer(Modifier.height(8.dp))
                 DecimalField(
-                    label = "Προσαρμοσμένος όγκος (mL)",
+                    label = "Όγκος ανασύστασης (mL)",
                     value = diluentMl,
                     onValueChange = { diluentMl = it }
                 )
@@ -230,14 +230,14 @@ fun CalculatorScreen(
         item {
             CalculatorStep(
                 number = "04",
-                title = if (reverse) "Μονάδες" else "Στόχος",
-                subtitle = if (reverse) "Ένδειξη στη σύριγγα U-100" else "Ποσότητα για τη μαθηματική μετατροπή",
+                title = if (reverse) "Μονάδες σύριγγας" else "Επιθυμητή ποσότητα",
+                subtitle = if (reverse) "Ένδειξη σε μονάδες σύριγγας U-100" else "Ποσότητα που θέλεις να μετατρέψεις σε όγκο και μονάδες",
                 icon = Icons.Rounded.InvertColors,
                 accent = Color(0xFFFFB36B)
             ) {
                 if (reverse) {
                     DecimalField(
-                        label = "Μονάδες U",
+                        label = "Μονάδες σύριγγας (U-100)",
                         value = syringeUnits,
                         onValueChange = { syringeUnits = it }
                     )
@@ -332,7 +332,7 @@ fun CalculatorScreen(
 
         item {
             Text(
-                "Το εργαλείο εκτελεί μόνο μαθηματικές μετατροπές. Δεν προτείνει ποσότητα, πρωτόκολλο, θεραπεία ή χρήση.",
+                "Το εργαλείο υπολογίζει ανασύσταση, συγκέντρωση, όγκο και μονάδες από τιμές που εισάγει ο χρήστης. Δεν προτείνει δοσολογικό πρωτόκολλο ή θεραπεία.",
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                 style = MaterialTheme.typography.bodySmall,
                 modifier = Modifier.padding(horizontal = 4.dp)
@@ -481,15 +481,35 @@ private fun ResultCard(
                 style = MaterialTheme.typography.labelLarge,
                 fontWeight = FontWeight.ExtraBold
             )
-            Text(
-                output.first(),
-                style = MaterialTheme.typography.displaySmall,
-                fontWeight = FontWeight.Black
-            )
-            Text(
-                output.drop(1).joinToString("  •  "),
-                color = MaterialTheme.colorScheme.onSurfaceVariant
-            )
+            if (!reverse) {
+                ResultLine(
+                    label = "Μονάδες σύριγγας (U-100)",
+                    value = output[0],
+                    emphasize = true
+                )
+                ResultLine(
+                    label = "Όγκος προς άντληση",
+                    value = output[1]
+                )
+                ResultLine(
+                    label = "Συγκέντρωση μετά την ανασύσταση",
+                    value = output[2]
+                )
+            } else {
+                ResultLine(
+                    label = "Ποσότητα",
+                    value = output[0],
+                    emphasize = true
+                )
+                ResultLine(
+                    label = "Ίδια ποσότητα σε mcg",
+                    value = output[1]
+                )
+                ResultLine(
+                    label = "Αντίστοιχος όγκος",
+                    value = output[2]
+                )
+            }
 
             if (!reverse) {
                 Spacer(Modifier.height(3.dp))
