@@ -68,8 +68,8 @@ fun HomeScreen(
     ) {
         item {
             PremiumTopBar(
-                title = "PeptideTracker GR",
-                subtitle = "Το research workspace σου, καθαρά οργανωμένο.",
+                title = "Ιχνηλάτης Πεπτιδίων",
+                subtitle = "Το κέντρο ελέγχου των πεπτιδίων σου.",
                 onSettings = onSettings
             )
         }
