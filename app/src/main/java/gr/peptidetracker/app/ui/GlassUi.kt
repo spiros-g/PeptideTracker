@@ -1,11 +1,15 @@
 package gr.peptidetracker.app.ui
 
+import android.graphics.Bitmap
+import android.graphics.BitmapFactory
+import android.util.LruCache
 import androidx.compose.animation.core.RepeatMode
 import androidx.compose.animation.core.animateFloat
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.infiniteRepeatable
 import androidx.compose.animation.core.rememberInfiniteTransition
 import androidx.compose.animation.core.tween
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -25,23 +29,75 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.produceState
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.blur
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
-import coil3.compose.AsyncImage
-import coil3.request.ImageRequest
-import coil3.request.crossfade
 import gr.peptidetracker.app.data.StoreCatalogClient
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
+import java.io.File
+import java.net.HttpURLConnection
+import java.net.URL
+import java.security.MessageDigest
+
+private object VialImageCache {
+    private val memory = LruCache<String, Bitmap>(24)
+
+    suspend fun load(cacheDir: File, url: String): Bitmap? {
+        memory.get(url)?.let { return it }
+
+        return withContext(Dispatchers.IO) {
+            val imageDir = File(cacheDir, "vial-images").apply { mkdirs() }
+            val imageFile = File(imageDir, sha256(url) + ".img")
+
+            val bitmap = runCatching {
+                if (imageFile.exists() && imageFile.length() > 0L) {
+                    BitmapFactory.decodeFile(imageFile.absolutePath)
+                } else {
+                    val connection = (URL(url).openConnection() as HttpURLConnection).apply {
+                        connectTimeout = 7_000
+                        readTimeout = 10_000
+                        instanceFollowRedirects = true
+                        requestMethod = "GET"
+                        setRequestProperty("Accept", "image/*")
+                        setRequestProperty("User-Agent", "PeptideTrackerGR/2.0")
+                    }
+
+                    try {
+                        if (connection.responseCode !in 200..299) return@runCatching null
+                        val bytes = connection.inputStream.use { it.readBytes() }
+                        if (bytes.isEmpty()) return@runCatching null
+                        imageFile.writeBytes(bytes)
+                        BitmapFactory.decodeByteArray(bytes, 0, bytes.size)
+                    } finally {
+                        connection.disconnect()
+                    }
+                }
+            }.getOrNull()
+
+            if (bitmap != null) memory.put(url, bitmap)
+            bitmap
+        }
+    }
+
+    private fun sha256(value: String): String =
+        MessageDigest.getInstance("SHA-256")
+            .digest(value.toByteArray())
+            .joinToString("") { "%02x".format(it) }
+}
 
 @Composable
 fun PremiumBackground(
@@ -145,7 +201,7 @@ fun GlassCard(
                         ElectricBlue.copy(alpha = 0.035f)
                     ),
                     start = Offset.Zero,
-                    end = Offset.Infinite
+                    end = Offset(1200f, 1200f)
                 )
             )
             .border(
@@ -177,27 +233,39 @@ fun StoreVialImage(
         StoreCatalogClient.resolveImage(imageIndex, productKey)
     }
 
-    if (imageUrl == null) {
-        Box(modifier, contentAlignment = Alignment.Center) {
+    val bitmap by produceState<Bitmap?>(
+        initialValue = null,
+        key1 = imageUrl
+    ) {
+        value = imageUrl?.let { VialImageCache.load(context.cacheDir, it) }
+    }
+
+    val alpha by animateFloatAsState(
+        targetValue = if (bitmap != null) 1f else 0f,
+        animationSpec = tween(280),
+        label = "imageAlpha"
+    )
+
+    Box(modifier, contentAlignment = Alignment.Center) {
+        val current = bitmap
+        if (current != null) {
+            Image(
+                bitmap = current.asImageBitmap(),
+                contentDescription = contentDescription,
+                contentScale = ContentScale.Fit,
+                modifier = Modifier
+                    .fillMaxSize()
+                    .alpha(alpha)
+            )
+        } else {
             Icon(
                 imageVector = Icons.Outlined.Science,
                 contentDescription = contentDescription,
-                tint = MaterialTheme.colorScheme.primary.copy(alpha = 0.7f),
-                modifier = Modifier.fillMaxSize(0.42f)
+                tint = MaterialTheme.colorScheme.primary.copy(alpha = 0.65f),
+                modifier = Modifier.fillMaxSize(0.38f)
             )
         }
-        return
     }
-
-    AsyncImage(
-        model = ImageRequest.Builder(context)
-            .data(imageUrl)
-            .crossfade(350)
-            .build(),
-        contentDescription = contentDescription,
-        contentScale = ContentScale.Fit,
-        modifier = modifier
-    )
 }
 
 @Composable
