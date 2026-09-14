@@ -1,66 +1,53 @@
 package gr.peptidetracker.app.data
 
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.withContext
-import org.json.JSONArray
-import java.net.HttpURLConnection
-import java.net.URL
 import java.util.Locale
+import kotlin.math.absoluteValue
 
 object StoreCatalogClient {
-    private const val catalogUrl =
-        "https://www.peptidiastore.gr/wp-json/wc/store/v1/products?per_page=100"
+    private val stockVials = listOf(
+        "https://bioart.niaid.nih.gov/api/bioarts/962/files/803427",
+        "https://bioart.niaid.nih.gov/api/bioarts/962/files/803397",
+        "https://bioart.niaid.nih.gov/api/bioarts/966/files/803653",
+        "https://bioart.niaid.nih.gov/api/bioarts/966/files/803662",
+        "https://bioart.niaid.nih.gov/api/bioarts/966/files/803667",
+        "https://bioart.niaid.nih.gov/api/bioarts/966/files/803677",
+        "https://bioart.niaid.nih.gov/api/bioarts/966/files/803682",
+        "https://bioart.niaid.nih.gov/api/bioarts/966/files/803687"
+    )
 
-    @Volatile
-    private var cachedImages: Map<String, String>? = null
+    private val curatedIndex = mapOf(
+        "retatrutide" to stockVials[0],
+        "tirzepatide" to stockVials[1],
+        "semaglutide" to stockVials[2],
+        "bpc157" to stockVials[3],
+        "tb500" to stockVials[4],
+        "ghkcu" to stockVials[5],
+        "tesamorelin" to stockVials[6],
+        "ipamorelin" to stockVials[7],
+        "cjc1295" to stockVials[0],
+        "sermorelin" to stockVials[1],
+        "aod9604" to stockVials[2],
+        "motsc" to stockVials[3],
+        "ss31" to stockVials[4],
+        "kpv" to stockVials[5],
+        "epitalon" to stockVials[6]
+    )
 
-    suspend fun loadImageIndex(): Map<String, String> {
-        cachedImages?.let { return it }
-
-        return withContext(Dispatchers.IO) {
-            runCatching {
-                val connection = (URL(catalogUrl).openConnection() as HttpURLConnection).apply {
-                    connectTimeout = 7_000
-                    readTimeout = 10_000
-                    requestMethod = "GET"
-                    setRequestProperty("Accept", "application/json")
-                    setRequestProperty("User-Agent", "PeptideTrackerGR/2.0")
-                }
-
-                try {
-                    if (connection.responseCode !in 200..299) return@runCatching emptyMap()
-
-                    val payload = connection.inputStream.bufferedReader().use { it.readText() }
-                    val products = JSONArray(payload)
-                    buildMap {
-                        for (index in 0 until products.length()) {
-                            val product = products.optJSONObject(index) ?: continue
-                            val images = product.optJSONArray("images") ?: continue
-                            val image = images.optJSONObject(0)?.optString("src").orEmpty()
-                            if (image.isBlank()) continue
-
-                            val name = product.optString("name")
-                            val slug = product.optString("slug")
-                            if (name.isNotBlank()) put(normalize(name), image)
-                            if (slug.isNotBlank()) put(normalize(slug), image)
-                        }
-                    }
-                } finally {
-                    connection.disconnect()
-                }
-            }.getOrElse { emptyMap() }.also { result ->
-                if (result.isNotEmpty()) cachedImages = result
-            }
-        }
-    }
+    suspend fun loadImageIndex(): Map<String, String> = curatedIndex
 
     fun resolveImage(index: Map<String, String>, query: String): String? {
+        if (stockVials.isEmpty()) return null
+
         val normalized = normalize(query)
+        if (normalized.isBlank()) return stockVials.first()
+
         index[normalized]?.let { return it }
 
-        return index.entries.firstOrNull { (key, _) ->
+        index.entries.firstOrNull { (key, _) ->
             key.contains(normalized) || normalized.contains(key)
-        }?.value
+        }?.value?.let { return it }
+
+        return stockVials[normalized.hashCode().absoluteValue % stockVials.size]
     }
 
     private fun normalize(value: String): String =
