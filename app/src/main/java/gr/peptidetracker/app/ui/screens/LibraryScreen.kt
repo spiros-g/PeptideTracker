@@ -451,6 +451,61 @@ fun PeptideDetailScreen(
             )
         }
 
+        if (peptide.selectedStudies.isNotEmpty()) {
+            item {
+                Text(
+                    "Επιλεγμένες μελέτες",
+                    style = MaterialTheme.typography.titleLarge
+                )
+            }
+
+            items(peptide.selectedStudies) { study ->
+                GlassCard(
+                    modifier = Modifier.fillMaxWidth(),
+                    onClick = {
+                        context.startActivity(
+                            Intent(Intent.ACTION_VIEW, Uri.parse(study.url))
+                        )
+                    }
+                ) {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Box(
+                            Modifier
+                                .size(44.dp)
+                                .clip(RoundedCornerShape(14.dp))
+                                .background(ElectricCyan.copy(alpha = 0.14f)),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Icon(
+                                Icons.AutoMirrored.Outlined.Article,
+                                contentDescription = null,
+                                tint = ElectricCyan
+                            )
+                        }
+                        Spacer(Modifier.width(12.dp))
+                        Column(Modifier.weight(1f)) {
+                            Text(
+                                study.title,
+                                fontWeight = FontWeight.Bold,
+                                maxLines = 3,
+                                overflow = TextOverflow.Ellipsis
+                            )
+                            Text(
+                                study.source,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                style = MaterialTheme.typography.bodySmall
+                            )
+                        }
+                        Icon(
+                            Icons.AutoMirrored.Rounded.OpenInNew,
+                            contentDescription = "Άνοιγμα",
+                            tint = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
+                }
+            }
+        }
+
         item {
             Text(
                 "Πηγές & αναζητήσεις βιβλιογραφίας",

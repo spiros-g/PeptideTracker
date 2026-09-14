@@ -19,6 +19,7 @@ data class PeptideInfo(
     val mechanism: String,
     val warning: String,
     val studies: List<Study>,
+    val selectedStudies: List<Study>,
     val lastReviewed: String
 )
 
@@ -27,6 +28,51 @@ private fun pubmed(query: String) =
 
 private fun trials(query: String) =
     "https://clinicaltrials.gov/search?term=" + Uri.encode(query)
+
+private val selectedStudiesById = mapOf(
+    "retatrutide" to listOf(
+        Study(
+            "Triple-Hormone-Receptor Agonist Retatrutide for Obesity — Phase 2",
+            "N Engl J Med · 2023 · PMID 37366315 · DOI 10.1056/NEJMoa2301972",
+            "https://pubmed.ncbi.nlm.nih.gov/37366315/"
+        )
+    ),
+    "tirzepatide" to listOf(
+        Study(
+            "Tirzepatide Once Weekly for the Treatment of Obesity — SURMOUNT-1",
+            "N Engl J Med · 2022 · PMID 35658024 · DOI 10.1056/NEJMoa2206038",
+            "https://pubmed.ncbi.nlm.nih.gov/35658024/"
+        )
+    ),
+    "semaglutide" to listOf(
+        Study(
+            "Once-Weekly Semaglutide in Adults with Overweight or Obesity — STEP 1",
+            "N Engl J Med · 2021 · PMID 33567185 · DOI 10.1056/NEJMoa2032183",
+            "https://pubmed.ncbi.nlm.nih.gov/33567185/"
+        )
+    ),
+    "liraglutide" to listOf(
+        Study(
+            "A Randomized, Controlled Trial of 3.0 mg of Liraglutide in Weight Management",
+            "N Engl J Med · 2015 · PMID 26132939",
+            "https://pubmed.ncbi.nlm.nih.gov/26132939/"
+        )
+    ),
+    "cagrilintide" to listOf(
+        Study(
+            "Once-weekly cagrilintide for weight management — Phase 2",
+            "Lancet · 2021 · PMID 34798060 · DOI 10.1016/S0140-6736(21)01751-7",
+            "https://pubmed.ncbi.nlm.nih.gov/34798060/"
+        )
+    ),
+    "tesamorelin" to listOf(
+        Study(
+            "Effect of tesamorelin on visceral fat and liver fat in HIV-infected patients",
+            "JAMA · 2014 · PMID 25038357 · DOI 10.1001/jama.2014.8334",
+            "https://pubmed.ncbi.nlm.nih.gov/25038357/"
+        )
+    )
+)
 
 private fun peptide(
     id: String,
@@ -54,6 +100,7 @@ private fun peptide(
         Study("Αναζήτηση δημοσιευμένης βιβλιογραφίας", "PubMed", pubmed(searchTerm)),
         Study("Αναζήτηση καταχωρημένων κλινικών μελετών", "ClinicalTrials.gov", trials(searchTerm))
     ),
+    selectedStudies = selectedStudiesById[id].orEmpty(),
     lastReviewed = lastReviewed
 )
 
