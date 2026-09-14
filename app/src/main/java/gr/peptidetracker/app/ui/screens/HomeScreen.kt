@@ -53,7 +53,8 @@ fun HomeScreen(
     imageIndex: Map<String, String>,
     onNavigate: (Int) -> Unit,
     onOpenPeptide: (PeptideInfo) -> Unit,
-    onNewLog: () -> Unit = {}
+    onNewLog: () -> Unit,
+    onOpenInventory: () -> Unit
 ) {
     val entries = store.entries()
     val inventory = store.inventory()
@@ -205,7 +206,7 @@ fun HomeScreen(
                     icon = Icons.Rounded.Inventory2,
                     accent = ElectricViolet,
                     modifier = Modifier.weight(1f),
-                    onClick = { onNavigate(3) }
+                    onClick = onOpenInventory
                 )
             }
         }
@@ -237,7 +238,7 @@ fun HomeScreen(
             item {
                 GlassCard(
                     modifier = Modifier.fillMaxWidth(),
-                    onClick = { onNavigate(3) }
+                    onClick = onOpenInventory
                 ) {
                     Row(
                         Modifier.fillMaxWidth(),
