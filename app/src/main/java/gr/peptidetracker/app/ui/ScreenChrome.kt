@@ -17,6 +17,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 
 @Composable
@@ -49,13 +50,17 @@ fun PremiumTopBar(
             Text(
                 title,
                 style = MaterialTheme.typography.headlineMedium,
-                color = TextPrimary
+                color = TextPrimary,
+                maxLines = 2,
+                overflow = TextOverflow.Ellipsis
             )
             if (!subtitle.isNullOrBlank()) {
                 Text(
                     subtitle,
                     color = TextSecondary,
-                    style = MaterialTheme.typography.bodyMedium
+                    style = MaterialTheme.typography.bodyMedium,
+                    maxLines = 2,
+                    overflow = TextOverflow.Ellipsis
                 )
             }
         }
