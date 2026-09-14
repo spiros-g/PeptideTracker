@@ -104,8 +104,10 @@ fun TrackerScreen(
     initialSection: Int = 0,
     newLogRequest: Int = 0,
     inventoryPeptidePreset: String? = null,
+    dataToolsRequest: Int = 0,
     onConsumeNewLogRequest: () -> Unit = {},
     onConsumeInventoryPreset: () -> Unit = {},
+    onConsumeDataToolsRequest: () -> Unit = {},
     onOpenCalculator: (InventoryEntry) -> Unit = {}
 ) {
     var section by remember { mutableIntStateOf(initialSection.coerceIn(0, 3)) }
@@ -202,6 +204,13 @@ fun TrackerScreen(
             editingInventory = null
             showInventoryDialog = true
             onConsumeInventoryPreset()
+        }
+    }
+
+    LaunchedEffect(dataToolsRequest) {
+        if (dataToolsRequest > 0) {
+            showDataTools = true
+            onConsumeDataToolsRequest()
         }
     }
 
