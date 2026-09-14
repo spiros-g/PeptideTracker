@@ -66,9 +66,11 @@ fun CalculatorScreen(
 ) {
     var reverse by remember { mutableStateOf(false) }
     var syringeCapacity by remember { mutableIntStateOf(30) }
-    var vialMg by remember { mutableStateOf("5") }
+    var vialAmount by remember { mutableStateOf("5") }
+    var vialUnit by remember { mutableStateOf("mg") }
     var diluentMl by remember { mutableStateOf("1") }
-    var targetMg by remember { mutableStateOf("0.1") }
+    var targetAmount by remember { mutableStateOf("0.1") }
+    var targetUnit by remember { mutableStateOf("mg") }
     var syringeUnits by remember { mutableStateOf("5") }
     var output by remember { mutableStateOf<List<String>>(emptyList()) }
     var error by remember { mutableStateOf("") }
@@ -119,7 +121,7 @@ fun CalculatorScreen(
                         )
                         Spacer(Modifier.height(6.dp))
                         Text(
-                            "mg · mL · U-100",
+                            "mg · mcg · mL · U-100",
                             style = MaterialTheme.typography.headlineMedium
                         )
                         Text(
@@ -192,15 +194,29 @@ fun CalculatorScreen(
                 accent = ElectricViolet
             ) {
                 ChoiceRow(
-                    choices = listOf("5", "10", "20", "30"),
-                    selected = vialMg,
-                    onSelected = { vialMg = it }
+                    choices = listOf("mg", "mcg"),
+                    selected = vialUnit,
+                    onSelected = {
+                        vialUnit = it
+                        vialAmount = if (it == "mg") "5" else "500"
+                        output = emptyList()
+                    }
+                )
+                Spacer(Modifier.height(8.dp))
+                ChoiceRow(
+                    choices = if (vialUnit == "mg") {
+                        listOf("5", "10", "20", "30")
+                    } else {
+                        listOf("100", "250", "500", "1000")
+                    },
+                    selected = vialAmount,
+                    onSelected = { vialAmount = it }
                 )
                 Spacer(Modifier.height(8.dp))
                 DecimalField(
-                    label = "Ποσότητα φιαλιδίου (mg)",
-                    value = vialMg,
-                    onValueChange = { vialMg = it }
+                    label = "Ποσότητα φιαλιδίου (" + vialUnit + ")",
+                    value = vialAmount,
+                    onValueChange = { vialAmount = it }
                 )
             }
         }
@@ -243,15 +259,29 @@ fun CalculatorScreen(
                     )
                 } else {
                     ChoiceRow(
-                        choices = listOf("0.1", "0.25", "0.5", "1"),
-                        selected = targetMg,
-                        onSelected = { targetMg = it }
+                        choices = listOf("mg", "mcg"),
+                        selected = targetUnit,
+                        onSelected = {
+                            targetUnit = it
+                            targetAmount = if (it == "mg") "0.1" else "100"
+                            output = emptyList()
+                        }
+                    )
+                    Spacer(Modifier.height(8.dp))
+                    ChoiceRow(
+                        choices = if (targetUnit == "mg") {
+                            listOf("0.1", "0.25", "0.5", "1")
+                        } else {
+                            listOf("50", "100", "250", "500")
+                        },
+                        selected = targetAmount,
+                        onSelected = { targetAmount = it }
                     )
                     Spacer(Modifier.height(8.dp))
                     DecimalField(
-                        label = "Επιθυμητή ποσότητα (mg)",
-                        value = targetMg,
-                        onValueChange = { targetMg = it }
+                        label = "Επιθυμητή ποσότητα (" + targetUnit + ")",
+                        value = targetAmount,
+                        onValueChange = { targetAmount = it }
                     )
                 }
             }
@@ -261,25 +291,33 @@ fun CalculatorScreen(
             Button(
                 onClick = {
                     runCatching {
-                        val vial = vialMg.toDouble()
+                        val vialInput = vialAmount.toDouble()
+                        val vialInMg = if (vialUnit == "mg") vialInput else vialInput / 1000.0
                         val water = diluentMl.toDouble()
+                        val concentration = PeptideCalculator.concentration(
+                            vialAmount = vialInput,
+                            vialIsMcg = vialUnit == "mcg",
+                            diluentMl = water,
+                            syringeUnitsPerMl = 100
+                        )
 
                         output = if (!reverse) {
                             val result = PeptideCalculator.dose(
-                                vialMg = vial,
+                                vialMg = vialInMg,
                                 diluentMl = water,
-                                target = targetMg.toDouble(),
-                                targetIsMg = true,
+                                target = targetAmount.toDouble(),
+                                targetIsMg = targetUnit == "mg",
                                 syringeUnitsPerMl = 100
                             )
                             listOf(
                                 PeptideCalculator.format(result.syringeUnits, 2) + " U",
                                 PeptideCalculator.format(result.volumeMl, 4) + " mL",
-                                PeptideCalculator.format(result.concentrationMgPerMl, 3) + " mg/mL"
+                                PeptideCalculator.format(concentration.mgPerMl, 4) + " mg/mL",
+                                PeptideCalculator.format(concentration.mcgPerUnit, 3) + " mcg/U"
                             )
                         } else {
                             val result = PeptideCalculator.reverse(
-                                vialMg = vial,
+                                vialMg = vialInMg,
                                 diluentMl = water,
                                 units = syringeUnits.toDouble(),
                                 syringeUnitsPerMl = 100
@@ -287,7 +325,8 @@ fun CalculatorScreen(
                             listOf(
                                 PeptideCalculator.format(result.amountMg, 4) + " mg",
                                 PeptideCalculator.format(result.amountMcg, 2) + " mcg",
-                                PeptideCalculator.format(result.volumeMl, 4) + " mL"
+                                PeptideCalculator.format(result.volumeMl, 4) + " mL",
+                                PeptideCalculator.format(concentration.mcgPerUnit, 3) + " mcg/U"
                             )
                         }
                         error = ""
@@ -521,6 +560,10 @@ private fun ResultCard(
                     label = "Συγκέντρωση μετά την ανασύσταση",
                     value = output[2]
                 )
+                ResultLine(
+                    label = "Περιεκτικότητα ανά μονάδα U-100",
+                    value = output[3]
+                )
             } else {
                 ResultLine(
                     label = "Ποσότητα",
@@ -534,6 +577,10 @@ private fun ResultCard(
                 ResultLine(
                     label = "Αντίστοιχος όγκος",
                     value = output[2]
+                )
+                ResultLine(
+                    label = "Περιεκτικότητα ανά μονάδα U-100",
+                    value = output[3]
                 )
             }
 
