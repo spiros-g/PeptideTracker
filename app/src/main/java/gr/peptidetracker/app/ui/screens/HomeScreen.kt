@@ -101,13 +101,13 @@ fun HomeScreen(
                         verticalArrangement = Arrangement.spacedBy(8.dp)
                     ) {
                         Text(
-                            "ΥΠΟΛΟΓΙΣΤΗΣ ΑΝΑΣΥΣΤΑΣΗΣ",
+                            "ΑΝΑΣΥΣΤΑΣΗ & ΔΟΣΟΜΕΤΡΙΑ",
                             color = ElectricCyan,
                             style = MaterialTheme.typography.labelLarge,
                             fontWeight = FontWeight.ExtraBold
                         )
                         Text(
-                            "Ανασύσταση & μετατροπή δόσης.",
+                            "Υπολογιστής ανασύστασης & δοσολογίας.",
                             style = MaterialTheme.typography.headlineLarge
                         )
                         Text(
