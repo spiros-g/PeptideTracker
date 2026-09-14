@@ -706,9 +706,7 @@ private fun StatisticsSection(
                 title = "Στατιστικά",
                 subtitle = "Σύνοψη από τις δικές σου καταγραφές, το απόθεμα και τις μετρήσεις.",
                 icon = Icons.Rounded.QueryStats,
-                accent = ElectricBlue,
-                buttonText = "7 ημέρες",
-                onAdd = {}
+                accent = ElectricBlue
             )
         }
 
@@ -911,8 +909,8 @@ private fun SectionHero(
     subtitle: String,
     icon: androidx.compose.ui.graphics.vector.ImageVector,
     accent: Color,
-    buttonText: String,
-    onAdd: () -> Unit
+    buttonText: String? = null,
+    onAdd: (() -> Unit)? = null
 ) {
     GlassCard(modifier = Modifier.fillMaxWidth()) {
         Row(
@@ -937,10 +935,12 @@ private fun SectionHero(
                     style = MaterialTheme.typography.bodySmall
                 )
             }
-            Button(onClick = onAdd, colors = premiumButtonColors()) {
-                Icon(Icons.Rounded.Add, contentDescription = null, modifier = Modifier.size(18.dp))
-                Spacer(Modifier.width(5.dp))
-                Text(buttonText)
+            if (buttonText != null && onAdd != null) {
+                Button(onClick = onAdd, colors = premiumButtonColors()) {
+                    Icon(Icons.Rounded.Add, contentDescription = null, modifier = Modifier.size(18.dp))
+                    Spacer(Modifier.width(5.dp))
+                    Text(buttonText)
+                }
             }
         }
     }
