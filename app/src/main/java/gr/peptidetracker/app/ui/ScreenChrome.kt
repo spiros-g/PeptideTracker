@@ -17,6 +17,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 
@@ -24,7 +25,10 @@ import androidx.compose.ui.unit.dp
 fun PremiumTopBar(
     title: String,
     subtitle: String? = null,
-    onBack: (() -> Unit)? = null
+    onBack: (() -> Unit)? = null,
+    actionIcon: ImageVector? = null,
+    actionDescription: String? = null,
+    onAction: (() -> Unit)? = null
 ) {
     Row(
         modifier = Modifier.fillMaxWidth(),
@@ -61,6 +65,22 @@ fun PremiumTopBar(
                     style = MaterialTheme.typography.bodyMedium,
                     maxLines = 2,
                     overflow = TextOverflow.Ellipsis
+                )
+            }
+        }
+
+        if (actionIcon != null && onAction != null) {
+            Spacer(Modifier.size(12.dp))
+            IconButton(
+                onClick = onAction,
+                modifier = Modifier
+                    .size(42.dp)
+                    .background(Color.White.copy(alpha = 0.08f), CircleShape)
+            ) {
+                Icon(
+                    actionIcon,
+                    contentDescription = actionDescription,
+                    tint = TextPrimary
                 )
             }
         }
