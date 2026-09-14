@@ -77,8 +77,7 @@ import kotlin.math.min
 @Composable
 fun TrackerScreen(
     store: LocalStore,
-    imageIndex: Map<String, String>,
-    onSettings: () -> Unit
+    imageIndex: Map<String, String>
 ) {
     var section by remember { mutableIntStateOf(0) }
 
@@ -93,8 +92,7 @@ fun TrackerScreen(
         ) {
             PremiumTopBar(
                 title = "Καταγραφές",
-                subtitle = "Καταγραφές, απόθεμα και πρόοδος σε ένα μέρος.",
-                onSettings = onSettings
+                subtitle = "Καταγραφές, απόθεμα και πρόοδος σε ένα μέρος."
             )
 
             Row(
