@@ -45,9 +45,11 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import gr.peptidetracker.app.data.LocalStore
 import gr.peptidetracker.app.data.PeptideInfo
+import gr.peptidetracker.app.ui.screens.CalculatorPreset
 import gr.peptidetracker.app.ui.screens.CalculatorScreen
 import gr.peptidetracker.app.ui.screens.HomeScreen
 import gr.peptidetracker.app.ui.screens.LibraryScreen
+import gr.peptidetracker.app.ui.screens.OnboardingScreen
 import gr.peptidetracker.app.ui.screens.PeptideDetailScreen
 import gr.peptidetracker.app.ui.screens.TrackerScreen
 
@@ -60,11 +62,16 @@ private data class MainDestination(
 fun PeptideTrackerApp(store: LocalStore) {
     var selectedTab by remember { mutableIntStateOf(0) }
     var selectedPeptide by remember { mutableStateOf<PeptideInfo?>(null) }
+    var showOnboarding by remember { mutableStateOf(!store.onboardingComplete()) }
+    var calculatorPreset by remember { mutableStateOf<CalculatorPreset?>(null) }
+    var newLogRequest by remember { mutableIntStateOf(0) }
+    var trackerSection by remember { mutableIntStateOf(0) }
+    var inventoryPreset by remember { mutableStateOf<String?>(null) }
 
     val imageIndex = emptyMap<String, String>()
 
     BackHandler(
-        enabled = selectedPeptide != null || selectedTab != 0
+        enabled = !showOnboarding && (selectedPeptide != null || selectedTab != 0)
     ) {
         when {
             selectedPeptide != null -> selectedPeptide = null
@@ -74,56 +81,102 @@ fun PeptideTrackerApp(store: LocalStore) {
 
     AppTheme {
         PremiumBackground {
-            Scaffold(
-                containerColor = Color.Transparent,
-                contentColor = TextPrimary,
-                bottomBar = {
-                    if (selectedPeptide == null) {
-                        PremiumBottomBar(
-                            selected = selectedTab,
-                            onSelected = { selectedTab = it }
-                        )
+            if (showOnboarding) {
+                OnboardingScreen(
+                    imageIndex = imageIndex,
+                    onFinish = {
+                        store.setOnboardingComplete(true)
+                        showOnboarding = false
                     }
-                }
-            ) { padding ->
-                AnimatedContent(
-                    targetState = selectedTab to selectedPeptide,
-                    transitionSpec = {
-                        fadeIn(tween(210)) togetherWith fadeOut(tween(145))
-                    },
-                    label = "screenTransition",
-                    modifier = Modifier.padding(padding)
-                ) { (tab, peptide) ->
-                    if (peptide != null) {
-                        PeptideDetailScreen(
-                            peptide = peptide,
-                            store = store,
-                            imageIndex = imageIndex,
-                            onBack = { selectedPeptide = null }
-                        )
-                    } else {
-                        when (tab) {
-                            0 -> HomeScreen(
+                )
+            } else {
+                Scaffold(
+                    containerColor = Color.Transparent,
+                    contentColor = TextPrimary,
+                    bottomBar = {
+                        if (selectedPeptide == null) {
+                            PremiumBottomBar(
+                                selected = selectedTab,
+                                onSelected = { tab ->
+                                    selectedTab = tab
+                                    if (tab != 3) inventoryPreset = null
+                                }
+                            )
+                        }
+                    }
+                ) { padding ->
+                    AnimatedContent(
+                        targetState = selectedTab to selectedPeptide,
+                        transitionSpec = {
+                            fadeIn(tween(210)) togetherWith fadeOut(tween(145))
+                        },
+                        label = "screenTransition",
+                        modifier = Modifier.padding(padding)
+                    ) { (tab, peptide) ->
+                        if (peptide != null) {
+                            PeptideDetailScreen(
+                                peptide = peptide,
                                 store = store,
                                 imageIndex = imageIndex,
-                                onNavigate = { selectedTab = it },
-                                onOpenPeptide = { selectedPeptide = it }
+                                onBack = { selectedPeptide = null },
+                                onOpenCalculator = { item ->
+                                    calculatorPreset = CalculatorPreset(item.name)
+                                    selectedPeptide = null
+                                    selectedTab = 2
+                                },
+                                onAddInventory = { item ->
+                                    trackerSection = 1
+                                    inventoryPreset = item.name
+                                    selectedPeptide = null
+                                    selectedTab = 3
+                                }
                             )
+                        } else {
+                            when (tab) {
+                                0 -> HomeScreen(
+                                    store = store,
+                                    imageIndex = imageIndex,
+                                    onNavigate = { selectedTab = it },
+                                    onOpenPeptide = { selectedPeptide = it },
+                                    onNewLog = {
+                                        trackerSection = 0
+                                        newLogRequest += 1
+                                        selectedTab = 3
+                                    },
+                                    onOpenInventory = {
+                                        trackerSection = 1
+                                        selectedTab = 3
+                                    }
+                                )
 
-                            1 -> LibraryScreen(
-                                store = store,
-                                imageIndex = imageIndex,
-                                onOpenPeptide = { selectedPeptide = it }
-                            )
+                                1 -> LibraryScreen(
+                                    store = store,
+                                    imageIndex = imageIndex,
+                                    onOpenPeptide = { selectedPeptide = it }
+                                )
 
-                            2 -> CalculatorScreen(
-                                imageIndex = imageIndex
-                            )
+                                2 -> CalculatorScreen(
+                                    imageIndex = imageIndex,
+                                    preset = calculatorPreset
+                                )
 
-                            else -> TrackerScreen(
-                                store = store,
-                                imageIndex = imageIndex
-                            )
+                                else -> TrackerScreen(
+                                    store = store,
+                                    imageIndex = imageIndex,
+                                    initialSection = trackerSection,
+                                    newLogRequest = newLogRequest,
+                                    inventoryPeptidePreset = inventoryPreset,
+                                    onConsumeNewLogRequest = { newLogRequest = 0 },
+                                    onConsumeInventoryPreset = { inventoryPreset = null },
+                                    onOpenCalculator = { row ->
+                                        calculatorPreset = CalculatorPreset(
+                                            peptideName = row.peptide,
+                                            vialMg = row.vialMg
+                                        )
+                                        selectedTab = 2
+                                    }
+                                )
+                            }
                         }
                     }
                 }
