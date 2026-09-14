@@ -205,7 +205,7 @@ private fun PeptideGridCard(
     onClick: () -> Unit
 ) {
     GlassCard(
-        modifier = Modifier.height(236.dp),
+        modifier = Modifier.height(252.dp),
         contentPadding = PaddingValues(0.dp),
         onClick = onClick
     ) {
@@ -213,7 +213,7 @@ private fun PeptideGridCard(
             Box(
                 Modifier
                     .fillMaxWidth()
-                    .height(142.dp)
+                    .height(150.dp)
                     .background(
                         Brush.verticalGradient(
                             listOf(
@@ -229,7 +229,7 @@ private fun PeptideGridCard(
                     imageIndex = imageIndex,
                     modifier = Modifier
                         .fillMaxSize()
-                        .padding(10.dp),
+                        .padding(horizontal = 18.dp, vertical = 10.dp),
                     contentDescription = peptide.name
                 )
                 IconButton(
