@@ -62,8 +62,7 @@ import gr.peptidetracker.app.ui.premiumTextFieldColors
 
 @Composable
 fun CalculatorScreen(
-    imageIndex: Map<String, String>,
-    onSettings: () -> Unit
+    imageIndex: Map<String, String>
 ) {
     var reverse by remember { mutableStateOf(false) }
     var syringeCapacity by remember { mutableIntStateOf(30) }
@@ -82,8 +81,7 @@ fun CalculatorScreen(
         item {
             PremiumTopBar(
                 title = "Υπολογιστής",
-                subtitle = "Καθαρή μαθηματική μετατροπή, χωρίς περιττά στοιχεία.",
-                onSettings = onSettings
+                subtitle = "Καθαρή μαθηματική μετατροπή, χωρίς περιττά στοιχεία."
             )
         }
 
