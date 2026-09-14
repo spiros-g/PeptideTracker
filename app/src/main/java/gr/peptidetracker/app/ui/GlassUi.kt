@@ -308,7 +308,7 @@ fun StoreVialImage(
         )
 
         Image(
-            painter = painterResource(R.drawable.peptide_vial),
+            painter = painterResource(R.drawable.peptide_vial_clean),
             contentDescription = contentDescription,
             contentScale = ContentScale.Fit,
             modifier = Modifier.fillMaxSize()
