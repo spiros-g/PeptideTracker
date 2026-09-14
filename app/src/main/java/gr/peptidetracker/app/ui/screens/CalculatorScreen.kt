@@ -73,11 +73,16 @@ data class CalculatorPreset(
 fun CalculatorScreen(
     imageIndex: Map<String, String>,
     preset: CalculatorPreset? = null,
+    defaultSyringeUnitsPerMl: Int = 100,
     onPresetConsumed: () -> Unit = {}
 ) {
     var reverse by remember { mutableStateOf(false) }
-    var syringeUnitsPerMl by remember { mutableIntStateOf(100) }
-    var syringeCapacity by remember { mutableIntStateOf(30) }
+    var syringeUnitsPerMl by remember(defaultSyringeUnitsPerMl) {
+        mutableIntStateOf(if (defaultSyringeUnitsPerMl == 40) 40 else 100)
+    }
+    var syringeCapacity by remember(defaultSyringeUnitsPerMl) {
+        mutableIntStateOf(if (defaultSyringeUnitsPerMl == 40) 40 else 30)
+    }
     var vialAmount by remember { mutableStateOf("5") }
     var vialUnit by remember { mutableStateOf("mg") }
     var diluentMl by remember { mutableStateOf("1") }
