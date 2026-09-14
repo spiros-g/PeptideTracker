@@ -91,8 +91,8 @@ fun TrackerScreen(
             verticalArrangement = Arrangement.spacedBy(14.dp)
         ) {
             PremiumTopBar(
-                title = "Καταγραφές",
-                subtitle = "Καταγραφές, απόθεμα και πρόοδος σε ένα μέρος."
+                title = "Ημερολόγιο",
+                subtitle = "Κατέγραψε τις χρήσεις πεπτιδίων, τα φιαλίδια που έχεις και τις μετρήσεις σου."
             )
 
             Row(
@@ -100,7 +100,7 @@ fun TrackerScreen(
                 horizontalArrangement = Arrangement.spacedBy(7.dp)
             ) {
                 TrackerTab(
-                    text = "Καταγραφές",
+                    text = "Χρήσεις",
                     selected = section == 0,
                     modifier = Modifier.weight(1f),
                     onClick = { section = 0 }
@@ -112,7 +112,7 @@ fun TrackerScreen(
                     onClick = { section = 1 }
                 )
                 TrackerTab(
-                    text = "Πρόοδος",
+                    text = "Μετρήσεις",
                     selected = section == 2,
                     modifier = Modifier.weight(1f),
                     onClick = { section = 2 }
@@ -167,11 +167,11 @@ private fun LogsSection(
     ) {
         item {
             SectionHero(
-                title = "Καταγραφές",
-                subtitle = rows.size.toString() + " αποθηκευμένες εγγραφές",
+                title = "Χρήσεις πεπτιδίων",
+                subtitle = rows.size.toString() + " καταγεγραμμένες χρήσεις",
                 icon = Icons.AutoMirrored.Rounded.EventNote,
                 accent = ElectricBlue,
-                buttonText = "Νέα",
+                buttonText = "Νέα χρήση",
                 onAdd = { showAdd = true }
             )
         }
@@ -179,8 +179,8 @@ private fun LogsSection(
         if (rows.isEmpty()) {
             item {
                 EmptyTrackerState(
-                    title = "Δεν υπάρχουν καταγραφές",
-                    text = "Οι εγγραφές που προσθέτεις θα εμφανίζονται εδώ.",
+                    title = "Δεν έχεις καταγράψει χρήση",
+                    text = "Εδώ αποθηκεύεις ποιο πεπτίδιο χρησιμοποίησες, την ποσότητα που μέτρησες και μια προαιρετική σημείωση. Η ημερομηνία και ώρα αποθηκεύονται αυτόματα.",
                     icon = Icons.AutoMirrored.Rounded.EventNote
                 )
             }
@@ -230,8 +230,8 @@ private fun InventorySection(
     ) {
         item {
             SectionHero(
-                title = "Απόθεμα",
-                subtitle = totalVials.toString() + " φιαλίδια · " + lowStock + " χαμηλό απόθεμα",
+                title = "Απόθεμα φιαλιδίων",
+                subtitle = totalVials.toString() + " φιαλίδια διαθέσιμα · " + lowStock + " με χαμηλό απόθεμα",
                 icon = Icons.Rounded.Inventory2,
                 accent = ElectricViolet,
                 buttonText = "Προσθήκη",
@@ -290,8 +290,8 @@ private fun ProgressSection(store: LocalStore) {
     ) {
         item {
             SectionHero(
-                title = "Πρόοδος",
-                subtitle = rows.size.toString() + " μετρήσεις",
+                title = "Μετρήσεις σώματος",
+                subtitle = rows.size.toString() + " αποθηκευμένες μετρήσεις",
                 icon = Icons.Rounded.MonitorWeight,
                 accent = ElectricCyan,
                 buttonText = "Μέτρηση",
@@ -308,8 +308,8 @@ private fun ProgressSection(store: LocalStore) {
         if (rows.isEmpty()) {
             item {
                 EmptyTrackerState(
-                    title = "Δεν υπάρχουν μετρήσεις",
-                    text = "Πρόσθεσε βάρος ή/και μέση για να δημιουργηθεί τάση προόδου.",
+                    title = "Δεν έχεις αποθηκεύσει μετρήσεις",
+                    text = "Πρόσθεσε βάρος και προαιρετικά περίμετρο μέσης για να βλέπεις πώς αλλάζουν με τον χρόνο.",
                     icon = Icons.Rounded.MonitorWeight
                 )
             }
@@ -679,14 +679,14 @@ private fun AddLogDialog(
         containerColor = GlassSurfaceStrong,
         titleContentColor = TextPrimary,
         textContentColor = TextPrimary,
-        title = { Text("Νέα καταγραφή") },
+        title = { Text("Καταγραφή χρήσης πεπτιδίου") },
         text = {
             Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
                 OutlinedTextField(
                     value = peptide,
                     onValueChange = { peptide = it },
                     modifier = Modifier.fillMaxWidth(),
-                    label = { Text("Πεπτίδιο") },
+                    label = { Text("Πεπτίδιο που χρησιμοποίησες") },
                     singleLine = true,
                     colors = premiumTextFieldColors()
                 )
@@ -694,7 +694,7 @@ private fun AddLogDialog(
                     value = amount,
                     onValueChange = { amount = it },
                     modifier = Modifier.fillMaxWidth(),
-                    label = { Text("Καταγεγραμμένη ποσότητα (π.χ. 250 mcg)") },
+                    label = { Text("Ποσότητα που μέτρησες (π.χ. 250 mcg)") },
                     singleLine = true,
                     colors = premiumTextFieldColors()
                 )
@@ -702,7 +702,7 @@ private fun AddLogDialog(
                     value = note,
                     onValueChange = { note = it },
                     modifier = Modifier.fillMaxWidth(),
-                    label = { Text("Σημείωση") },
+                    label = { Text("Σημείωση (προαιρετικά)") },
                     colors = premiumTextFieldColors()
                 )
             }
@@ -713,7 +713,7 @@ private fun AddLogDialog(
                 enabled = peptide.isNotBlank() && amount.isNotBlank(),
                 colors = premiumButtonColors()
             ) {
-                Text("Αποθήκευση")
+                Text("Καταγραφή χρήσης")
             }
         },
         dismissButton = {
@@ -742,7 +742,7 @@ private fun AddInventoryDialog(
         containerColor = GlassSurfaceStrong,
         titleContentColor = TextPrimary,
         textContentColor = TextPrimary,
-        title = { Text("Προσθήκη στο απόθεμα") },
+        title = { Text("Προσθήκη φιαλιδίων στο απόθεμα") },
         text = {
             Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
                 OutlinedTextField(
@@ -757,7 +757,7 @@ private fun AddInventoryDialog(
                     value = vial,
                     onValueChange = { vial = it },
                     modifier = Modifier.fillMaxWidth(),
-                    label = { Text("Φιαλίδιο (mg)") },
+                    label = { Text("Περιεκτικότητα κάθε φιαλιδίου (mg)") },
                     singleLine = true,
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
                     colors = premiumTextFieldColors()
@@ -766,7 +766,7 @@ private fun AddInventoryDialog(
                     value = quantity,
                     onValueChange = { quantity = it.filter(Char::isDigit) },
                     modifier = Modifier.fillMaxWidth(),
-                    label = { Text("Ποσότητα") },
+                    label = { Text("Πόσα φιαλίδια έχεις") },
                     singleLine = true,
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
                     colors = premiumTextFieldColors()
@@ -775,7 +775,7 @@ private fun AddInventoryDialog(
                     value = batch,
                     onValueChange = { batch = it },
                     modifier = Modifier.fillMaxWidth(),
-                    label = { Text("Αριθμός παρτίδας / lot") },
+                    label = { Text("Αριθμός παρτίδας / lot (προαιρετικά)") },
                     singleLine = true,
                     colors = premiumTextFieldColors()
                 )
@@ -824,7 +824,7 @@ private fun AddProgressDialog(
         containerColor = GlassSurfaceStrong,
         titleContentColor = TextPrimary,
         textContentColor = TextPrimary,
-        title = { Text("Νέα μέτρηση") },
+        title = { Text("Νέα μέτρηση σώματος") },
         text = {
             Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
                 OutlinedTextField(
@@ -840,7 +840,7 @@ private fun AddProgressDialog(
                     value = waist,
                     onValueChange = { waist = it },
                     modifier = Modifier.fillMaxWidth(),
-                    label = { Text("Μέση (cm, προαιρετικό)") },
+                    label = { Text("Περίμετρος μέσης (cm, προαιρετικά)") },
                     singleLine = true,
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
                     colors = premiumTextFieldColors()
