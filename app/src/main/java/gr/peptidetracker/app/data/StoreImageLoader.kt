@@ -26,7 +26,17 @@ object StoreImageLoader {
         withContext(Dispatchers.IO) {
             memoryCache.get(imageUrl)?.let { return@withContext it }
 
-            val cacheDir = File(context.cacheDir, "peptidiastore-vials").apply { mkdirs() }
+            if (imageUrl.startsWith("asset://")) {
+                val assetPath = imageUrl.removePrefix("asset://")
+                val bitmap = runCatching {
+                    context.assets.open(assetPath).use(BitmapFactory::decodeStream)
+                }.getOrNull()
+
+                if (bitmap != null) memoryCache.put(imageUrl, bitmap)
+                return@withContext bitmap
+            }
+
+            val cacheDir = File(context.cacheDir, "peptide-vials").apply { mkdirs() }
             val diskFile = File(cacheDir, sha256(imageUrl) + ".img")
 
             if (diskFile.isFile && diskFile.length() > 0L) {
@@ -59,7 +69,7 @@ object StoreImageLoader {
             instanceFollowRedirects = true
             useCaches = true
             setRequestProperty("Accept", "image/*")
-            setRequestProperty("User-Agent", "PeptideTrackerGR/2.0")
+            setRequestProperty("User-Agent", "PeptideTrackerGR/2.1.1")
         }
 
         return try {
