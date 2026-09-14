@@ -81,8 +81,8 @@ fun CalculatorScreen(
     ) {
         item {
             PremiumTopBar(
-                title = "Calculator",
-                subtitle = "Καθαρή μαθηματική μετατροπή, χωρίς περιττό UI.",
+                title = "Υπολογιστής",
+                subtitle = "Καθαρή μαθηματική μετατροπή, χωρίς περιττά στοιχεία.",
                 onSettings = onSettings
             )
         }
