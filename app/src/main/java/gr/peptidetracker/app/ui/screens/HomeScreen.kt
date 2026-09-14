@@ -20,6 +20,8 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.ArrowForward
 import androidx.compose.material.icons.rounded.Calculate
+import androidx.compose.material.icons.rounded.AddCircle
+import androidx.compose.material.icons.rounded.CheckCircle
 import androidx.compose.material.icons.automirrored.rounded.EventNote
 import androidx.compose.material.icons.rounded.Inventory2
 import androidx.compose.material.icons.rounded.Science
@@ -50,13 +52,15 @@ fun HomeScreen(
     store: LocalStore,
     imageIndex: Map<String, String>,
     onNavigate: (Int) -> Unit,
-    onOpenPeptide: (PeptideInfo) -> Unit
+    onOpenPeptide: (PeptideInfo) -> Unit,
+    onNewLog: () -> Unit = {}
 ) {
     val entries = store.entries()
     val inventory = store.inventory()
     val favoriteIds = store.favorites()
     val favorites = peptideCatalog.filter { it.id in favoriteIds }
     val last = entries.firstOrNull()
+    val activeVial = inventory.firstOrNull { it.active && it.quantity > 0 }
 
     LazyColumn(
         modifier = Modifier.fillMaxSize(),
@@ -185,6 +189,30 @@ fun HomeScreen(
         item {
             Row(
                 Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(12.dp)
+            ) {
+                QuickActionCard(
+                    title = "Νέα καταγραφή",
+                    subtitle = "Πρόσθεσε χρήση",
+                    icon = Icons.Rounded.AddCircle,
+                    accent = ElectricBlue,
+                    modifier = Modifier.weight(1f),
+                    onClick = onNewLog
+                )
+                QuickActionCard(
+                    title = "Απόθεμα",
+                    subtitle = inventory.sumOf { it.quantity }.toString() + " φιαλίδια",
+                    icon = Icons.Rounded.Inventory2,
+                    accent = ElectricViolet,
+                    modifier = Modifier.weight(1f),
+                    onClick = { onNavigate(3) }
+                )
+            }
+        }
+
+        item {
+            Row(
+                Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.spacedBy(10.dp)
             ) {
                 MetricCard(
@@ -202,6 +230,55 @@ fun HomeScreen(
                     label = "Αγαπημ.",
                     modifier = Modifier.weight(1f)
                 )
+            }
+        }
+
+        if (activeVial != null) {
+            item {
+                GlassCard(
+                    modifier = Modifier.fillMaxWidth(),
+                    onClick = { onNavigate(3) }
+                ) {
+                    Row(
+                        Modifier.fillMaxWidth(),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Box(
+                            Modifier
+                                .size(44.dp)
+                                .clip(RoundedCornerShape(14.dp))
+                                .background(ElectricCyan.copy(alpha = 0.14f)),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Icon(
+                                Icons.Rounded.CheckCircle,
+                                contentDescription = null,
+                                tint = ElectricCyan
+                            )
+                        }
+                        Spacer(Modifier.width(12.dp))
+                        Column(Modifier.weight(1f)) {
+                            Text(
+                                "Ενεργό vial",
+                                color = ElectricCyan,
+                                style = MaterialTheme.typography.labelLarge,
+                                fontWeight = FontWeight.ExtraBold
+                            )
+                            Text(activeVial.peptide, fontWeight = FontWeight.ExtraBold)
+                            Text(
+                                activeVial.effectiveRemainingMg.toString() + " mg υπόλοιπο · " +
+                                    activeVial.quantity + " vial συνολικά",
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                style = MaterialTheme.typography.bodySmall
+                            )
+                        }
+                        Icon(
+                            Icons.AutoMirrored.Rounded.ArrowForward,
+                            contentDescription = null,
+                            tint = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
+                }
             }
         }
 
