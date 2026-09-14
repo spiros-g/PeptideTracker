@@ -103,7 +103,7 @@ fun HomeScreen(
                         verticalArrangement = Arrangement.spacedBy(8.dp)
                     ) {
                         Text(
-                            "SMART CALCULATOR",
+                            "ΓΡΗΓΟΡΟΣ ΥΠΟΛΟΓΙΣΤΗΣ",
                             color = ElectricCyan,
                             style = MaterialTheme.typography.labelLarge,
                             fontWeight = FontWeight.ExtraBold
@@ -113,14 +113,14 @@ fun HomeScreen(
                             style = MaterialTheme.typography.headlineLarge
                         )
                         Text(
-                            "Συγκέντρωση, όγκος και μονάδες σε ένα καθαρό flow.",
+                            "Συγκέντρωση, όγκος και μονάδες σε μία καθαρή ροή.",
                             color = MaterialTheme.colorScheme.onSurfaceVariant,
                             style = MaterialTheme.typography.bodyMedium
                         )
                         Spacer(Modifier.height(3.dp))
                         Row(verticalAlignment = Alignment.CenterVertically) {
                             Text(
-                                "Άνοιγμα calculator",
+                                "Άνοιγμα υπολογιστή",
                                 color = ElectricBlue,
                                 fontWeight = FontWeight.Bold
                             )
@@ -152,15 +152,6 @@ fun HomeScreen(
                             .offset(x = (-56).dp, y = 10.dp),
                         phase = 4
                     )
-                    FloatingVial(
-                        productKey = "tesamorelin",
-                        imageIndex = imageIndex,
-                        modifier = Modifier
-                            .size(width = 62.dp, height = 92.dp)
-                            .align(Alignment.TopEnd)
-                            .offset(x = (-42).dp, y = (-3).dp),
-                        phase = 7
-                    )
                 }
             }
         }
@@ -186,7 +177,7 @@ fun HomeScreen(
                     onClick = { onNavigate(1) }
                 )
                 QuickActionCard(
-                    title = "Tracker",
+                    title = "Καταγραφές",
                     subtitle = entries.size.toString() + " καταγραφές",
                     icon = Icons.AutoMirrored.Rounded.EventNote,
                     accent = ElectricCyan,
@@ -203,17 +194,17 @@ fun HomeScreen(
             ) {
                 MetricCard(
                     value = entries.size.toString(),
-                    label = "Logs",
+                    label = "Καταγρ.",
                     modifier = Modifier.weight(1f)
                 )
                 MetricCard(
                     value = inventory.sumOf { it.quantity }.toString(),
-                    label = "Vials",
+                    label = "Φιαλίδια",
                     modifier = Modifier.weight(1f)
                 )
                 MetricCard(
                     value = favorites.size.toString(),
-                    label = "Saved",
+                    label = "Αγαπημ.",
                     modifier = Modifier.weight(1f)
                 )
             }
@@ -246,7 +237,7 @@ fun HomeScreen(
                         Column {
                             Text("Δεν υπάρχουν καταγραφές", fontWeight = FontWeight.Bold)
                             Text(
-                                "Ο Tracker είναι έτοιμος για την πρώτη εγγραφή.",
+                                "Οι καταγραφές είναι έτοιμες για την πρώτη εγγραφή.",
                                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                                 style = MaterialTheme.typography.bodySmall
                             )
