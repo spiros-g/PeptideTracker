@@ -84,7 +84,7 @@ fun CalculatorScreen(
         item {
             PremiumTopBar(
                 title = "Υπολογιστής Ανασύστασης & Δοσολογίας",
-                subtitle = "Ανασύσταση, συγκέντρωση, όγκος και μονάδες σύριγγας."
+                subtitle = "Βάλε τι έχει το φιαλίδιο, πόσο διαλύτη πρόσθεσες και την ποσότητα που θέλεις να μετρήσεις."
             )
         }
 
@@ -133,7 +133,7 @@ fun CalculatorScreen(
                         )
 
                         Text(
-                            "Μετατροπή ποσότητας σε όγκο και μονάδες U-100, και αντίστροφα.",
+                            "Μετατρέπει την ποσότητα που εισάγεις σε mL και μονάδες σύριγγας U-100 — ή το αντίστροφο.",
                             color = MaterialTheme.colorScheme.onSurfaceVariant,
                             style = MaterialTheme.typography.bodySmall,
                             maxLines = 3,
@@ -182,8 +182,8 @@ fun CalculatorScreen(
         item {
             CalculatorStep(
                 number = "01",
-                title = "Σύριγγα U-100",
-                subtitle = "Επιλογή συνολικής χωρητικότητας σύριγγας",
+                title = "1. Τι σύριγγα χρησιμοποιείς;",
+                subtitle = "Διάλεξε τη συνολική κλίμακα της σύριγγας U-100.",
                 icon = Icons.Rounded.Straighten,
                 accent = ElectricBlue
             ) {
@@ -198,8 +198,8 @@ fun CalculatorScreen(
         item {
             CalculatorStep(
                 number = "02",
-                title = "Ποσότητα φιαλιδίου",
-                subtitle = "Συνολική ποσότητα πεπτιδίου πριν την ανασύσταση",
+                title = "2. Τι περιέχει το φιαλίδιο;",
+                subtitle = "Βάλε τη συνολική ποσότητα που γράφει το φιαλίδιο πριν προσθέσεις διαλύτη.",
                 icon = Icons.Rounded.Science,
                 accent = ElectricViolet
             ) {
@@ -224,7 +224,7 @@ fun CalculatorScreen(
                 )
                 Spacer(Modifier.height(8.dp))
                 DecimalField(
-                    label = "Ποσότητα φιαλιδίου (" + vialUnit + ")",
+                    label = "Ποσότητα στο φιαλίδιο (" + vialUnit + ")",
                     value = vialAmount,
                     onValueChange = { vialAmount = it }
                 )
@@ -234,8 +234,8 @@ fun CalculatorScreen(
         item {
             CalculatorStep(
                 number = "03",
-                title = "Όγκος ανασύστασης",
-                subtitle = "Συνολικός όγκος διαλύτη που προστίθεται στο φιαλίδιο",
+                title = "3. Πόσο διαλύτη πρόσθεσες;",
+                subtitle = "Βάλε τα συνολικά mL διαλύτη που πρόσθεσες στο φιαλίδιο.",
                 icon = Icons.Rounded.WaterDrop,
                 accent = ElectricCyan
             ) {
@@ -246,7 +246,7 @@ fun CalculatorScreen(
                 )
                 Spacer(Modifier.height(8.dp))
                 DecimalField(
-                    label = "Όγκος ανασύστασης (mL)",
+                    label = "Διαλύτης που πρόσθεσες (mL)",
                     value = diluentMl,
                     onValueChange = { diluentMl = it }
                 )
@@ -256,14 +256,14 @@ fun CalculatorScreen(
         item {
             CalculatorStep(
                 number = "04",
-                title = if (reverse) "Μονάδες σύριγγας" else "Επιθυμητή ποσότητα",
-                subtitle = if (reverse) "Ένδειξη σε μονάδες σύριγγας U-100" else "Ποσότητα που εισάγεις για μετατροπή σε όγκο και μονάδες",
+                title = if (reverse) "4. Τι δείχνει η σύριγγα;" else "4. Πόση ποσότητα θέλεις να μετρήσεις;",
+                subtitle = if (reverse) "Βάλε τις μονάδες U-100 και θα δεις σε τι ποσότητα αντιστοιχούν." else "Βάλε την ποσότητα και θα δεις πόσα mL και πόσες μονάδες U-100 αντιστοιχούν.",
                 icon = Icons.Rounded.InvertColors,
                 accent = Color(0xFFFFB36B)
             ) {
                 if (reverse) {
                     DecimalField(
-                        label = "Μονάδες σύριγγας (U-100)",
+                        label = "Τράβηξε μέχρι τις μονάδες U-100",
                         value = syringeUnits,
                         onValueChange = { syringeUnits = it }
                     )
@@ -289,7 +289,7 @@ fun CalculatorScreen(
                     )
                     Spacer(Modifier.height(8.dp))
                     DecimalField(
-                        label = "Επιθυμητή ποσότητα (" + targetUnit + ")",
+                        label = "Ποσότητα που θέλεις να μετρήσεις (" + targetUnit + ")",
                         value = targetAmount,
                         onValueChange = { targetAmount = it }
                     )
@@ -381,7 +381,7 @@ fun CalculatorScreen(
 
         item {
             Text(
-                "Το εργαλείο υπολογίζει ανασύσταση, συγκέντρωση, όγκο και μονάδες από τιμές που εισάγει ο χρήστης. Δεν προτείνει δοσολογικό πρωτόκολλο ή θεραπεία.",
+                "Ο υπολογιστής κάνει μόνο μαθηματική μετατροπή από τις τιμές που βάζεις. Δεν επιλέγει για εσένα ποια ποσότητα πρέπει να χρησιμοποιήσεις.",
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                 style = MaterialTheme.typography.bodySmall,
                 modifier = Modifier.padding(horizontal = 4.dp)
@@ -563,15 +563,15 @@ private fun ResultCard(
                     emphasize = true
                 )
                 ResultLine(
-                    label = "Όγκος προς άντληση",
+                    label = "Αντίστοιχος όγκος",
                     value = output[1]
                 )
                 ResultLine(
-                    label = "Συγκέντρωση μετά την ανασύσταση",
+                    label = "Συγκέντρωση μετά την ανάμιξη",
                     value = output[2]
                 )
                 ResultLine(
-                    label = "Περιεκτικότητα ανά μονάδα U-100",
+                    label = "Ποσότητα ανά 1 μονάδα U-100",
                     value = output[3]
                 )
             } else {
