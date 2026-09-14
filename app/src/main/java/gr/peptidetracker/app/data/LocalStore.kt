@@ -33,10 +33,21 @@ data class InventoryEntry(
     val batch: String,
     val remainingMg: Double? = null,
     val active: Boolean = false,
-    val openedAt: Long? = null
+    val openedAt: Long? = null,
+    val diluentMl: Double? = null,
+    val syringeUnitsPerMl: Int = 100
 ) {
     val effectiveRemainingMg: Double
         get() = remainingMg ?: vialMg
+
+    val isReconstituted: Boolean
+        get() = diluentMl != null && diluentMl > 0
+
+    val concentrationMgPerMl: Double?
+        get() = diluentMl?.takeIf { it > 0 }?.let { vialMg / it }
+
+    val mcgPerSyringeUnit: Double?
+        get() = concentrationMgPerMl?.let { it * 1000.0 / syringeUnitsPerMl.coerceAtLeast(1) }
 }
 
 class LocalStore(context: Context) {
@@ -238,8 +249,17 @@ class LocalStore(context: Context) {
         }.sortedBy { it.peptide }
     }
 
-    fun addInventory(peptide: String, vial: Double, quantity: Int, batch: String) {
+    fun addInventory(
+        peptide: String,
+        vial: Double,
+        quantity: Int,
+        batch: String,
+        diluentMl: Double? = null,
+        syringeUnitsPerMl: Int = 100
+    ) {
         require(peptide.isNotBlank() && vial > 0 && quantity > 0)
+        require(diluentMl == null || diluentMl > 0)
+        require(syringeUnitsPerMl == 40 || syringeUnitsPerMl == 100)
         val next = inventory().toMutableList()
         next += InventoryEntry(
             id = uniqueId(),
@@ -247,7 +267,9 @@ class LocalStore(context: Context) {
             vialMg = vial,
             quantity = quantity,
             batch = safe(batch.trim()),
-            remainingMg = vial
+            remainingMg = vial,
+            diluentMl = diluentMl,
+            syringeUnitsPerMl = syringeUnitsPerMl
         )
         saveInventory(next)
     }
@@ -258,9 +280,13 @@ class LocalStore(context: Context) {
         vialMg: Double,
         quantity: Int,
         batch: String,
-        remainingMg: Double?
+        remainingMg: Double?,
+        diluentMl: Double? = null,
+        syringeUnitsPerMl: Int = 100
     ) {
         require(peptide.isNotBlank() && vialMg > 0 && quantity >= 0)
+        require(diluentMl == null || diluentMl > 0)
+        require(syringeUnitsPerMl == 40 || syringeUnitsPerMl == 100)
         saveInventory(
             inventory().map {
                 if (it.id == id) {
@@ -269,7 +295,9 @@ class LocalStore(context: Context) {
                         vialMg = vialMg,
                         quantity = quantity,
                         batch = safe(batch.trim()),
-                        remainingMg = remainingMg?.coerceIn(0.0, vialMg)
+                        remainingMg = remainingMg?.coerceIn(0.0, vialMg),
+                        diluentMl = diluentMl,
+                        syringeUnitsPerMl = syringeUnitsPerMl
                     )
                 } else {
                     it
@@ -337,7 +365,7 @@ class LocalStore(context: Context) {
 
     fun exportJson(): String {
         val root = JSONObject()
-            .put("schema", 2)
+            .put("schema", 3)
             .put("generatedAt", System.currentTimeMillis())
             .put("darkMode", darkMode())
             .put("onboardingComplete", onboardingComplete())
@@ -351,7 +379,7 @@ class LocalStore(context: Context) {
     fun restoreJson(raw: String): Boolean = runCatching {
         val root = JSONObject(raw)
         val schema = root.optInt("schema", 1)
-        require(schema in 1..2)
+        require(schema in 1..3)
 
         val decodedEntries = decodeEntries(root.optJSONArray("entries") ?: JSONArray())
         val decodedInventory = decodeInventory(root.optJSONArray("inventory") ?: JSONArray())
@@ -493,6 +521,8 @@ class LocalStore(context: Context) {
                     .put("remainingMg", row.remainingMg ?: JSONObject.NULL)
                     .put("active", row.active)
                     .put("openedAt", row.openedAt ?: JSONObject.NULL)
+                    .put("diluentMl", row.diluentMl ?: JSONObject.NULL)
+                    .put("syringeUnitsPerMl", row.syringeUnitsPerMl)
             )
         }
     }
@@ -509,7 +539,9 @@ class LocalStore(context: Context) {
                     batch = o.optString("batch"),
                     remainingMg = if (o.has("remainingMg") && !o.isNull("remainingMg")) o.optDouble("remainingMg") else null,
                     active = o.optBoolean("active"),
-                    openedAt = if (o.has("openedAt") && !o.isNull("openedAt")) o.optLong("openedAt") else null
+                    openedAt = if (o.has("openedAt") && !o.isNull("openedAt")) o.optLong("openedAt") else null,
+                    diluentMl = if (o.has("diluentMl") && !o.isNull("diluentMl")) o.optDouble("diluentMl") else null,
+                    syringeUnitsPerMl = o.optInt("syringeUnitsPerMl", 100).takeIf { it == 40 || it == 100 } ?: 100
                 )
             )
         }
