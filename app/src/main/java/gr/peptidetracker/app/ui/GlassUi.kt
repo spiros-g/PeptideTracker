@@ -1,7 +1,5 @@
 package gr.peptidetracker.app.ui
 
-import android.graphics.BitmapFactory
-import android.util.Base64
 import androidx.compose.animation.core.RepeatMode
 import androidx.compose.animation.core.animateFloat
 import androidx.compose.animation.core.animateFloatAsState
@@ -22,7 +20,6 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.ButtonDefaults
@@ -39,11 +36,11 @@ import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
+import gr.peptidetracker.app.R
 import kotlin.math.ceil
 
 @Composable
@@ -282,9 +279,6 @@ fun premiumTextFieldColors() = OutlinedTextFieldDefaults.colors(
     unfocusedPlaceholderColor = TextMuted
 )
 
-private const val VIAL_ASSET_PARTS = 6
-private const val EXPECTED_VIAL_BYTES = 15_488
-
 @Suppress("UNUSED_PARAMETER")
 @Composable
 fun StoreVialImage(
@@ -293,47 +287,6 @@ fun StoreVialImage(
     modifier: Modifier = Modifier,
     contentDescription: String? = null
 ) {
-    val context = LocalContext.current
-    val vialBitmap = remember(context.applicationContext) {
-        runCatching {
-            val encoded = buildString {
-                repeat(VIAL_ASSET_PARTS) { index ->
-                    val path = "vials/peptide_vial_0" + index + ".b64"
-                    context.assets.open(path).bufferedReader().use { reader ->
-                        append(reader.readText())
-                    }
-                }
-            }
-            val bytes = Base64.decode(encoded, Base64.NO_WRAP)
-            require(bytes.size == EXPECTED_VIAL_BYTES) {
-                "Unexpected bundled vial asset size"
-            }
-            require(
-                bytes.size >= 8 &&
-                    bytes[0] == 0x89.toByte() &&
-                    bytes[1] == 0x50.toByte() &&
-                    bytes[2] == 0x4E.toByte() &&
-                    bytes[3] == 0x47.toByte()
-            ) {
-                "Invalid bundled vial PNG signature"
-            }
-            require(
-                bytes.takeLast(12).toByteArray().contentEquals(
-                    byteArrayOf(
-                        0x00, 0x00, 0x00, 0x00,
-                        0x49, 0x45, 0x4E, 0x44,
-                        0xAE.toByte(), 0x42, 0x60, 0x82.toByte()
-                    )
-                )
-            ) {
-                "Invalid bundled vial PNG trailer"
-            }
-            BitmapFactory.decodeByteArray(bytes, 0, bytes.size)
-                ?.asImageBitmap()
-                ?: error("Unable to decode bundled vial PNG")
-        }.getOrNull()
-    }
-
     Box(
         modifier = modifier,
         contentAlignment = Alignment.Center
@@ -344,8 +297,8 @@ fun StoreVialImage(
                 .background(
                     Brush.radialGradient(
                         listOf(
-                            ElectricBlue.copy(alpha = 0.12f),
-                            ElectricCyan.copy(alpha = 0.035f),
+                            ElectricBlue.copy(alpha = 0.10f),
+                            ElectricCyan.copy(alpha = 0.025f),
                             Color.Transparent
                         )
                     ),
@@ -353,14 +306,14 @@ fun StoreVialImage(
                 )
         )
 
-        if (vialBitmap != null) {
-            Image(
-                bitmap = vialBitmap,
-                contentDescription = contentDescription,
-                contentScale = ContentScale.Fit,
-                modifier = Modifier.fillMaxSize()
-            )
-        }
+        Image(
+            painter = painterResource(R.drawable.peptide_vial),
+            contentDescription = contentDescription,
+            contentScale = ContentScale.Fit,
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(4.dp)
+        )
     }
 }
 
@@ -373,10 +326,10 @@ fun FloatingVial(
 ) {
     val transition = rememberInfiniteTransition(label = "vialFloat$productKey")
     val y by transition.animateFloat(
-        initialValue = -6f + phase,
-        targetValue = 7f + phase,
+        initialValue = -4f + phase,
+        targetValue = 5f + phase,
         animationSpec = infiniteRepeatable(
-            animation = tween(2_800 + phase * 80),
+            animation = tween(3_000 + phase * 70),
             repeatMode = RepeatMode.Reverse
         ),
         label = "vialY"
@@ -387,7 +340,6 @@ fun FloatingVial(
         imageIndex = imageIndex,
         modifier = modifier.graphicsLayer {
             translationY = y
-            rotationZ = phase * 0.18f
         }
     )
 }
