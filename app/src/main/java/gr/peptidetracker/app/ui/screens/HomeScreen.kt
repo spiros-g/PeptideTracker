@@ -25,6 +25,7 @@ import androidx.compose.material.icons.rounded.CheckCircle
 import androidx.compose.material.icons.automirrored.rounded.EventNote
 import androidx.compose.material.icons.rounded.Inventory2
 import androidx.compose.material.icons.rounded.Science
+import androidx.compose.material.icons.rounded.Settings
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -54,7 +55,8 @@ fun HomeScreen(
     onNavigate: (Int) -> Unit,
     onOpenPeptide: (PeptideInfo) -> Unit,
     onNewLog: () -> Unit,
-    onOpenInventory: () -> Unit
+    onOpenInventory: () -> Unit,
+    onOpenSettings: () -> Unit
 ) {
     val entries = store.entries()
     val inventory = store.inventory()
@@ -71,7 +73,10 @@ fun HomeScreen(
         item {
             PremiumTopBar(
                 title = "Ιχνηλάτης Πεπτιδίων",
-                subtitle = "Το κέντρο ελέγχου των πεπτιδίων σου."
+                subtitle = "Το κέντρο ελέγχου των πεπτιδίων σου.",
+                actionIcon = Icons.Rounded.Settings,
+                actionDescription = "Ρυθμίσεις",
+                onAction = onOpenSettings
             )
         }
 
