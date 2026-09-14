@@ -349,10 +349,17 @@ fun TrackerScreen(
             current = editingInventory,
             presetPeptide = inventoryPreset,
             onDismiss = { showInventoryDialog = false },
-            onSave = { peptide, vial, quantity, batch, remaining ->
+            onSave = { peptide, vial, quantity, batch, remaining, diluentMl, syringeUnitsPerMl ->
                 val current = editingInventory
                 if (current == null) {
-                    store.addInventory(peptide, vial, quantity, batch)
+                    store.addInventory(
+                        peptide = peptide,
+                        vial = vial,
+                        quantity = quantity,
+                        batch = batch,
+                        diluentMl = diluentMl,
+                        syringeUnitsPerMl = syringeUnitsPerMl
+                    )
                 } else {
                     store.updateInventory(
                         id = current.id,
@@ -360,7 +367,9 @@ fun TrackerScreen(
                         vialMg = vial,
                         quantity = quantity,
                         batch = batch,
-                        remainingMg = remaining
+                        remainingMg = remaining,
+                        diluentMl = diluentMl,
+                        syringeUnitsPerMl = syringeUnitsPerMl
                     )
                 }
                 inventory = store.inventory()
@@ -820,6 +829,27 @@ private fun InventoryCard(
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                         style = MaterialTheme.typography.bodySmall
                     )
+                    if (row.isReconstituted) {
+                        Text(
+                            "Ανασύσταση: " + formatCompact(row.diluentMl ?: 0.0) + " mL · U-" + row.syringeUnitsPerMl,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            style = MaterialTheme.typography.bodySmall
+                        )
+                        row.mcgPerSyringeUnit?.let { mcgPerUnit ->
+                            Text(
+                                formatCompact(mcgPerUnit) + " mcg ανά μονάδα U-" + row.syringeUnitsPerMl,
+                                color = ElectricViolet,
+                                style = MaterialTheme.typography.bodySmall,
+                                fontWeight = FontWeight.Bold
+                            )
+                        }
+                    } else {
+                        Text(
+                            "Δεν έχει καταχωρηθεί ανασύσταση",
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            style = MaterialTheme.typography.bodySmall
+                        )
+                    }
                     if (row.active) {
                         Text(
                             "Υπόλοιπο ενεργού vial: " + formatCompact(remaining) + " mg",
@@ -1209,7 +1239,7 @@ private fun InventoryEditorDialog(
     current: InventoryEntry?,
     presetPeptide: String?,
     onDismiss: () -> Unit,
-    onSave: (String, Double, Int, String, Double?) -> Unit
+    onSave: (String, Double, Int, String, Double?, Double?, Int) -> Unit
 ) {
     var peptide by remember(current, presetPeptide) {
         mutableStateOf(current?.peptide ?: presetPeptide ?: peptideCatalog.firstOrNull()?.name.orEmpty())
@@ -1218,12 +1248,19 @@ private fun InventoryEditorDialog(
     var vial by remember(current) { mutableStateOf(current?.vialMg?.let(::formatCompact) ?: "10") }
     var quantity by remember(current) { mutableStateOf(current?.quantity?.toString() ?: "1") }
     var batch by remember(current) { mutableStateOf(current?.batch.orEmpty()) }
+    var diluent by remember(current) {
+        mutableStateOf(current?.diluentMl?.let(::formatCompact).orEmpty())
+    }
+    var syringeUnitsPerMl by remember(current) {
+        mutableIntStateOf(current?.syringeUnitsPerMl ?: 100)
+    }
     var remaining by remember(current) {
         mutableStateOf(current?.remainingMg?.let(::formatCompact) ?: current?.vialMg?.let(::formatCompact).orEmpty())
     }
 
     val vialValue = vial.replace(',', '.').toDoubleOrNull()
     val quantityValue = quantity.toIntOrNull()
+    val diluentValue = diluent.replace(',', '.').toDoubleOrNull()
     val remainingValue = remaining.replace(',', '.').toDoubleOrNull()
 
     AlertDialog(
@@ -1282,6 +1319,44 @@ private fun InventoryEditorDialog(
                     singleLine = true,
                     colors = premiumTextFieldColors()
                 )
+                Text(
+                    "Ανασύσταση vial (προαιρετικά)",
+                    fontWeight = FontWeight.Bold
+                )
+                OutlinedTextField(
+                    value = diluent,
+                    onValueChange = { diluent = it.replace(',', '.') },
+                    modifier = Modifier.fillMaxWidth(),
+                    label = { Text("Διαλύτης που προστέθηκε (mL)") },
+                    singleLine = true,
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
+                    colors = premiumTextFieldColors()
+                )
+                Row(
+                    Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    listOf(100, 40).forEach { unitsPerMl ->
+                        FilterChip(
+                            selected = syringeUnitsPerMl == unitsPerMl,
+                            onClick = { syringeUnitsPerMl = unitsPerMl },
+                            label = { Text("U-" + unitsPerMl) },
+                            modifier = Modifier.weight(1f),
+                            colors = premiumFilterChipColors()
+                        )
+                    }
+                }
+                Text(
+                    if (diluentValue != null && diluentValue > 0 && vialValue != null && vialValue > 0) {
+                        val mcgPerUnit = (vialValue / diluentValue) * 1000.0 / syringeUnitsPerMl
+                        "Συγκέντρωση: " + formatCompact(vialValue / diluentValue) +
+                            " mg/mL · " + formatCompact(mcgPerUnit) + " mcg/μονάδα"
+                    } else {
+                        "Άφησέ το κενό αν το vial δεν έχει ανασυσταθεί ακόμη."
+                    },
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    style = MaterialTheme.typography.bodySmall
+                )
                 if (current != null) {
                     OutlinedTextField(
                         value = remaining,
@@ -1303,12 +1378,15 @@ private fun InventoryEditorDialog(
                         vialValue ?: return@Button,
                         quantityValue ?: return@Button,
                         batch.trim(),
-                        if (current == null) null else remainingValue
+                        if (current == null) null else remainingValue,
+                        diluentValue,
+                        syringeUnitsPerMl
                     )
                 },
                 enabled = peptide.isNotBlank() &&
                     vialValue != null && vialValue > 0 &&
                     quantityValue != null && quantityValue >= 0 &&
+                    (diluent.isBlank() || (diluentValue != null && diluentValue > 0)) &&
                     (current == null || remainingValue == null || remainingValue >= 0),
                 colors = premiumButtonColors()
             ) {
