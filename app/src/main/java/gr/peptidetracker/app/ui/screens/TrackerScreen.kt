@@ -21,7 +21,7 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.Delete
 import androidx.compose.material.icons.rounded.Add
-import androidx.compose.material.icons.rounded.EventNote
+import androidx.compose.material.icons.automirrored.rounded.EventNote
 import androidx.compose.material.icons.rounded.Inventory2
 import androidx.compose.material.icons.rounded.MonitorWeight
 import androidx.compose.material.icons.rounded.WarningAmber
@@ -171,7 +171,7 @@ private fun LogsSection(
             SectionHero(
                 title = "Καταγραφές",
                 subtitle = rows.size.toString() + " αποθηκευμένες εγγραφές",
-                icon = Icons.Rounded.EventNote,
+                icon = Icons.AutoMirrored.Rounded.EventNote,
                 accent = ElectricBlue,
                 buttonText = "Νέα",
                 onAdd = { showAdd = true }
@@ -183,7 +183,7 @@ private fun LogsSection(
                 EmptyTrackerState(
                     title = "Δεν υπάρχουν καταγραφές",
                     text = "Οι εγγραφές που προσθέτεις θα εμφανίζονται εδώ.",
-                    icon = Icons.Rounded.EventNote
+                    icon = Icons.AutoMirrored.Rounded.EventNote
                 )
             }
         } else {
@@ -777,7 +777,7 @@ private fun AddInventoryDialog(
                     value = batch,
                     onValueChange = { batch = it },
                     modifier = Modifier.fillMaxWidth(),
-                    label = { Text("Batch / lot") },
+                    label = { Text("Batch / παρτίδα") },
                     singleLine = true,
                     colors = premiumTextFieldColors()
                 )
