@@ -104,7 +104,7 @@ fun LibraryScreen(
         ) {
             PremiumTopBar(
                 title = "Βιβλιοθήκη",
-                subtitle = "Προφίλ, μηχανισμοί και επιστημονικές πηγές."
+                subtitle = "Δες τι είναι κάθε πεπτίδιο, σε τι έχει μελετηθεί και πόσο ισχυρά είναι τα διαθέσιμα δεδομένα."
             )
 
             OutlinedTextField(
@@ -379,7 +379,7 @@ fun PeptideDetailScreen(
 
         item {
             DetailInfoCard(
-                title = "Επιστημονική επισκόπηση",
+                title = "Τι είναι",
                 text = peptide.overview,
                 icon = Icons.Rounded.Science,
                 accent = ElectricBlue
@@ -388,7 +388,7 @@ fun PeptideDetailScreen(
 
         item {
             DetailInfoCard(
-                title = "Ερευνητικά πεδία",
+                title = "Σε τι έχει μελετηθεί",
                 text = peptide.research,
                 icon = Icons.AutoMirrored.Rounded.ManageSearch,
                 accent = ElectricCyan
@@ -397,7 +397,7 @@ fun PeptideDetailScreen(
 
         item {
             DetailInfoCard(
-                title = "Μηχανισμός",
+                title = "Πώς δρα",
                 text = peptide.mechanism,
                 icon = Icons.Rounded.Hub,
                 accent = ElectricViolet
@@ -406,7 +406,7 @@ fun PeptideDetailScreen(
 
         item {
             DetailInfoCard(
-                title = "Περιορισμοί",
+                title = "Τι πρέπει να γνωρίζεις",
                 text = peptide.warning,
                 icon = Icons.Rounded.WarningAmber,
                 accent = Color(0xFFFFBE6B)
@@ -415,7 +415,7 @@ fun PeptideDetailScreen(
 
         item {
             Text(
-                "Κλινικές μελέτες & πηγές",
+                "Μελέτες & επιστημονικές πηγές",
                 style = MaterialTheme.typography.titleLarge
             )
         }
@@ -479,7 +479,7 @@ fun PeptideDetailScreen(
                 )
                 Spacer(Modifier.width(8.dp))
                 Text(
-                    "Ενημερωτικό περιεχόμενο. Δεν αποτελεί ιατρική συμβουλή, διάγνωση ή οδηγία χρήσης.",
+                    "Οι πληροφορίες εξηγούν τα διαθέσιμα δεδομένα με απλό τρόπο. Δεν αποτελούν ιατρική συμβουλή ή εξατομικευμένη οδηγία χρήσης.",
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                     style = MaterialTheme.typography.bodySmall
                 )
