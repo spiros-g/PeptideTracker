@@ -550,7 +550,7 @@ private fun FavoritePeptideCard(
     GlassCard(
         modifier = Modifier
             .width(148.dp)
-            .height(174.dp),
+            .heightIn(min = 174.dp),
         contentPadding = PaddingValues(12.dp),
         onClick = onClick
     ) {

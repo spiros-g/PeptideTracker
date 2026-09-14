@@ -13,6 +13,7 @@ import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -210,7 +211,7 @@ private fun PeptideGridCard(
     onClick: () -> Unit
 ) {
     GlassCard(
-        modifier = Modifier.height(252.dp),
+        modifier = Modifier.heightIn(min = 252.dp),
         contentPadding = PaddingValues(0.dp),
         onClick = onClick
     ) {

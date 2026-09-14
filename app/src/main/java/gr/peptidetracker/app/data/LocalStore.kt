@@ -724,6 +724,74 @@ class LocalStore(context: Context) {
         true
     }.getOrDefault(false)
 
+    fun mergeJson(raw: String): Boolean = runCatching {
+        val root = JSONObject(raw)
+        val schema = root.optInt("schema", 1)
+        require(schema in 1..9)
+
+        val importedEntries = decodeEntries(root.optJSONArray("entries") ?: JSONArray())
+        val importedInventory = decodeInventory(root.optJSONArray("inventory") ?: JSONArray())
+        val importedProgress = decodeProgress(root.optJSONArray("progress") ?: JSONArray())
+        val importedReminders = decodeReminders(root.optJSONArray("reminders") ?: JSONArray())
+        val importedCalculations = decodeCalculations(root.optJSONArray("savedCalculations") ?: JSONArray())
+
+        val importedFavorites = buildSet {
+            val array = root.optJSONArray("favorites") ?: JSONArray()
+            for (i in 0 until array.length()) {
+                array.optString(i).takeIf { it.isNotBlank() }?.let(::add)
+            }
+        }
+
+        val importedCustomPeptides = buildList {
+            val array = root.optJSONArray("customPeptides") ?: JSONArray()
+            for (i in 0 until array.length()) {
+                array.optString(i).trim().takeIf { it.length >= 2 }?.let(::add)
+            }
+        }
+
+        val mergedEntries = (entries() + importedEntries).distinctBy { it.id }
+        val mergedInventory = (inventory() + importedInventory).distinctBy { it.id }
+        val mergedProgress = (progress() + importedProgress).distinctBy { it.id }
+        val mergedReminders = (reminders() + importedReminders).distinctBy { it.id }
+        val mergedCalculations = (savedCalculations() + importedCalculations).distinctBy { it.id }
+        val mergedFavorites = favorites() + importedFavorites
+        val mergedCustomPeptides = (customPeptides() + importedCustomPeptides)
+            .distinctBy { it.lowercase() }
+
+        io {
+            database.runInTransaction {
+                dao.clearTrackerEntries()
+                dao.clearInventoryEntries()
+                dao.clearProgressEntries()
+                dao.clearReminderEntries()
+                dao.clearSavedCalculations()
+                dao.clearFavorites()
+                dao.clearCustomPeptides()
+
+                if (mergedEntries.isNotEmpty()) dao.insertTrackerEntries(mergedEntries)
+                if (mergedInventory.isNotEmpty()) dao.insertInventoryEntries(mergedInventory)
+                if (mergedProgress.isNotEmpty()) dao.insertProgressEntries(mergedProgress)
+                if (mergedReminders.isNotEmpty()) dao.insertReminderEntries(mergedReminders)
+                if (mergedCalculations.isNotEmpty()) dao.insertSavedCalculations(mergedCalculations)
+                if (mergedFavorites.isNotEmpty()) dao.insertFavorites(mergedFavorites.map(::FavoriteEntry))
+                mergedCustomPeptides.forEach {
+                    dao.insertCustomPeptide(CustomPeptideEntry(it, System.currentTimeMillis()))
+                }
+            }
+        }
+
+        ReminderScheduler.rescheduleAll(appContext, reminders())
+        true
+    }.getOrDefault(false)
+
+    fun hasPreRestoreBackup(): Boolean =
+        !prefs.getString(KEY_PRE_RESTORE_BACKUP, null).isNullOrBlank()
+
+    fun restorePreRestoreBackup(): Boolean {
+        val raw = prefs.getString(KEY_PRE_RESTORE_BACKUP, null) ?: return false
+        return restoreJson(raw)
+    }
+
     fun exportEntriesCsv(): String {
         val rows = mutableListOf("id,peptide,amount,unit,note,site,created_at")
         entries().sortedBy { it.createdAt }.forEach { entry ->

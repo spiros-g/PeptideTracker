@@ -17,6 +17,7 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -586,6 +587,23 @@ fun TrackerScreen(
                     ) {
                         Text("Εξαγωγή ημερολογίου σε CSV")
                     }
+                    if (store.hasPreRestoreBackup()) {
+                        OutlinedButton(
+                            onClick = {
+                                showDataTools = false
+                                val ok = store.restorePreRestoreBackup()
+                                if (ok) {
+                                    reloadAll()
+                                    dataMessage = "Επαναφέρθηκε το snapshot πριν από το τελευταίο restore."
+                                } else {
+                                    dataMessage = "Δεν ήταν δυνατή η επαναφορά του προηγούμενου snapshot."
+                                }
+                            },
+                            modifier = Modifier.fillMaxWidth()
+                        ) {
+                            Text("Επαναφορά πριν το τελευταίο restore")
+                        }
+                    }
                 }
             },
             confirmButton = {
@@ -663,7 +681,7 @@ fun TrackerScreen(
             text = {
                 Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                     Text(
-                        "Το backup θα αντικαταστήσει τα τρέχοντα δεδομένα. Πριν την επαναφορά αποθηκεύεται αυτόματα εσωτερικό snapshot ασφαλείας.",
+                        "Μπορείς να συγχωνεύσεις το backup με τα τρέχοντα δεδομένα ή να τα αντικαταστήσεις. Πριν από πλήρη αντικατάσταση αποθηκεύεται αυτόματα εσωτερικό snapshot ασφαλείας.",
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                         style = MaterialTheme.typography.bodySmall
                     )
@@ -677,23 +695,42 @@ fun TrackerScreen(
                 }
             },
             confirmButton = {
-                Button(
-                    onClick = {
-                        val raw = pendingRestoreRaw
-                        val ok = raw != null && store.restoreJson(raw)
-                        if (ok) {
-                            reloadAll()
-                            dataMessage = "Το backup επαναφέρθηκε και οι ενεργές υπενθυμίσεις επαναπρογραμματίστηκαν."
-                            haptics.performHapticFeedback(HapticFeedbackType.LongPress)
-                        } else {
-                            dataMessage = "Η επαναφορά απέτυχε. Τα προηγούμενα δεδομένα διατηρήθηκαν."
+                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    OutlinedButton(
+                        onClick = {
+                            val raw = pendingRestoreRaw
+                            val ok = raw != null && store.mergeJson(raw)
+                            if (ok) {
+                                reloadAll()
+                                dataMessage = "Το backup συγχωνεύτηκε με τα τρέχοντα δεδομένα."
+                                haptics.performHapticFeedback(HapticFeedbackType.LongPress)
+                            } else {
+                                dataMessage = "Η συγχώνευση απέτυχε. Τα τρέχοντα δεδομένα διατηρήθηκαν."
+                            }
+                            pendingRestoreRaw = null
+                            pendingRestoreSummary = null
                         }
-                        pendingRestoreRaw = null
-                        pendingRestoreSummary = null
-                    },
-                    colors = premiumButtonColors()
-                ) {
-                    Text("Επαναφορά")
+                    ) {
+                        Text("Συγχώνευση")
+                    }
+                    Button(
+                        onClick = {
+                            val raw = pendingRestoreRaw
+                            val ok = raw != null && store.restoreJson(raw)
+                            if (ok) {
+                                reloadAll()
+                                dataMessage = "Το backup επαναφέρθηκε και οι ενεργές υπενθυμίσεις επαναπρογραμματίστηκαν."
+                                haptics.performHapticFeedback(HapticFeedbackType.LongPress)
+                            } else {
+                                dataMessage = "Η επαναφορά απέτυχε. Τα προηγούμενα δεδομένα διατηρήθηκαν."
+                            }
+                            pendingRestoreRaw = null
+                            pendingRestoreSummary = null
+                        },
+                        colors = premiumButtonColors()
+                    ) {
+                        Text("Αντικατάσταση")
+                    }
                 }
             },
             dismissButton = {
@@ -1449,7 +1486,7 @@ private fun StatisticsMetricCard(
     modifier: Modifier = Modifier
 ) {
     GlassCard(
-        modifier = modifier.height(90.dp),
+        modifier = modifier.heightIn(min = 90.dp),
         contentPadding = PaddingValues(12.dp)
     ) {
         Column(
