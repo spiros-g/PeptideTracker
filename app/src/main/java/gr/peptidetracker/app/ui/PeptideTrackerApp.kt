@@ -1,10 +1,10 @@
 package gr.peptidetracker.app.ui
 
 import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.togetherWith
-import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -21,6 +21,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Calculate
+import androidx.compose.material.icons.rounded.DarkMode
 import androidx.compose.material.icons.rounded.Home
 import androidx.compose.material.icons.rounded.QueryStats
 import androidx.compose.material.icons.rounded.Science
@@ -32,7 +33,6 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -66,7 +66,6 @@ private data class MainDestination(
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun PeptideTrackerApp(store: LocalStore) {
-    var darkMode by remember { mutableStateOf(store.darkMode()) }
     var selectedTab by remember { mutableIntStateOf(0) }
     var selectedPeptide by remember { mutableStateOf<PeptideInfo?>(null) }
     var settingsOpen by remember { mutableStateOf(false) }
@@ -75,10 +74,11 @@ fun PeptideTrackerApp(store: LocalStore) {
         value = StoreCatalogClient.loadImageIndex()
     }
 
-    AppTheme(darkMode) {
+    AppTheme {
         PremiumBackground {
             Scaffold(
                 containerColor = Color.Transparent,
+                contentColor = TextPrimary,
                 bottomBar = {
                     if (selectedPeptide == null) {
                         PremiumBottomBar(
@@ -91,7 +91,7 @@ fun PeptideTrackerApp(store: LocalStore) {
                 AnimatedContent(
                     targetState = selectedTab to selectedPeptide,
                     transitionSpec = {
-                        fadeIn(tween(220)) togetherWith fadeOut(tween(160))
+                        fadeIn(tween(210)) togetherWith fadeOut(tween(145))
                     },
                     label = "screenTransition",
                     modifier = Modifier.padding(padding)
@@ -138,16 +138,11 @@ fun PeptideTrackerApp(store: LocalStore) {
             if (settingsOpen) {
                 ModalBottomSheet(
                     onDismissRequest = { settingsOpen = false },
-                    containerColor = MaterialTheme.colorScheme.surface.copy(alpha = 0.97f),
-                    scrimColor = Color.Black.copy(alpha = 0.55f)
+                    containerColor = GlassSurfaceStrong.copy(alpha = 0.985f),
+                    contentColor = TextPrimary,
+                    scrimColor = Color.Black.copy(alpha = 0.72f)
                 ) {
-                    SettingsSheet(
-                        darkMode = darkMode,
-                        onDarkModeChange = {
-                            darkMode = it
-                            store.setDarkMode(it)
-                        }
-                    )
+                    SettingsSheet()
                 }
             }
         }
@@ -160,32 +155,38 @@ private fun PremiumBottomBar(
     onSelected: (Int) -> Unit
 ) {
     val destinations = listOf(
-        MainDestination("Home", Icons.Rounded.Home),
+        MainDestination("Αρχική", Icons.Rounded.Home),
         MainDestination("Πεπτίδια", Icons.Rounded.Science),
-        MainDestination("Calc", Icons.Rounded.Calculate),
+        MainDestination("Υπολογ.", Icons.Rounded.Calculate),
         MainDestination("Tracker", Icons.Rounded.QueryStats)
     )
 
     Box(
         Modifier
             .fillMaxWidth()
-            .padding(horizontal = 18.dp, vertical = 10.dp)
-            .clip(RoundedCornerShape(28.dp))
+            .padding(horizontal = 14.dp, vertical = 8.dp)
+            .clip(RoundedCornerShape(26.dp))
             .background(
                 Brush.horizontalGradient(
                     listOf(
-                        Color(0xEE101722),
-                        Color(0xE8141A27),
-                        Color(0xEE0D141F)
+                        Color(0xF20C131D),
+                        Color(0xF5141D29),
+                        Color(0xF20B121B)
                     )
                 )
             )
             .border(
                 1.dp,
-                Color.White.copy(alpha = 0.11f),
-                RoundedCornerShape(28.dp)
+                Brush.horizontalGradient(
+                    listOf(
+                        Color.White.copy(alpha = 0.18f),
+                        ElectricBlue.copy(alpha = 0.16f),
+                        Color.White.copy(alpha = 0.08f)
+                    )
+                ),
+                RoundedCornerShape(26.dp)
             )
-            .padding(horizontal = 8.dp, vertical = 7.dp)
+            .padding(horizontal = 6.dp, vertical = 6.dp)
     ) {
         Row(
             Modifier.fillMaxWidth(),
@@ -195,34 +196,42 @@ private fun PremiumBottomBar(
             destinations.forEachIndexed { index, destination ->
                 val active = selected == index
                 val tint by animateColorAsState(
-                    targetValue = if (active) ElectricBlue else MaterialTheme.colorScheme.onSurfaceVariant,
-                    animationSpec = tween(180),
+                    targetValue = if (active) Color.White else TextMuted,
+                    animationSpec = tween(170),
                     label = "navTint"
                 )
+                val tileColor = if (active) {
+                    Brush.linearGradient(
+                        listOf(
+                            ElectricBlue.copy(alpha = 0.22f),
+                            ElectricViolet.copy(alpha = 0.10f)
+                        )
+                    )
+                } else {
+                    Brush.linearGradient(listOf(Color.Transparent, Color.Transparent))
+                }
 
                 Column(
                     modifier = Modifier
                         .weight(1f)
-                        .clip(RoundedCornerShape(20.dp))
+                        .clip(RoundedCornerShape(19.dp))
                         .clickable { onSelected(index) }
-                        .background(
-                            if (active) ElectricBlue.copy(alpha = 0.12f) else Color.Transparent
-                        )
-                        .padding(vertical = 9.dp),
+                        .background(tileColor)
+                        .padding(vertical = 8.dp),
                     horizontalAlignment = Alignment.CenterHorizontally,
                     verticalArrangement = Arrangement.spacedBy(3.dp)
                 ) {
                     Icon(
                         imageVector = destination.icon,
                         contentDescription = destination.label,
-                        tint = tint,
-                        modifier = Modifier.size(23.dp)
+                        tint = if (active) ElectricCyan else tint,
+                        modifier = Modifier.size(22.dp)
                     )
                     Text(
                         destination.label,
                         color = tint,
                         style = MaterialTheme.typography.labelSmall,
-                        fontWeight = if (active) FontWeight.Bold else FontWeight.Medium
+                        fontWeight = if (active) FontWeight.ExtraBold else FontWeight.SemiBold
                     )
                 }
             }
@@ -231,14 +240,11 @@ private fun PremiumBottomBar(
 }
 
 @Composable
-private fun SettingsSheet(
-    darkMode: Boolean,
-    onDarkModeChange: (Boolean) -> Unit
-) {
+private fun SettingsSheet() {
     Column(
         Modifier
             .fillMaxWidth()
-            .padding(horizontal = 22.dp)
+            .padding(horizontal = 20.dp)
             .padding(bottom = 34.dp),
         verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
@@ -246,17 +252,18 @@ private fun SettingsSheet(
             Icon(
                 Icons.Rounded.Settings,
                 contentDescription = null,
-                tint = MaterialTheme.colorScheme.primary
+                tint = ElectricBlue
             )
             Spacer(Modifier.size(12.dp))
             Column(Modifier.weight(1f)) {
                 Text(
                     "Ρυθμίσεις",
-                    style = MaterialTheme.typography.headlineMedium
+                    style = MaterialTheme.typography.headlineMedium,
+                    color = TextPrimary
                 )
                 Text(
-                    "PeptideTracker GR · v2.0.0",
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                    "Ιχνηλάτης Πεπτιδίων · v2.1.0",
+                    color = TextSecondary
                 )
             }
         }
@@ -266,18 +273,32 @@ private fun SettingsSheet(
                 Modifier.fillMaxWidth(),
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                Column(Modifier.weight(1f)) {
-                    Text("Dark glass theme", fontWeight = FontWeight.Bold)
+                Box(
+                    Modifier
+                        .size(44.dp)
+                        .clip(RoundedCornerShape(14.dp))
+                        .background(ElectricViolet.copy(alpha = 0.15f)),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Icon(
+                        Icons.Rounded.DarkMode,
+                        contentDescription = null,
+                        tint = ElectricViolet
+                    )
+                }
+                Spacer(Modifier.size(12.dp))
+                Column {
                     Text(
-                        "Premium dark interface με υψηλή αντίθεση.",
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        "Dark-only interface",
+                        color = TextPrimary,
+                        fontWeight = FontWeight.ExtraBold
+                    )
+                    Text(
+                        "Η εφαρμογή χρησιμοποιεί αποκλειστικά το premium dark glass theme.",
+                        color = TextSecondary,
                         style = MaterialTheme.typography.bodySmall
                     )
                 }
-                Switch(
-                    checked = darkMode,
-                    onCheckedChange = onDarkModeChange
-                )
             }
         }
 
@@ -293,10 +314,14 @@ private fun SettingsSheet(
                 tint = ElectricCyan
             )
             Column {
-                Text("Local-first δεδομένα", fontWeight = FontWeight.Bold)
                 Text(
-                    "Οι καταγραφές, το απόθεμα, οι μετρήσεις και τα αγαπημένα αποθηκεύονται στη συσκευή. Η σύνδεση χρησιμοποιείται για τις εικόνες του καταλόγου και για εξωτερικές επιστημονικές πηγές.",
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    "Local-first δεδομένα",
+                    color = TextPrimary,
+                    fontWeight = FontWeight.Bold
+                )
+                Text(
+                    "Οι καταγραφές, το απόθεμα, οι μετρήσεις και τα αγαπημένα αποθηκεύονται στη συσκευή. Η σύνδεση χρησιμοποιείται για stock vial imagery και εξωτερικές επιστημονικές πηγές.",
+                    color = TextSecondary,
                     style = MaterialTheme.typography.bodyMedium
                 )
             }
