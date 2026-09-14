@@ -25,15 +25,12 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import gr.peptidetracker.app.data.*
 import gr.peptidetracker.app.domain.PeptideCalculator
-import gr.peptidetracker.app.ui.EmptyArtwork
-import gr.peptidetracker.app.ui.MoleculeArtwork
-import gr.peptidetracker.app.ui.SyringeArtwork
+import gr.peptidetracker.app.ui.AppTheme
 import gr.peptidetracker.app.ui.VialArtwork
 import java.text.DateFormat
 import java.util.Date
 
 class MainActivity:ComponentActivity(){override fun onCreate(b:Bundle?){super.onCreate(b);enableEdgeToEdge();setContent{PeptideApp(LocalStore(this))}}}
-private val Blue=Color(0xFF0D47A1);private val Mint=Color(0xFF00A896)
 data class Nav(val label:String,val icon:androidx.compose.ui.graphics.vector.ImageVector)
 
 @Composable fun PeptideApp(store:LocalStore){var dark by remember{mutableStateOf(store.darkMode())};AppTheme(dark){AppShell(store,dark){dark=it;store.setDarkMode(it)}}}
