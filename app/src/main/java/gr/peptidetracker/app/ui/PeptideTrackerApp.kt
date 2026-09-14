@@ -157,7 +157,8 @@ fun PeptideTrackerApp(store: LocalStore) {
 
                                 2 -> CalculatorScreen(
                                     imageIndex = imageIndex,
-                                    preset = calculatorPreset
+                                    preset = calculatorPreset,
+                                    onPresetConsumed = { calculatorPreset = null }
                                 )
 
                                 else -> TrackerScreen(
@@ -171,7 +172,9 @@ fun PeptideTrackerApp(store: LocalStore) {
                                     onOpenCalculator = { row ->
                                         calculatorPreset = CalculatorPreset(
                                             peptideName = row.peptide,
-                                            vialMg = row.vialMg
+                                            vialMg = row.vialMg,
+                                            diluentMl = row.diluentMl,
+                                            syringeUnitsPerMl = row.syringeUnitsPerMl
                                         )
                                         selectedTab = 2
                                     }
