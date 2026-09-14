@@ -1,7 +1,76 @@
+import java.io.File
+import java.util.Base64
+import javax.imageio.ImageIO
+
 plugins {
     id("com.android.application")
     id("org.jetbrains.kotlin.android")
     id("org.jetbrains.kotlin.plugin.compose")
+}
+
+val generatedArtworkResDir =
+    layout.buildDirectory.dir("generated/artworkRes").get().asFile
+
+val generateArtwork by tasks.registering {
+    val artworkSourceDir = file("src/main/assets/artwork")
+    inputs.dir(artworkSourceDir)
+    outputs.dir(generatedArtworkResDir)
+
+    doLast {
+        fun rebuildPng(
+            partsDir: File,
+            outputName: String,
+            expectedWidth: Int,
+            expectedHeight: Int
+        ) {
+            val parts = partsDir.listFiles { file ->
+                file.isFile && file.extension == "b64"
+            }?.sortedBy { it.name }.orEmpty()
+
+            check(parts.isNotEmpty()) {
+                "No artwork chunks found in ${partsDir.path}"
+            }
+
+            val encoded = buildString {
+                parts.forEach { append(it.readText().trim()) }
+            }
+
+            val bytes = Base64.getDecoder().decode(encoded)
+            val output = File(
+                generatedArtworkResDir,
+                "drawable-nodpi/$outputName"
+            )
+            output.parentFile.mkdirs()
+            output.writeBytes(bytes)
+
+            val image = ImageIO.read(output)
+                ?: error("Generated artwork is not a readable PNG: ${output.path}")
+
+            check(image.width == expectedWidth && image.height == expectedHeight) {
+                "Unexpected artwork dimensions for $outputName: " +
+                    "${image.width}x${image.height}, expected " +
+                    "${expectedWidth}x${expectedHeight}"
+            }
+
+            check(output.length() > 5_000L) {
+                "Generated artwork is unexpectedly small: ${output.path}"
+            }
+        }
+
+        rebuildPng(
+            partsDir = File(artworkSourceDir, "icon"),
+            outputName = "app_icon_generated.png",
+            expectedWidth = 160,
+            expectedHeight = 160
+        )
+
+        rebuildPng(
+            partsDir = File(artworkSourceDir, "vial"),
+            outputName = "peptide_vial_generated.png",
+            expectedWidth = 192,
+            expectedHeight = 288
+        )
+    }
 }
 
 android {
@@ -12,15 +81,20 @@ android {
         applicationId = "gr.peptidetracker.app"
         minSdk = 26
         targetSdk = 36
-        versionCode = 17
-        versionName = "2.3.0"
+        versionCode = 18
+        versionName = "2.3.1"
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
+
+    sourceSets["main"].res.srcDir(generatedArtworkResDir)
 
     buildTypes {
         release {
             isMinifyEnabled = false
-            proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
+            proguardFiles(
+                getDefaultProguardFile("proguard-android-optimize.txt"),
+                "proguard-rules.pro"
+            )
         }
     }
 
@@ -30,13 +104,19 @@ android {
     }
 
     kotlinOptions { jvmTarget = "17" }
+
     buildFeatures {
         compose = true
         buildConfig = true
     }
+
     packaging {
         resources.excludes += "/META-INF/{AL2.0,LGPL2.1}"
     }
+}
+
+tasks.named("preBuild").configure {
+    dependsOn(generateArtwork)
 }
 
 dependencies {
