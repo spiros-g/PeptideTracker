@@ -27,6 +27,8 @@ import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.automirrored.outlined.Article
 import androidx.compose.material.icons.outlined.FavoriteBorder
 import androidx.compose.material.icons.rounded.Close
+import androidx.compose.material.icons.rounded.Calculate
+import androidx.compose.material.icons.rounded.Inventory2
 import androidx.compose.material.icons.rounded.Hub
 import androidx.compose.material.icons.automirrored.rounded.ManageSearch
 import androidx.compose.material.icons.automirrored.rounded.OpenInNew
@@ -34,10 +36,12 @@ import androidx.compose.material.icons.rounded.Science
 import androidx.compose.material.icons.rounded.Search
 import androidx.compose.material.icons.rounded.Shield
 import androidx.compose.material.icons.rounded.WarningAmber
+import androidx.compose.material3.Button
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -65,6 +69,7 @@ import gr.peptidetracker.app.ui.GlassCard
 import gr.peptidetracker.app.ui.NeonRose
 import gr.peptidetracker.app.ui.PremiumTopBar
 import gr.peptidetracker.app.ui.StoreVialImage
+import gr.peptidetracker.app.ui.premiumButtonColors
 import gr.peptidetracker.app.ui.premiumFilterChipColors
 import gr.peptidetracker.app.ui.premiumTextFieldColors
 
@@ -280,7 +285,9 @@ fun PeptideDetailScreen(
     peptide: PeptideInfo,
     store: LocalStore,
     imageIndex: Map<String, String>,
-    onBack: () -> Unit
+    onBack: () -> Unit,
+    onOpenCalculator: (PeptideInfo) -> Unit = {},
+    onAddInventory: (PeptideInfo) -> Unit = {}
 ) {
     val context = LocalContext.current
     var favorite by remember { mutableStateOf(peptide.id in store.favorites()) }
@@ -373,6 +380,31 @@ fun PeptideDetailScreen(
                         peptide.status,
                         style = MaterialTheme.typography.titleMedium
                     )
+                }
+            }
+        }
+
+        item {
+            Row(
+                Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(10.dp)
+            ) {
+                Button(
+                    onClick = { onOpenCalculator(peptide) },
+                    modifier = Modifier.weight(1f),
+                    colors = premiumButtonColors()
+                ) {
+                    Icon(Icons.Rounded.Calculate, contentDescription = null)
+                    Spacer(Modifier.width(6.dp))
+                    Text("Calculator", maxLines = 1)
+                }
+                OutlinedButton(
+                    onClick = { onAddInventory(peptide) },
+                    modifier = Modifier.weight(1f)
+                ) {
+                    Icon(Icons.Rounded.Inventory2, contentDescription = null)
+                    Spacer(Modifier.width(6.dp))
+                    Text("Απόθεμα", maxLines = 1)
                 }
             }
         }
