@@ -116,7 +116,7 @@ fun HomeScreen(
                         )
 
                         Text(
-                            "Συγκέντρωση, όγκος και μονάδες U-100 από τις τιμές που εισάγεις.",
+                            "Βάλε τι έχει το φιαλίδιο και πόσο διαλύτη πρόσθεσες. Ο υπολογιστής σου δείχνει συγκέντρωση, όγκο και μονάδες U-100.",
                             color = MaterialTheme.colorScheme.onSurfaceVariant,
                             style = MaterialTheme.typography.bodyMedium,
                             maxLines = 3,
@@ -172,8 +172,8 @@ fun HomeScreen(
                     onClick = { onNavigate(1) }
                 )
                 QuickActionCard(
-                    title = "Καταγραφές",
-                    subtitle = entries.size.toString() + " καταγραφές",
+                    title = "Ημερολόγιο",
+                    subtitle = entries.size.toString() + " χρήσεις πεπτιδίων",
                     icon = Icons.AutoMirrored.Rounded.EventNote,
                     accent = ElectricCyan,
                     modifier = Modifier.weight(1f),
@@ -189,7 +189,7 @@ fun HomeScreen(
             ) {
                 MetricCard(
                     value = entries.size.toString(),
-                    label = "Καταγρ.",
+                    label = "Χρήσεις",
                     modifier = Modifier.weight(1f)
                 )
                 MetricCard(
@@ -230,9 +230,9 @@ fun HomeScreen(
                         )
                         Spacer(Modifier.width(14.dp))
                         Column {
-                            Text("Δεν υπάρχουν καταγραφές", fontWeight = FontWeight.Bold)
+                            Text("Δεν έχεις καταγράψει χρήση", fontWeight = FontWeight.Bold)
                             Text(
-                                "Οι καταγραφές είναι έτοιμες για την πρώτη εγγραφή.",
+                                "Όταν καταγράψεις ότι χρησιμοποίησες ένα πεπτίδιο, θα εμφανιστεί εδώ η τελευταία σου εγγραφή.",
                                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                                 style = MaterialTheme.typography.bodySmall
                             )
