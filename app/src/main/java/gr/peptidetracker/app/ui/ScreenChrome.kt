@@ -8,7 +8,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.rounded.ArrowBack
+import androidx.compose.material.icons.automirrored.rounded.ArrowBack
 import androidx.compose.material.icons.rounded.Settings
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -39,7 +39,7 @@ fun PremiumTopBar(
                     .size(42.dp)
                     .background(Color.White.copy(alpha = 0.08f), CircleShape)
             ) {
-                Icon(Icons.Rounded.ArrowBack, contentDescription = "Πίσω")
+                Icon(Icons.AutoMirrored.Rounded.ArrowBack, contentDescription = "Πίσω")
             }
             Spacer(Modifier.size(12.dp))
         }
