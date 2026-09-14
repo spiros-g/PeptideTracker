@@ -1,12 +1,19 @@
 package gr.peptidetracker.app.data
 
 import android.content.Context
+import androidx.room.Entity
+import androidx.room.Ignore
+import androidx.room.PrimaryKey
+import gr.peptidetracker.app.domain.InventoryLedger
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.runBlocking
 import org.json.JSONArray
 import org.json.JSONObject
 import java.math.BigDecimal
 
+@Entity(tableName = "tracker_entries")
 data class TrackerEntry(
-    val id: Long,
+    @PrimaryKey val id: Long,
     val peptide: String,
     val amount: String,
     val note: String,
@@ -18,16 +25,18 @@ data class TrackerEntry(
     val inventoryAppliedMg: Double? = null
 )
 
+@Entity(tableName = "progress_entries")
 data class ProgressEntry(
-    val id: Long,
+    @PrimaryKey val id: Long,
     val weight: Double,
     val waist: Double?,
     val note: String,
     val createdAt: Long
 )
 
+@Entity(tableName = "inventory_entries")
 data class InventoryEntry(
-    val id: Long,
+    @PrimaryKey val id: Long,
     val peptide: String,
     val vialMg: Double,
     val quantity: Int,
@@ -38,21 +47,26 @@ data class InventoryEntry(
     val diluentMl: Double? = null,
     val syringeUnitsPerMl: Int = 100
 ) {
+    @get:Ignore
     val effectiveRemainingMg: Double
         get() = remainingMg ?: vialMg
 
+    @get:Ignore
     val isReconstituted: Boolean
         get() = diluentMl != null && diluentMl > 0
 
+    @get:Ignore
     val concentrationMgPerMl: Double?
         get() = diluentMl?.takeIf { it > 0 }?.let { vialMg / it }
 
+    @get:Ignore
     val mcgPerSyringeUnit: Double?
         get() = concentrationMgPerMl?.let { it * 1000.0 / syringeUnitsPerMl.coerceAtLeast(1) }
 }
 
+@Entity(tableName = "reminder_entries")
 data class ReminderEntry(
-    val id: Long,
+    @PrimaryKey val id: Long,
     val peptide: String,
     val note: String,
     val scheduledAt: Long,
@@ -61,8 +75,9 @@ data class ReminderEntry(
     val createdAt: Long
 )
 
+@Entity(tableName = "saved_calculations")
 data class SavedCalculationEntry(
-    val id: Long,
+    @PrimaryKey val id: Long,
     val peptide: String,
     val vialMg: Double,
     val diluentMl: Double,
@@ -80,19 +95,25 @@ data class BackupSummary(
     val inventory: Int,
     val progress: Int,
     val reminders: Int,
-    val savedCalculations: Int
+    val savedCalculations: Int,
+    val customPeptides: Int
 )
 
 class LocalStore(context: Context) {
     private val appContext = context.applicationContext
     private val prefs = appContext.getSharedPreferences("peptide_tracker", Context.MODE_PRIVATE)
+    private val database = AppDatabase.get(appContext)
+    private val dao = database.dao()
+
+    init {
+        migrateLegacyToRoomIfNeeded()
+    }
+
+    private fun <T> io(block: () -> T): T = runBlocking(Dispatchers.IO) { block() }
 
     private fun safe(value: String) = value.replace("|", "/").replace("\n", " ")
     private fun formatNumber(value: Double): String =
         BigDecimal.valueOf(value).stripTrailingZeros().toPlainString()
-
-    fun darkMode() = prefs.getBoolean("dark", true)
-    fun setDarkMode(value: Boolean) = prefs.edit().putBoolean("dark", value).apply()
 
     fun defaultSyringeUnitsPerMl(): Int =
         prefs.getInt("default_syringe_units_per_ml", 100)
@@ -107,36 +128,37 @@ class LocalStore(context: Context) {
     fun setOnboardingComplete(value: Boolean) =
         prefs.edit().putBoolean("onboarding_complete", value).apply()
 
-    fun favorites() = prefs.getStringSet("favorites", emptySet()).orEmpty()
+    fun favorites(): Set<String> = io { dao.favoriteIds().toSet() }
+
     fun toggleFavorite(id: String) {
-        val next = favorites().toMutableSet()
-        if (!next.add(id)) next.remove(id)
-        prefs.edit().putStringSet("favorites", next).apply()
-    }
-
-    fun entries(): List<TrackerEntry> {
-        val json = prefs.getString(KEY_ENTRIES_V2, null)
-        if (json != null) {
-            return runCatching { decodeEntries(JSONArray(json)) }
-                .getOrDefault(emptyList())
-                .sortedByDescending { it.createdAt }
-        }
-
-        return prefs.getStringSet("entries", emptySet()).orEmpty().mapNotNull {
-            val p = it.split("|", limit = 5)
-            if (p.size == 5) {
-                TrackerEntry(
-                    id = p[0].toLongOrNull() ?: return@mapNotNull null,
-                    peptide = p[1],
-                    amount = p[2],
-                    note = p[3],
-                    createdAt = p[4].toLongOrNull() ?: return@mapNotNull null
-                )
+        io {
+            if (id in dao.favoriteIds()) {
+                dao.deleteFavorite(id)
             } else {
-                null
+                dao.insertFavorite(FavoriteEntry(id))
             }
-        }.sortedByDescending { it.createdAt }
+        }
     }
+
+    fun customPeptides(): List<String> = io { dao.customPeptideNames() }
+
+    fun peptideNames(): List<String> =
+        (peptideCatalog.map { it.name } + customPeptides())
+            .distinctBy { it.lowercase() }
+            .sortedBy { it.lowercase() }
+
+    fun addCustomPeptide(name: String): Boolean {
+        val cleaned = safe(name.trim())
+        if (cleaned.length < 2) return false
+        io { dao.insertCustomPeptide(CustomPeptideEntry(cleaned, System.currentTimeMillis())) }
+        return true
+    }
+
+    fun deleteCustomPeptide(name: String) {
+        io { dao.deleteCustomPeptide(name) }
+    }
+
+    fun entries(): List<TrackerEntry> = io { dao.trackerEntries() }
 
     fun add(peptide: String, amount: String, note: String) {
         val now = System.currentTimeMillis()
@@ -264,29 +286,7 @@ class LocalStore(context: Context) {
         return current
     }
 
-    fun progress(): List<ProgressEntry> {
-        val json = prefs.getString(KEY_PROGRESS_V2, null)
-        if (json != null) {
-            return runCatching { decodeProgress(JSONArray(json)) }
-                .getOrDefault(emptyList())
-                .sortedByDescending { it.createdAt }
-        }
-
-        return prefs.getStringSet("progress", emptySet()).orEmpty().mapNotNull {
-            val p = it.split("|", limit = 5)
-            if (p.size == 5) {
-                ProgressEntry(
-                    id = p[0].toLongOrNull() ?: return@mapNotNull null,
-                    weight = p[1].toDoubleOrNull() ?: return@mapNotNull null,
-                    waist = p[2].takeIf(String::isNotBlank)?.toDoubleOrNull(),
-                    note = p[3],
-                    createdAt = p[4].toLongOrNull() ?: return@mapNotNull null
-                )
-            } else {
-                null
-            }
-        }.sortedByDescending { it.createdAt }
-    }
+    fun progress(): List<ProgressEntry> = io { dao.progressEntries() }
 
     fun addProgress(weight: Double, waist: Double?, note: String) {
         require(weight > 0)
@@ -314,29 +314,7 @@ class LocalStore(context: Context) {
         saveProgress(progress().filterNot { it.id == id })
     }
 
-    fun inventory(): List<InventoryEntry> {
-        val json = prefs.getString(KEY_INVENTORY_V2, null)
-        if (json != null) {
-            return runCatching { decodeInventory(JSONArray(json)) }
-                .getOrDefault(emptyList())
-                .sortedWith(compareByDescending<InventoryEntry> { it.active }.thenBy { it.peptide })
-        }
-
-        return prefs.getStringSet("inventory", emptySet()).orEmpty().mapNotNull {
-            val p = it.split("|", limit = 5)
-            if (p.size >= 5) {
-                InventoryEntry(
-                    id = p[0].toLongOrNull() ?: return@mapNotNull null,
-                    peptide = p[1],
-                    vialMg = p[2].toDoubleOrNull() ?: return@mapNotNull null,
-                    quantity = p[3].toIntOrNull() ?: return@mapNotNull null,
-                    batch = p[4]
-                )
-            } else {
-                null
-            }
-        }.sortedBy { it.peptide }
-    }
+    fun inventory(): List<InventoryEntry> = io { dao.inventoryEntries() }
 
     fun addInventory(
         peptide: String,
@@ -419,65 +397,26 @@ class LocalStore(context: Context) {
     }
 
     fun consumeInventory(id: Long, amountMg: Double): Boolean {
-        if (amountMg <= 0) return false
         val rows = inventory()
-        val target = rows.firstOrNull { it.id == id && it.active && it.quantity > 0 } ?: return false
-        val remaining = target.effectiveRemainingMg
-        if (amountMg > remaining + 0.0000001) return false
-
-        val next = rows.map { row ->
-            if (row.id != id) {
-                row
-            } else if (amountMg < remaining - 0.0000001) {
-                row.copy(remainingMg = (remaining - amountMg).coerceAtLeast(0.0))
-            } else {
-                row.copy(
-                    quantity = (row.quantity - 1).coerceAtLeast(0),
-                    remainingMg = 0.0,
-                    active = false,
-                    openedAt = null
-                )
-            }
-        }
-        saveInventory(next)
+        val target = rows.firstOrNull { it.id == id } ?: return false
+        val updated = InventoryLedger.consume(target, amountMg) ?: return false
+        saveInventory(rows.map { if (it.id == id) updated else it })
         return true
     }
 
     fun restoreInventory(id: Long, amountMg: Double): Boolean {
-        if (amountMg <= 0) return false
-        var restored = false
         val rows = inventory()
-        val next = rows.map { row ->
-            if (row.id != id) return@map row
-
-            restored = true
-            when {
-                row.active && row.quantity > 0 -> {
-                    row.copy(remainingMg = (row.effectiveRemainingMg + amountMg).coerceAtMost(row.vialMg))
-                }
-                row.effectiveRemainingMg <= 0.0000001 -> {
-                    row.copy(
-                        quantity = row.quantity + 1,
-                        remainingMg = amountMg.coerceAtMost(row.vialMg),
-                        active = true,
-                        openedAt = System.currentTimeMillis()
-                    )
-                }
-                else -> {
-                    row.copy(remainingMg = (row.effectiveRemainingMg + amountMg).coerceAtMost(row.vialMg))
-                }
-            }
-        }
-        if (restored) saveInventory(next)
-        return restored
+        val target = rows.firstOrNull { it.id == id } ?: return false
+        val updated = InventoryLedger.restore(
+            row = target,
+            amountMg = amountMg,
+            now = System.currentTimeMillis()
+        ) ?: return false
+        saveInventory(rows.map { if (it.id == id) updated else it })
+        return true
     }
 
-    fun reminders(): List<ReminderEntry> {
-        val json = prefs.getString(KEY_REMINDERS_V1, null) ?: return emptyList()
-        return runCatching { decodeReminders(JSONArray(json)) }
-            .getOrDefault(emptyList())
-            .sortedWith(compareByDescending<ReminderEntry> { it.enabled }.thenBy { it.scheduledAt })
-    }
+    fun reminders(): List<ReminderEntry> = io { dao.reminderEntries() }
 
     fun addReminder(
         peptide: String,
@@ -562,12 +501,7 @@ class LocalStore(context: Context) {
         return nextRow
     }
 
-    fun savedCalculations(): List<SavedCalculationEntry> {
-        val json = prefs.getString(KEY_CALCULATIONS_V1, null) ?: return emptyList()
-        return runCatching { decodeCalculations(JSONArray(json)) }
-            .getOrDefault(emptyList())
-            .sortedByDescending { it.createdAt }
-    }
+    fun savedCalculations(): List<SavedCalculationEntry> = io { dao.savedCalculations() }
 
     fun addSavedCalculation(
         peptide: String,
@@ -610,9 +544,8 @@ class LocalStore(context: Context) {
 
     fun exportJson(): String {
         val root = JSONObject()
-            .put("schema", 7)
+            .put("schema", 8)
             .put("generatedAt", System.currentTimeMillis())
-            .put("darkMode", darkMode())
             .put("defaultSyringeUnitsPerMl", defaultSyringeUnitsPerMl())
             .put("onboardingComplete", onboardingComplete())
             .put("favorites", JSONArray(favorites().toList()))
@@ -621,27 +554,29 @@ class LocalStore(context: Context) {
             .put("progress", encodeProgress(progress()))
             .put("reminders", encodeReminders(reminders()))
             .put("savedCalculations", encodeCalculations(savedCalculations()))
+            .put("customPeptides", JSONArray(customPeptides()))
         return root.toString(2)
     }
 
     fun inspectBackup(raw: String): BackupSummary? = runCatching {
         val root = JSONObject(raw)
         val schema = root.optInt("schema", 1)
-        require(schema in 1..7)
+        require(schema in 1..8)
         BackupSummary(
             schema = schema,
             entries = root.optJSONArray("entries")?.length() ?: 0,
             inventory = root.optJSONArray("inventory")?.length() ?: 0,
             progress = root.optJSONArray("progress")?.length() ?: 0,
             reminders = root.optJSONArray("reminders")?.length() ?: 0,
-            savedCalculations = root.optJSONArray("savedCalculations")?.length() ?: 0
+            savedCalculations = root.optJSONArray("savedCalculations")?.length() ?: 0,
+            customPeptides = root.optJSONArray("customPeptides")?.length() ?: 0
         )
     }.getOrNull()
 
     fun restoreJson(raw: String): Boolean = runCatching {
         val root = JSONObject(raw)
         val schema = root.optInt("schema", 1)
-        require(schema in 1..7)
+        require(schema in 1..8)
         val previousReminderIds = reminders().map { it.id }
         prefs.edit().putString(KEY_PRE_RESTORE_BACKUP, exportJson()).commit()
 
@@ -650,6 +585,12 @@ class LocalStore(context: Context) {
         val decodedProgress = decodeProgress(root.optJSONArray("progress") ?: JSONArray())
         val decodedReminders = decodeReminders(root.optJSONArray("reminders") ?: JSONArray())
         val decodedCalculations = decodeCalculations(root.optJSONArray("savedCalculations") ?: JSONArray())
+        val decodedCustomPeptides = buildList {
+            val customJson = root.optJSONArray("customPeptides") ?: JSONArray()
+            for (i in 0 until customJson.length()) {
+                customJson.optString(i).trim().takeIf { it.length >= 2 }?.let(::add)
+            }
+        }
 
         val favoriteSet = mutableSetOf<String>()
         val favoritesJson = root.optJSONArray("favorites") ?: JSONArray()
@@ -657,14 +598,26 @@ class LocalStore(context: Context) {
             favoritesJson.optString(i).takeIf { it.isNotBlank() }?.let(favoriteSet::add)
         }
 
+        io {
+            database.runInTransaction {
+                dao.clearTrackerEntries()
+                dao.clearInventoryEntries()
+                dao.clearProgressEntries()
+                dao.clearReminderEntries()
+                dao.clearSavedCalculations()
+                dao.clearFavorites()
+                dao.clearCustomPeptides()
+                if (decodedEntries.isNotEmpty()) dao.insertTrackerEntries(decodedEntries)
+                if (decodedInventory.isNotEmpty()) dao.insertInventoryEntries(decodedInventory)
+                if (decodedProgress.isNotEmpty()) dao.insertProgressEntries(decodedProgress)
+                if (decodedReminders.isNotEmpty()) dao.insertReminderEntries(decodedReminders)
+                if (decodedCalculations.isNotEmpty()) dao.insertSavedCalculations(decodedCalculations)
+                if (favoriteSet.isNotEmpty()) dao.insertFavorites(favoriteSet.map(::FavoriteEntry))
+                decodedCustomPeptides.forEach { dao.insertCustomPeptide(CustomPeptideEntry(it, System.currentTimeMillis())) }
+            }
+        }
+
         prefs.edit()
-            .putString(KEY_ENTRIES_V2, encodeEntries(decodedEntries).toString())
-            .putString(KEY_INVENTORY_V2, encodeInventory(decodedInventory).toString())
-            .putString(KEY_PROGRESS_V2, encodeProgress(decodedProgress).toString())
-            .putString(KEY_REMINDERS_V1, encodeReminders(decodedReminders).toString())
-            .putString(KEY_CALCULATIONS_V1, encodeCalculations(decodedCalculations).toString())
-            .putStringSet("favorites", favoriteSet)
-            .putBoolean("dark", root.optBoolean("darkMode", darkMode()))
             .putInt(
                 "default_syringe_units_per_ml",
                 root.optInt("defaultSyringeUnitsPerMl", defaultSyringeUnitsPerMl())
@@ -712,24 +665,39 @@ class LocalStore(context: Context) {
         return id
     }
 
-    private fun saveEntries(rows: List<TrackerEntry>) {
-        prefs.edit().putString(KEY_ENTRIES_V2, encodeEntries(rows).toString()).apply()
+    private fun saveEntries(rows: List<TrackerEntry>) = io {
+        database.runInTransaction {
+            dao.clearTrackerEntries()
+            if (rows.isNotEmpty()) dao.insertTrackerEntries(rows)
+        }
     }
 
-    private fun saveProgress(rows: List<ProgressEntry>) {
-        prefs.edit().putString(KEY_PROGRESS_V2, encodeProgress(rows).toString()).apply()
+    private fun saveProgress(rows: List<ProgressEntry>) = io {
+        database.runInTransaction {
+            dao.clearProgressEntries()
+            if (rows.isNotEmpty()) dao.insertProgressEntries(rows)
+        }
     }
 
-    private fun saveInventory(rows: List<InventoryEntry>) {
-        prefs.edit().putString(KEY_INVENTORY_V2, encodeInventory(rows).toString()).apply()
+    private fun saveInventory(rows: List<InventoryEntry>) = io {
+        database.runInTransaction {
+            dao.clearInventoryEntries()
+            if (rows.isNotEmpty()) dao.insertInventoryEntries(rows)
+        }
     }
 
-    private fun saveReminders(rows: List<ReminderEntry>) {
-        prefs.edit().putString(KEY_REMINDERS_V1, encodeReminders(rows).toString()).apply()
+    private fun saveReminders(rows: List<ReminderEntry>) = io {
+        database.runInTransaction {
+            dao.clearReminderEntries()
+            if (rows.isNotEmpty()) dao.insertReminderEntries(rows)
+        }
     }
 
-    private fun saveCalculations(rows: List<SavedCalculationEntry>) {
-        prefs.edit().putString(KEY_CALCULATIONS_V1, encodeCalculations(rows).toString()).apply()
+    private fun saveCalculations(rows: List<SavedCalculationEntry>) = io {
+        database.runInTransaction {
+            dao.clearSavedCalculations()
+            if (rows.isNotEmpty()) dao.insertSavedCalculations(rows)
+        }
     }
 
     private fun encodeEntries(rows: List<TrackerEntry>) = JSONArray().apply {
@@ -913,6 +881,80 @@ class LocalStore(context: Context) {
         }
     }
 
+    private fun migrateLegacyToRoomIfNeeded() {
+        if (prefs.getBoolean(KEY_ROOM_MIGRATED, false)) return
+
+        val legacyEntries = runCatching {
+            prefs.getString(KEY_ENTRIES_V2, null)?.let { decodeEntries(JSONArray(it)) }
+                ?: prefs.getStringSet("entries", emptySet()).orEmpty().mapNotNull {
+                    val p = it.split("|", limit = 5)
+                    if (p.size != 5) return@mapNotNull null
+                    TrackerEntry(
+                        id = p[0].toLongOrNull() ?: return@mapNotNull null,
+                        peptide = p[1],
+                        amount = p[2],
+                        note = p[3],
+                        createdAt = p[4].toLongOrNull() ?: return@mapNotNull null
+                    )
+                }
+        }.getOrDefault(emptyList())
+
+        val legacyInventory = runCatching {
+            prefs.getString(KEY_INVENTORY_V2, null)?.let { decodeInventory(JSONArray(it)) }
+                ?: prefs.getStringSet("inventory", emptySet()).orEmpty().mapNotNull {
+                    val p = it.split("|", limit = 5)
+                    if (p.size < 5) return@mapNotNull null
+                    InventoryEntry(
+                        id = p[0].toLongOrNull() ?: return@mapNotNull null,
+                        peptide = p[1],
+                        vialMg = p[2].toDoubleOrNull() ?: return@mapNotNull null,
+                        quantity = p[3].toIntOrNull() ?: return@mapNotNull null,
+                        batch = p[4]
+                    )
+                }
+        }.getOrDefault(emptyList())
+
+        val legacyProgress = runCatching {
+            prefs.getString(KEY_PROGRESS_V2, null)?.let { decodeProgress(JSONArray(it)) }
+                ?: prefs.getStringSet("progress", emptySet()).orEmpty().mapNotNull {
+                    val p = it.split("|", limit = 5)
+                    if (p.size != 5) return@mapNotNull null
+                    ProgressEntry(
+                        id = p[0].toLongOrNull() ?: return@mapNotNull null,
+                        weight = p[1].toDoubleOrNull() ?: return@mapNotNull null,
+                        waist = p[2].takeIf(String::isNotBlank)?.toDoubleOrNull(),
+                        note = p[3],
+                        createdAt = p[4].toLongOrNull() ?: return@mapNotNull null
+                    )
+                }
+        }.getOrDefault(emptyList())
+
+        val legacyReminders = runCatching {
+            prefs.getString(KEY_REMINDERS_V1, null)?.let { decodeReminders(JSONArray(it)) }
+        }.getOrNull().orEmpty()
+
+        val legacyCalculations = runCatching {
+            prefs.getString(KEY_CALCULATIONS_V1, null)?.let { decodeCalculations(JSONArray(it)) }
+        }.getOrNull().orEmpty()
+
+        val legacyFavorites = prefs.getStringSet("favorites", emptySet()).orEmpty()
+
+        io {
+            database.runInTransaction {
+                if (dao.trackerEntries().isEmpty() && legacyEntries.isNotEmpty()) dao.insertTrackerEntries(legacyEntries)
+                if (dao.inventoryEntries().isEmpty() && legacyInventory.isNotEmpty()) dao.insertInventoryEntries(legacyInventory)
+                if (dao.progressEntries().isEmpty() && legacyProgress.isNotEmpty()) dao.insertProgressEntries(legacyProgress)
+                if (dao.reminderEntries().isEmpty() && legacyReminders.isNotEmpty()) dao.insertReminderEntries(legacyReminders)
+                if (dao.savedCalculations().isEmpty() && legacyCalculations.isNotEmpty()) dao.insertSavedCalculations(legacyCalculations)
+                if (dao.favoriteIds().isEmpty() && legacyFavorites.isNotEmpty()) {
+                    dao.insertFavorites(legacyFavorites.map(::FavoriteEntry))
+                }
+            }
+        }
+
+        prefs.edit().putBoolean(KEY_ROOM_MIGRATED, true).commit()
+    }
+
     private fun csv(value: String): String =
         "\"" + value.replace("\"", "\"\"") + "\""
 
@@ -923,6 +965,7 @@ class LocalStore(context: Context) {
         const val KEY_REMINDERS_V1 = "reminders_v1_json"
         const val KEY_CALCULATIONS_V1 = "calculations_v1_json"
         const val KEY_PRE_RESTORE_BACKUP = "pre_restore_backup_json"
+        const val KEY_ROOM_MIGRATED = "room_migrated_v1"
         const val DAY_MS = 24L * 60L * 60L * 1000L
     }
 }
