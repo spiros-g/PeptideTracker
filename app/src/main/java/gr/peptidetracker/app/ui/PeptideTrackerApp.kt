@@ -42,6 +42,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import gr.peptidetracker.app.data.LocalStore
 import gr.peptidetracker.app.data.PeptideInfo
 import gr.peptidetracker.app.ui.screens.CalculatorScreen
@@ -214,8 +215,9 @@ private fun PremiumBottomBar(
                     Text(
                         destination.label,
                         color = tint,
-                        style = MaterialTheme.typography.labelSmall,
-                        fontWeight = if (active) FontWeight.ExtraBold else FontWeight.SemiBold
+                        style = MaterialTheme.typography.labelSmall.copy(fontSize = 10.sp),
+                        fontWeight = if (active) FontWeight.ExtraBold else FontWeight.SemiBold,
+                        maxLines = 1
                     )
                 }
             }
