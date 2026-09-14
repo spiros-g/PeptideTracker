@@ -47,6 +47,7 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import gr.peptidetracker.app.domain.PeptideCalculator
@@ -91,11 +92,11 @@ fun CalculatorScreen(
             GlassCard(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(154.dp),
+                    .height(196.dp),
                 contentPadding = PaddingValues(0.dp)
             ) {
-                Box(
-                    Modifier
+                Row(
+                    modifier = Modifier
                         .fillMaxSize()
                         .background(
                             Brush.horizontalGradient(
@@ -106,36 +107,45 @@ fun CalculatorScreen(
                                 )
                             )
                         )
-                        .padding(18.dp)
+                        .padding(horizontal = 18.dp, vertical = 18.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
                     Column(
-                        Modifier
-                            .align(Alignment.CenterStart)
-                            .fillMaxWidth(0.68f)
+                        modifier = Modifier.weight(1f),
+                        verticalArrangement = Arrangement.spacedBy(6.dp)
                     ) {
                         Text(
                             "ΑΝΑΣΥΣΤΑΣΗ & ΔΟΣΟΜΕΤΡΙΑ",
                             color = ElectricCyan,
                             style = MaterialTheme.typography.labelLarge,
-                            fontWeight = FontWeight.ExtraBold
+                            fontWeight = FontWeight.ExtraBold,
+                            maxLines = 2,
+                            overflow = TextOverflow.Ellipsis
                         )
-                        Spacer(Modifier.height(6.dp))
+
                         Text(
                             "mg · mcg · mL · U-100",
-                            style = MaterialTheme.typography.headlineMedium
+                            style = MaterialTheme.typography.headlineMedium,
+                            fontWeight = FontWeight.ExtraBold,
+                            maxLines = 2,
+                            overflow = TextOverflow.Ellipsis
                         )
+
                         Text(
-                            "Υπολογισμός από ποσότητα σε μονάδες U-100 και αντίστροφα.",
+                            "Μετατροπή ποσότητας σε όγκο και μονάδες U-100, και αντίστροφα.",
                             color = MaterialTheme.colorScheme.onSurfaceVariant,
-                            style = MaterialTheme.typography.bodySmall
+                            style = MaterialTheme.typography.bodySmall,
+                            maxLines = 3,
+                            overflow = TextOverflow.Ellipsis
                         )
                     }
+
                     StoreVialImage(
                         productKey = "retatrutide",
                         imageIndex = imageIndex,
-                        modifier = Modifier
-                            .size(width = 88.dp, height = 122.dp)
-                            .align(Alignment.CenterEnd)
+                        modifier = Modifier.size(width = 82.dp, height = 150.dp),
+                        contentDescription = "Φιαλίδιο πεπτιδίου"
                     )
                 }
             }
