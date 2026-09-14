@@ -60,6 +60,15 @@ class LocalStore(context: Context) {
     fun darkMode() = prefs.getBoolean("dark", true)
     fun setDarkMode(value: Boolean) = prefs.edit().putBoolean("dark", value).apply()
 
+    fun defaultSyringeUnitsPerMl(): Int =
+        prefs.getInt("default_syringe_units_per_ml", 100)
+            .takeIf { it == 40 || it == 100 } ?: 100
+
+    fun setDefaultSyringeUnitsPerMl(value: Int) {
+        require(value == 40 || value == 100)
+        prefs.edit().putInt("default_syringe_units_per_ml", value).apply()
+    }
+
     fun onboardingComplete() = prefs.getBoolean("onboarding_complete", false)
     fun setOnboardingComplete(value: Boolean) =
         prefs.edit().putBoolean("onboarding_complete", value).apply()
@@ -365,9 +374,10 @@ class LocalStore(context: Context) {
 
     fun exportJson(): String {
         val root = JSONObject()
-            .put("schema", 3)
+            .put("schema", 4)
             .put("generatedAt", System.currentTimeMillis())
             .put("darkMode", darkMode())
+            .put("defaultSyringeUnitsPerMl", defaultSyringeUnitsPerMl())
             .put("onboardingComplete", onboardingComplete())
             .put("favorites", JSONArray(favorites().toList()))
             .put("entries", encodeEntries(entries()))
@@ -379,7 +389,7 @@ class LocalStore(context: Context) {
     fun restoreJson(raw: String): Boolean = runCatching {
         val root = JSONObject(raw)
         val schema = root.optInt("schema", 1)
-        require(schema in 1..3)
+        require(schema in 1..4)
 
         val decodedEntries = decodeEntries(root.optJSONArray("entries") ?: JSONArray())
         val decodedInventory = decodeInventory(root.optJSONArray("inventory") ?: JSONArray())
@@ -397,6 +407,11 @@ class LocalStore(context: Context) {
             .putString(KEY_PROGRESS_V2, encodeProgress(decodedProgress).toString())
             .putStringSet("favorites", favoriteSet)
             .putBoolean("dark", root.optBoolean("darkMode", darkMode()))
+            .putInt(
+                "default_syringe_units_per_ml",
+                root.optInt("defaultSyringeUnitsPerMl", defaultSyringeUnitsPerMl())
+                    .takeIf { it == 40 || it == 100 } ?: 100
+            )
             .putBoolean("onboarding_complete", root.optBoolean("onboardingComplete", true))
             .apply()
         true
