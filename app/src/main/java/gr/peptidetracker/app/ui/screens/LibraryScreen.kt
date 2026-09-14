@@ -24,12 +24,12 @@ import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Favorite
-import androidx.compose.material.icons.outlined.Article
+import androidx.compose.material.icons.automirrored.outlined.Article
 import androidx.compose.material.icons.outlined.FavoriteBorder
 import androidx.compose.material.icons.rounded.Close
 import androidx.compose.material.icons.rounded.Hub
-import androidx.compose.material.icons.rounded.ManageSearch
-import androidx.compose.material.icons.rounded.OpenInNew
+import androidx.compose.material.icons.automirrored.rounded.ManageSearch
+import androidx.compose.material.icons.automirrored.rounded.OpenInNew
 import androidx.compose.material.icons.rounded.Science
 import androidx.compose.material.icons.rounded.Search
 import androidx.compose.material.icons.rounded.Shield
@@ -392,7 +392,7 @@ fun PeptideDetailScreen(
             DetailInfoCard(
                 title = "Ερευνητικά πεδία",
                 text = peptide.research,
-                icon = Icons.Rounded.ManageSearch,
+                icon = Icons.AutoMirrored.Rounded.ManageSearch,
                 accent = ElectricCyan
             )
         }
@@ -440,7 +440,7 @@ fun PeptideDetailScreen(
                         contentAlignment = Alignment.Center
                     ) {
                         Icon(
-                            Icons.Outlined.Article,
+                            Icons.AutoMirrored.Outlined.Article,
                             contentDescription = null,
                             tint = ElectricBlue
                         )
@@ -460,7 +460,7 @@ fun PeptideDetailScreen(
                         )
                     }
                     Icon(
-                        Icons.Rounded.OpenInNew,
+                        Icons.AutoMirrored.Rounded.OpenInNew,
                         contentDescription = "Άνοιγμα",
                         tint = MaterialTheme.colorScheme.onSurfaceVariant
                     )
