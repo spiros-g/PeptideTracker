@@ -82,7 +82,7 @@ fun CalculatorScreen(
     ) {
         item {
             PremiumTopBar(
-                title = "Υπολογιστής Ανασύστασης & Δόσης",
+                title = "Υπολογιστής Ανασύστασης & Δοσολογίας",
                 subtitle = "Ανασύσταση, συγκέντρωση, όγκος και μονάδες σύριγγας."
             )
         }
@@ -114,7 +114,7 @@ fun CalculatorScreen(
                             .fillMaxWidth(0.68f)
                     ) {
                         Text(
-                            "ΑΝΑΣΥΣΤΑΣΗ & ΥΠΟΛΟΓΙΣΜΟΣ ΔΟΣΗΣ",
+                            "ΑΝΑΣΥΣΤΑΣΗ & ΔΟΣΟΜΕΤΡΙΑ",
                             color = ElectricCyan,
                             style = MaterialTheme.typography.labelLarge,
                             fontWeight = FontWeight.ExtraBold
@@ -247,7 +247,7 @@ fun CalculatorScreen(
             CalculatorStep(
                 number = "04",
                 title = if (reverse) "Μονάδες σύριγγας" else "Επιθυμητή ποσότητα",
-                subtitle = if (reverse) "Ένδειξη σε μονάδες σύριγγας U-100" else "Ποσότητα που θέλεις να μετατρέψεις σε όγκο και μονάδες",
+                subtitle = if (reverse) "Ένδειξη σε μονάδες σύριγγας U-100" else "Ποσότητα που εισάγεις για μετατροπή σε όγκο και μονάδες",
                 icon = Icons.Rounded.InvertColors,
                 accent = Color(0xFFFFB36B)
             ) {
