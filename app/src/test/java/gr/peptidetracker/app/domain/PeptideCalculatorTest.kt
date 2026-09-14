@@ -25,6 +25,15 @@ class PeptideCalculatorTest {
     @Test fun u40AndMcgInput() {
         assertEquals(125.0, PeptideCalculator.concentration(5000.0, true, 1.0, 40).mcgPerUnit, 0.000001)
     }
+    @Test fun u40DoseAndReverseUseFortyUnitsPerMl() {
+        val dose = PeptideCalculator.dose(10.0, 2.0, 250.0, false, 40)
+        assertEquals(0.05, dose.volumeMl, 0.000001)
+        assertEquals(2.0, dose.syringeUnits, 0.000001)
+
+        val reverse = PeptideCalculator.reverse(10.0, 2.0, 2.0, 40)
+        assertEquals(0.05, reverse.volumeMl, 0.000001)
+        assertEquals(250.0, reverse.amountMcg, 0.000001)
+    }
     @Test fun rejectsInvalidValues() {
         assertThrows(IllegalArgumentException::class.java) { PeptideCalculator.dose(10.0, 0.0, 1.0, true, 100) }
     }
