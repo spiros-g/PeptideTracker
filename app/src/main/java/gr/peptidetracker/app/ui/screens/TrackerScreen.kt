@@ -219,14 +219,21 @@ fun TrackerScreen(
                 subtitle = "Χρήσεις, ενεργά φιαλίδια, απόθεμα και προσωπικές μετρήσεις."
             )
 
-            Row(
-                Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(7.dp)
-            ) {
-                TrackerTab("Χρήσεις", section == 0, Modifier.weight(1f)) { section = 0 }
-                TrackerTab("Απόθεμα", section == 1, Modifier.weight(1f)) { section = 1 }
-                TrackerTab("Μετρήσεις", section == 2, Modifier.weight(1f)) { section = 2 }
-                TrackerTab("Στατ.", section == 3, Modifier.weight(1f)) { section = 3 }
+            Column(verticalArrangement = Arrangement.spacedBy(7.dp)) {
+                Row(
+                    Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(7.dp)
+                ) {
+                    TrackerTab("Χρήσεις", section == 0, Modifier.weight(1f)) { section = 0 }
+                    TrackerTab("Απόθεμα", section == 1, Modifier.weight(1f)) { section = 1 }
+                }
+                Row(
+                    Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(7.dp)
+                ) {
+                    TrackerTab("Μετρήσεις", section == 2, Modifier.weight(1f)) { section = 2 }
+                    TrackerTab("Στατιστικά", section == 3, Modifier.weight(1f)) { section = 3 }
+                }
             }
 
             TextButton(
@@ -680,12 +687,11 @@ private fun StatisticsSection(
     val estimatedInventoryMg = inventory.sumOf { row ->
         if (row.quantity <= 0) {
             0.0
+        } else if (row.active) {
+            row.effectiveRemainingMg +
+                (row.quantity - 1).coerceAtLeast(0) * row.vialMg
         } else {
-            val activeCount = if (row.active) 1 else 0
-            val unopenedCount = (row.quantity - activeCount).coerceAtLeast(0)
-            (if (row.active) row.effectiveRemainingMg else 0.0) +
-                unopenedCount * row.vialMg +
-                (if (!row.active) row.vialMg else 0.0)
+            row.quantity * row.vialMg
         }
     }
     val newestWeight = progress.firstOrNull()?.weight
