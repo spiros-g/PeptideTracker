@@ -14,7 +14,8 @@ data class TrackerEntry(
     val amountValue: Double? = null,
     val unit: String = "",
     val site: String = "",
-    val inventoryId: Long? = null
+    val inventoryId: Long? = null,
+    val inventoryAppliedMg: Double? = null
 )
 
 data class ProgressEntry(
@@ -73,8 +74,18 @@ data class SavedCalculationEntry(
     val createdAt: Long
 )
 
+data class BackupSummary(
+    val schema: Int,
+    val entries: Int,
+    val inventory: Int,
+    val progress: Int,
+    val reminders: Int,
+    val savedCalculations: Int
+)
+
 class LocalStore(context: Context) {
-    private val prefs = context.getSharedPreferences("peptide_tracker", Context.MODE_PRIVATE)
+    private val appContext = context.applicationContext
+    private val prefs = appContext.getSharedPreferences("peptide_tracker", Context.MODE_PRIVATE)
 
     private fun safe(value: String) = value.replace("|", "/").replace("\n", " ")
     private fun formatNumber(value: Double): String =
@@ -149,10 +160,20 @@ class LocalStore(context: Context) {
         createdAt: Long,
         inventoryId: Long? = null,
         subtractFromInventory: Boolean = false
-    ) {
+    ): Boolean {
         require(peptide.isNotBlank())
         require(amountValue > 0)
         val normalizedUnit = unit.trim().ifBlank { "mcg" }
+        val amountMg = if (subtractFromInventory && inventoryId != null) {
+            amountToMg(amountValue, normalizedUnit) ?: return false
+        } else {
+            null
+        }
+
+        if (amountMg != null && !consumeInventory(inventoryId!!, amountMg)) {
+            return false
+        }
+
         val id = uniqueId()
         val next = entries().toMutableList()
         next += TrackerEntry(
@@ -164,13 +185,11 @@ class LocalStore(context: Context) {
             amountValue = amountValue,
             unit = normalizedUnit,
             site = safe(site.trim()),
-            inventoryId = inventoryId
+            inventoryId = if (amountMg != null) inventoryId else null,
+            inventoryAppliedMg = amountMg
         )
         saveEntries(next)
-
-        if (subtractFromInventory && inventoryId != null) {
-            amountToMg(amountValue, normalizedUnit)?.let { consumeInventory(inventoryId, it) }
-        }
+        return true
     }
 
     fun updateEntry(
@@ -181,10 +200,40 @@ class LocalStore(context: Context) {
         note: String,
         site: String,
         createdAt: Long
-    ) {
+    ): Boolean {
         require(peptide.isNotBlank())
         require(amountValue > 0)
+
+        val current = entries().firstOrNull { it.id == id } ?: return false
         val normalizedUnit = unit.trim().ifBlank { "mcg" }
+        var nextInventoryId = current.inventoryId
+        var nextAppliedMg = current.inventoryAppliedMg
+
+        if (current.inventoryId != null && current.inventoryAppliedMg != null) {
+            val stillSamePeptide = current.peptide.equals(peptide.trim(), ignoreCase = true)
+            val requestedMg = amountToMg(amountValue, normalizedUnit)
+
+            if (!stillSamePeptide || requestedMg == null) {
+                restoreInventory(current.inventoryId, current.inventoryAppliedMg)
+                nextInventoryId = null
+                nextAppliedMg = null
+            } else {
+                val delta = requestedMg - current.inventoryAppliedMg
+                when {
+                    delta > 0.0000001 -> {
+                        if (!consumeInventory(current.inventoryId, delta)) return false
+                    }
+                    delta < -0.0000001 -> restoreInventory(current.inventoryId, -delta)
+                }
+                nextAppliedMg = requestedMg
+            }
+        } else if (current.inventoryId != null) {
+            // Legacy v4 entries did not persist whether stock subtraction actually succeeded.
+            // Detach them on edit rather than guessing and corrupting inventory.
+            nextInventoryId = null
+            nextAppliedMg = null
+        }
+
         val next = entries().map { entry ->
             if (entry.id != id) {
                 entry
@@ -196,15 +245,23 @@ class LocalStore(context: Context) {
                     createdAt = createdAt,
                     amountValue = amountValue,
                     unit = normalizedUnit,
-                    site = safe(site.trim())
+                    site = safe(site.trim()),
+                    inventoryId = nextInventoryId,
+                    inventoryAppliedMg = nextAppliedMg
                 )
             }
         }
         saveEntries(next)
+        return true
     }
 
-    fun deleteEntry(id: Long) {
+    fun deleteEntry(id: Long): TrackerEntry? {
+        val current = entries().firstOrNull { it.id == id } ?: return null
+        if (current.inventoryId != null && current.inventoryAppliedMg != null) {
+            restoreInventory(current.inventoryId, current.inventoryAppliedMg)
+        }
         saveEntries(entries().filterNot { it.id == id })
+        return current
     }
 
     fun progress(): List<ProgressEntry> {
@@ -347,8 +404,8 @@ class LocalStore(context: Context) {
                 when {
                     it.id == id -> it.copy(
                         active = it.quantity > 0,
-                        remainingMg = it.remainingMg ?: it.vialMg,
-                        openedAt = it.openedAt ?: now
+                        remainingMg = if ((it.remainingMg ?: 0.0) <= 0.0) it.vialMg else it.remainingMg,
+                        openedAt = now
                     )
                     it.peptide.equals(target.peptide, ignoreCase = true) -> it.copy(active = false)
                     else -> it
@@ -363,36 +420,56 @@ class LocalStore(context: Context) {
 
     fun consumeInventory(id: Long, amountMg: Double): Boolean {
         if (amountMg <= 0) return false
-        var consumed = false
+        val rows = inventory()
+        val target = rows.firstOrNull { it.id == id && it.active && it.quantity > 0 } ?: return false
+        val remaining = target.effectiveRemainingMg
+        if (amountMg > remaining + 0.0000001) return false
 
-        val next = inventory().map { row ->
-            if (row.id != id || row.quantity <= 0) return@map row
-
-            val remaining = row.effectiveRemainingMg
-            when {
-                amountMg < remaining -> {
-                    consumed = true
-                    row.copy(remainingMg = remaining - amountMg)
-                }
-                amountMg == remaining -> {
-                    consumed = true
-                    if (row.quantity > 1) {
-                        row.copy(
-                            quantity = row.quantity - 1,
-                            remainingMg = row.vialMg,
-                            active = true,
-                            openedAt = System.currentTimeMillis()
-                        )
-                    } else {
-                        row.copy(quantity = 0, remainingMg = 0.0, active = false)
-                    }
-                }
-                else -> row
+        val next = rows.map { row ->
+            if (row.id != id) {
+                row
+            } else if (amountMg < remaining - 0.0000001) {
+                row.copy(remainingMg = (remaining - amountMg).coerceAtLeast(0.0))
+            } else {
+                row.copy(
+                    quantity = (row.quantity - 1).coerceAtLeast(0),
+                    remainingMg = 0.0,
+                    active = false,
+                    openedAt = null
+                )
             }
         }
+        saveInventory(next)
+        return true
+    }
 
-        if (consumed) saveInventory(next)
-        return consumed
+    fun restoreInventory(id: Long, amountMg: Double): Boolean {
+        if (amountMg <= 0) return false
+        var restored = false
+        val rows = inventory()
+        val next = rows.map { row ->
+            if (row.id != id) return@map row
+
+            restored = true
+            when {
+                row.active && row.quantity > 0 -> {
+                    row.copy(remainingMg = (row.effectiveRemainingMg + amountMg).coerceAtMost(row.vialMg))
+                }
+                row.effectiveRemainingMg <= 0.0000001 -> {
+                    row.copy(
+                        quantity = row.quantity + 1,
+                        remainingMg = amountMg.coerceAtMost(row.vialMg),
+                        active = true,
+                        openedAt = System.currentTimeMillis()
+                    )
+                }
+                else -> {
+                    row.copy(remainingMg = (row.effectiveRemainingMg + amountMg).coerceAtMost(row.vialMg))
+                }
+            }
+        }
+        if (restored) saveInventory(next)
+        return restored
     }
 
     fun reminders(): List<ReminderEntry> {
@@ -533,7 +610,7 @@ class LocalStore(context: Context) {
 
     fun exportJson(): String {
         val root = JSONObject()
-            .put("schema", 6)
+            .put("schema", 7)
             .put("generatedAt", System.currentTimeMillis())
             .put("darkMode", darkMode())
             .put("defaultSyringeUnitsPerMl", defaultSyringeUnitsPerMl())
@@ -547,10 +624,26 @@ class LocalStore(context: Context) {
         return root.toString(2)
     }
 
+    fun inspectBackup(raw: String): BackupSummary? = runCatching {
+        val root = JSONObject(raw)
+        val schema = root.optInt("schema", 1)
+        require(schema in 1..7)
+        BackupSummary(
+            schema = schema,
+            entries = root.optJSONArray("entries")?.length() ?: 0,
+            inventory = root.optJSONArray("inventory")?.length() ?: 0,
+            progress = root.optJSONArray("progress")?.length() ?: 0,
+            reminders = root.optJSONArray("reminders")?.length() ?: 0,
+            savedCalculations = root.optJSONArray("savedCalculations")?.length() ?: 0
+        )
+    }.getOrNull()
+
     fun restoreJson(raw: String): Boolean = runCatching {
         val root = JSONObject(raw)
         val schema = root.optInt("schema", 1)
-        require(schema in 1..6)
+        require(schema in 1..7)
+        val previousReminderIds = reminders().map { it.id }
+        prefs.edit().putString(KEY_PRE_RESTORE_BACKUP, exportJson()).commit()
 
         val decodedEntries = decodeEntries(root.optJSONArray("entries") ?: JSONArray())
         val decodedInventory = decodeInventory(root.optJSONArray("inventory") ?: JSONArray())
@@ -578,7 +671,11 @@ class LocalStore(context: Context) {
                     .takeIf { it == 40 || it == 100 } ?: 100
             )
             .putBoolean("onboarding_complete", root.optBoolean("onboardingComplete", true))
-            .apply()
+            .commit()
+
+        previousReminderIds.forEach { ReminderScheduler.cancel(appContext, it) }
+        ReminderScheduler.cancelAllSnoozes(appContext)
+        ReminderScheduler.rescheduleAll(appContext, reminders())
         true
     }.getOrDefault(false)
 
@@ -648,6 +745,7 @@ class LocalStore(context: Context) {
                     .put("unit", row.unit)
                     .put("site", row.site)
                     .put("inventoryId", row.inventoryId ?: JSONObject.NULL)
+                    .put("inventoryAppliedMg", row.inventoryAppliedMg ?: JSONObject.NULL)
             )
         }
     }
@@ -665,7 +763,8 @@ class LocalStore(context: Context) {
                     amountValue = if (o.has("amountValue") && !o.isNull("amountValue")) o.optDouble("amountValue") else null,
                     unit = o.optString("unit"),
                     site = o.optString("site"),
-                    inventoryId = if (o.has("inventoryId") && !o.isNull("inventoryId")) o.optLong("inventoryId") else null
+                    inventoryId = if (o.has("inventoryId") && !o.isNull("inventoryId")) o.optLong("inventoryId") else null,
+                    inventoryAppliedMg = if (o.has("inventoryAppliedMg") && !o.isNull("inventoryAppliedMg")) o.optDouble("inventoryAppliedMg") else null
                 )
             )
         }
@@ -823,6 +922,7 @@ class LocalStore(context: Context) {
         const val KEY_PROGRESS_V2 = "progress_v2_json"
         const val KEY_REMINDERS_V1 = "reminders_v1_json"
         const val KEY_CALCULATIONS_V1 = "calculations_v1_json"
+        const val KEY_PRE_RESTORE_BACKUP = "pre_restore_backup_json"
         const val DAY_MS = 24L * 60L * 60L * 1000L
     }
 }

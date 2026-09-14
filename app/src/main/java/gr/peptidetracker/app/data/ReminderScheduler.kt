@@ -25,6 +25,7 @@ import kotlin.math.max
 object ReminderScheduler {
     private const val WORK_PREFIX = "peptide-reminder-"
     private const val SNOOZE_PREFIX = "peptide-reminder-snooze-"
+    private const val SNOOZE_TAG = "peptide-reminder-snooze-all"
 
     fun schedule(context: Context, reminder: ReminderEntry) {
         if (!reminder.enabled) {
@@ -63,6 +64,11 @@ object ReminderScheduler {
         }
     }
 
+    fun cancelAllSnoozes(context: Context) {
+        WorkManager.getInstance(context.applicationContext)
+            .cancelAllWorkByTag(SNOOZE_TAG)
+    }
+
     fun snooze(
         context: Context,
         reminderId: Long,
@@ -82,6 +88,7 @@ object ReminderScheduler {
             .setInitialDelay(minutes, TimeUnit.MINUTES)
             .setInputData(data)
             .addTag(SNOOZE_PREFIX + reminderId)
+            .addTag(SNOOZE_TAG)
             .build()
 
         WorkManager.getInstance(context.applicationContext).enqueueUniqueWork(

@@ -74,6 +74,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import gr.peptidetracker.app.data.BackupSummary
 import gr.peptidetracker.app.data.InventoryEntry
 import gr.peptidetracker.app.data.LocalStore
 import gr.peptidetracker.app.data.ProgressEntry
@@ -124,6 +125,11 @@ fun TrackerScreen(
     var showProgressDialog by remember { mutableStateOf(false) }
     var showDataTools by remember { mutableStateOf(false) }
     var dataMessage by remember { mutableStateOf("") }
+    var pendingRestoreRaw by remember { mutableStateOf<String?>(null) }
+    var pendingRestoreSummary by remember { mutableStateOf<BackupSummary?>(null) }
+    var pendingDeleteLog by remember { mutableStateOf<TrackerEntry?>(null) }
+    var pendingDeleteInventory by remember { mutableStateOf<InventoryEntry?>(null) }
+    var pendingDeleteProgress by remember { mutableStateOf<ProgressEntry?>(null) }
 
     val context = LocalContext.current
     val haptics = LocalHapticFeedback.current
@@ -173,12 +179,12 @@ fun TrackerScreen(
             runCatching {
                 val raw = context.contentResolver.openInputStream(uri)?.bufferedReader()?.use { it.readText() }
                     ?: error("Κενό αρχείο.")
-                check(store.restoreJson(raw))
-            }.onSuccess {
-                reloadAll()
-                dataMessage = "Το backup επαναφέρθηκε επιτυχώς."
-                haptics.performHapticFeedback(HapticFeedbackType.LongPress)
+                val summary = store.inspectBackup(raw) ?: error("Μη έγκυρο backup.")
+                pendingRestoreRaw = raw
+                pendingRestoreSummary = summary
             }.onFailure {
+                pendingRestoreRaw = null
+                pendingRestoreSummary = null
                 dataMessage = "Το αρχείο backup δεν είναι έγκυρο."
             }
         }
@@ -278,8 +284,7 @@ fun TrackerScreen(
                     showLogDialog = true
                 },
                 onDelete = {
-                    store.deleteEntry(it.id)
-                    logs = store.entries()
+                    pendingDeleteLog = it
                 }
             )
 
@@ -301,9 +306,15 @@ fun TrackerScreen(
                     inventoryPreset = null
                     showInventoryDialog = true
                 },
-                onDelete = {
-                    store.deleteInventory(it.id)
-                    inventory = store.inventory()
+                onDelete = { row ->
+                    val hasLinkedUsage = logs.any { entry ->
+                        entry.inventoryId == row.id && entry.inventoryAppliedMg != null
+                    }
+                    if (hasLinkedUsage) {
+                        dataMessage = "Δεν μπορεί να διαγραφεί απόθεμα που συνδέεται με καταγραφές. Διέγραψε ή αποσύνδεσε πρώτα τις σχετικές καταγραφές."
+                    } else {
+                        pendingDeleteInventory = row
+                    }
                 },
                 onCalculator = onOpenCalculator
             )
@@ -319,8 +330,7 @@ fun TrackerScreen(
                     showProgressDialog = true
                 },
                 onDelete = {
-                    store.deleteProgress(it.id)
-                    progress = store.progress()
+                    pendingDeleteProgress = it
                 }
             )
 
@@ -339,7 +349,7 @@ fun TrackerScreen(
             onDismiss = { showLogDialog = false },
             onSave = { peptide, value, unit, note, site, createdAt, inventoryId, subtract ->
                 val current = editingLog
-                if (current == null) {
+                val saved = if (current == null) {
                     store.addEntry(
                         peptide = peptide,
                         amountValue = value,
@@ -361,9 +371,14 @@ fun TrackerScreen(
                         createdAt = createdAt
                     )
                 }
-                reloadAll()
-                showLogDialog = false
-                haptics.performHapticFeedback(HapticFeedbackType.LongPress)
+                if (saved) {
+                    reloadAll()
+                    showLogDialog = false
+                    dataMessage = ""
+                    haptics.performHapticFeedback(HapticFeedbackType.LongPress)
+                } else {
+                    dataMessage = "Δεν υπάρχει αρκετό υπόλοιπο στο συνδεδεμένο ενεργό vial για αυτή την καταγραφή."
+                }
             }
         )
     }
@@ -474,6 +489,135 @@ fun TrackerScreen(
             }
         )
     }
+
+    pendingRestoreSummary?.let { summary ->
+        AlertDialog(
+            onDismissRequest = {
+                pendingRestoreRaw = null
+                pendingRestoreSummary = null
+            },
+            containerColor = GlassSurfaceStrong,
+            titleContentColor = TextPrimary,
+            textContentColor = TextPrimary,
+            title = { Text("Επαναφορά backup") },
+            text = {
+                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Text(
+                        "Το backup θα αντικαταστήσει τα τρέχοντα δεδομένα. Πριν την επαναφορά αποθηκεύεται αυτόματα εσωτερικό snapshot ασφαλείας.",
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        style = MaterialTheme.typography.bodySmall
+                    )
+                    Text("Schema v" + summary.schema, fontWeight = FontWeight.Bold)
+                    Text("Καταγραφές: " + summary.entries)
+                    Text("Απόθεμα: " + summary.inventory)
+                    Text("Μετρήσεις: " + summary.progress)
+                    Text("Υπενθυμίσεις: " + summary.reminders)
+                    Text("Αποθηκευμένοι υπολογισμοί: " + summary.savedCalculations)
+                }
+            },
+            confirmButton = {
+                Button(
+                    onClick = {
+                        val raw = pendingRestoreRaw
+                        val ok = raw != null && store.restoreJson(raw)
+                        if (ok) {
+                            reloadAll()
+                            dataMessage = "Το backup επαναφέρθηκε και οι ενεργές υπενθυμίσεις επαναπρογραμματίστηκαν."
+                            haptics.performHapticFeedback(HapticFeedbackType.LongPress)
+                        } else {
+                            dataMessage = "Η επαναφορά απέτυχε. Τα προηγούμενα δεδομένα διατηρήθηκαν."
+                        }
+                        pendingRestoreRaw = null
+                        pendingRestoreSummary = null
+                    },
+                    colors = premiumButtonColors()
+                ) {
+                    Text("Επαναφορά")
+                }
+            },
+            dismissButton = {
+                TextButton(
+                    onClick = {
+                        pendingRestoreRaw = null
+                        pendingRestoreSummary = null
+                    },
+                    colors = premiumTextButtonColors()
+                ) {
+                    Text("Άκυρο")
+                }
+            }
+        )
+    }
+
+    pendingDeleteLog?.let { row ->
+        ConfirmDeleteDialog(
+            title = "Διαγραφή καταγραφής;",
+            text = if (row.inventoryAppliedMg != null) {
+                "Η καταγραφή θα διαγραφεί και η ποσότητα που είχε αφαιρεθεί θα επιστραφεί στο συνδεδεμένο απόθεμα."
+            } else {
+                "Η καταγραφή θα διαγραφεί οριστικά."
+            },
+            onConfirm = {
+                store.deleteEntry(row.id)
+                reloadAll()
+                pendingDeleteLog = null
+            },
+            onDismiss = { pendingDeleteLog = null }
+        )
+    }
+
+    pendingDeleteInventory?.let { row ->
+        ConfirmDeleteDialog(
+            title = "Διαγραφή αποθέματος;",
+            text = row.peptide + " θα αφαιρεθεί από το απόθεμα.",
+            onConfirm = {
+                store.deleteInventory(row.id)
+                reloadAll()
+                pendingDeleteInventory = null
+            },
+            onDismiss = { pendingDeleteInventory = null }
+        )
+    }
+
+    pendingDeleteProgress?.let { row ->
+        ConfirmDeleteDialog(
+            title = "Διαγραφή μέτρησης;",
+            text = "Η μέτρηση " + formatCompact(row.weight) + " kg θα διαγραφεί.",
+            onConfirm = {
+                store.deleteProgress(row.id)
+                reloadAll()
+                pendingDeleteProgress = null
+            },
+            onDismiss = { pendingDeleteProgress = null }
+        )
+    }
+}
+
+@Composable
+private fun ConfirmDeleteDialog(
+    title: String,
+    text: String,
+    onConfirm: () -> Unit,
+    onDismiss: () -> Unit
+) {
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        containerColor = GlassSurfaceStrong,
+        titleContentColor = TextPrimary,
+        textContentColor = TextPrimary,
+        title = { Text(title) },
+        text = { Text(text, color = MaterialTheme.colorScheme.onSurfaceVariant) },
+        confirmButton = {
+            Button(onClick = onConfirm, colors = premiumButtonColors()) {
+                Text("Διαγραφή")
+            }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismiss, colors = premiumTextButtonColors()) {
+                Text("Άκυρο")
+            }
+        }
+    )
 }
 
 @Composable
