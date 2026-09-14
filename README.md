@@ -2,12 +2,14 @@
 
 Native offline-first Android application in Greek, built with Kotlin, Jetpack Compose and Material 3.
 
-## Current v1
+## Current v1.1
 
-- Local peptide reference list and instant search
+- Searchable peptide library with favorites, detail pages, research context and external PubMed/ClinicalTrials sources
 - Reconstitution, dosage-to-volume and reverse calculators
 - U-100 and U-40 syringe conversions
-- Persistent local tracker records
+- Persistent local tracker, inventory and progress records
+- Material 3 light/dark themes with dedicated navigation icons
+- Mobile calculator flow based on the PeptidiaStore calculator, including syringe capacity presets and reverse conversion
 - Greek decimal comma support
 - AdMob test application configuration (no production IDs)
 - Unit tests, lint and debug APK build in GitHub Actions
