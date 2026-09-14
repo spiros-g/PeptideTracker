@@ -35,6 +35,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
@@ -61,9 +62,16 @@ import gr.peptidetracker.app.ui.premiumButtonColors
 import gr.peptidetracker.app.ui.premiumFilterChipColors
 import gr.peptidetracker.app.ui.premiumTextFieldColors
 
+data class CalculatorPreset(
+    val peptideName: String,
+    val vialMg: Double? = null
+)
+
 @Composable
 fun CalculatorScreen(
-    imageIndex: Map<String, String>
+    imageIndex: Map<String, String>,
+    preset: CalculatorPreset? = null,
+    onPresetConsumed: () -> Unit = {}
 ) {
     var reverse by remember { mutableStateOf(false) }
     var syringeCapacity by remember { mutableIntStateOf(30) }
@@ -76,6 +84,18 @@ fun CalculatorScreen(
     var output by remember { mutableStateOf<List<String>>(emptyList()) }
     var error by remember { mutableStateOf("") }
 
+    LaunchedEffect(preset) {
+        if (preset != null) {
+            preset.vialMg?.let {
+                vialUnit = "mg"
+                vialAmount = PeptideCalculator.format(it, 4)
+            }
+            output = emptyList()
+            error = ""
+            onPresetConsumed()
+        }
+    }
+
     LazyColumn(
         modifier = Modifier.fillMaxSize(),
         contentPadding = PaddingValues(horizontal = 18.dp, vertical = 18.dp),
@@ -86,6 +106,33 @@ fun CalculatorScreen(
                 title = "Υπολογιστής Ανασύστασης & Δοσολογίας",
                 subtitle = "Βάλε τι έχει το φιαλίδιο, πόσο διαλύτη πρόσθεσες και την ποσότητα που θέλεις να μετρήσεις."
             )
+        }
+
+        if (preset != null) {
+            item {
+                GlassCard(modifier = Modifier.fillMaxWidth()) {
+                    Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                        Text(
+                            "ΠΡΟΕΠΙΛΟΓΗ",
+                            color = ElectricCyan,
+                            style = MaterialTheme.typography.labelLarge,
+                            fontWeight = FontWeight.ExtraBold
+                        )
+                        Text(
+                            preset.peptideName,
+                            style = MaterialTheme.typography.titleMedium,
+                            fontWeight = FontWeight.ExtraBold
+                        )
+                        if (preset.vialMg != null) {
+                            Text(
+                                "Φιαλίδιο " + PeptideCalculator.format(preset.vialMg, 4) + " mg φορτώθηκε αυτόματα.",
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                style = MaterialTheme.typography.bodySmall
+                            )
+                        }
+                    }
+                }
+            }
         }
 
         item {
