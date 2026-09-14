@@ -65,6 +65,8 @@ import gr.peptidetracker.app.ui.GlassCard
 import gr.peptidetracker.app.ui.NeonRose
 import gr.peptidetracker.app.ui.PremiumTopBar
 import gr.peptidetracker.app.ui.StoreVialImage
+import gr.peptidetracker.app.ui.premiumFilterChipColors
+import gr.peptidetracker.app.ui.premiumTextFieldColors
 
 @Composable
 fun LibraryScreen(
@@ -113,6 +115,7 @@ fun LibraryScreen(
                 modifier = Modifier.fillMaxWidth(),
                 singleLine = true,
                 shape = RoundedCornerShape(22.dp),
+                colors = premiumTextFieldColors(),
                 placeholder = { Text("Αναζήτηση πεπτιδίου") },
                 leadingIcon = {
                     Icon(Icons.Rounded.Search, contentDescription = null)
@@ -134,7 +137,8 @@ fun LibraryScreen(
                     FilterChip(
                         selected = category == item,
                         onClick = { category = item },
-                        label = { Text(item) }
+                        label = { Text(item) },
+                        colors = premiumFilterChipColors()
                     )
                 }
             }
