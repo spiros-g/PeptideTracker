@@ -158,7 +158,7 @@ private fun PremiumBottomBar(
         MainDestination("Αρχική", Icons.Rounded.Home),
         MainDestination("Πεπτίδια", Icons.Rounded.Science),
         MainDestination("Υπολογ.", Icons.Rounded.Calculate),
-        MainDestination("Tracker", Icons.Rounded.QueryStats)
+        MainDestination("Ιστορικό", Icons.Rounded.QueryStats)
     )
 
     Box(
@@ -289,12 +289,12 @@ private fun SettingsSheet() {
                 Spacer(Modifier.size(12.dp))
                 Column {
                     Text(
-                        "Dark-only interface",
+                        "Μόνιμο σκοτεινό θέμα",
                         color = TextPrimary,
                         fontWeight = FontWeight.ExtraBold
                     )
                     Text(
-                        "Η εφαρμογή χρησιμοποιεί αποκλειστικά το premium dark glass theme.",
+                        "Η εφαρμογή χρησιμοποιεί αποκλειστικά το σκοτεινό glass theme υψηλής αντίθεσης.",
                         color = TextSecondary,
                         style = MaterialTheme.typography.bodySmall
                     )
@@ -315,7 +315,7 @@ private fun SettingsSheet() {
             )
             Column {
                 Text(
-                    "Local-first δεδομένα",
+                    "Τοπικά δεδομένα",
                     color = TextPrimary,
                     fontWeight = FontWeight.Bold
                 )
