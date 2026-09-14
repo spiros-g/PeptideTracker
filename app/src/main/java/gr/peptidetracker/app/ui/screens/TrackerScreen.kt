@@ -682,6 +682,11 @@ private fun AddLogDialog(
         title = { Text("Καταγραφή χρήσης πεπτιδίου") },
         text = {
             Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                Text(
+                    "Αποθήκευσε μια χρήση που έχεις ήδη αποφασίσει: ποιο πεπτίδιο ήταν, την ποσότητα που μέτρησες και προαιρετικά μια σημείωση. Η ημερομηνία και η ώρα μπαίνουν αυτόματα.",
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    style = MaterialTheme.typography.bodySmall
+                )
                 OutlinedTextField(
                     value = peptide,
                     onValueChange = { peptide = it },
