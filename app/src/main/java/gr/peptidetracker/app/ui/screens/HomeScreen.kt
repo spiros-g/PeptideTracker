@@ -76,51 +76,62 @@ fun HomeScreen(
             GlassCard(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(232.dp),
+                    .height(274.dp),
                 contentPadding = PaddingValues(0.dp),
                 onClick = { onNavigate(2) }
             ) {
-                Box(
-                    Modifier
+                Row(
+                    modifier = Modifier
                         .fillMaxSize()
                         .background(
                             Brush.linearGradient(
                                 listOf(
                                     ElectricBlue.copy(alpha = 0.20f),
-                                    ElectricViolet.copy(alpha = 0.13f),
+                                    ElectricViolet.copy(alpha = 0.12f),
                                     Color.Transparent
                                 )
                             )
                         )
-                        .padding(20.dp)
+                        .padding(horizontal = 20.dp, vertical = 22.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(10.dp)
                 ) {
                     Column(
-                        Modifier
-                            .align(Alignment.CenterStart)
-                            .fillMaxWidth(0.63f),
+                        modifier = Modifier.weight(1f),
                         verticalArrangement = Arrangement.spacedBy(8.dp)
                     ) {
                         Text(
                             "ΑΝΑΣΥΣΤΑΣΗ & ΔΟΣΟΜΕΤΡΙΑ",
                             color = ElectricCyan,
                             style = MaterialTheme.typography.labelLarge,
-                            fontWeight = FontWeight.ExtraBold
+                            fontWeight = FontWeight.ExtraBold,
+                            maxLines = 2,
+                            overflow = TextOverflow.Ellipsis
                         )
+
                         Text(
-                            "Υπολογιστής ανασύστασης & δοσολογίας.",
-                            style = MaterialTheme.typography.headlineLarge
+                            "Υπολογιστής Ανασύστασης & Δοσολογίας",
+                            style = MaterialTheme.typography.headlineMedium,
+                            fontWeight = FontWeight.ExtraBold,
+                            maxLines = 3,
+                            overflow = TextOverflow.Ellipsis
                         )
+
                         Text(
-                            "Συγκέντρωση, όγκος και μονάδες σε μία καθαρή ροή.",
+                            "Συγκέντρωση, όγκος και μονάδες U-100 από τις τιμές που εισάγεις.",
                             color = MaterialTheme.colorScheme.onSurfaceVariant,
-                            style = MaterialTheme.typography.bodyMedium
+                            style = MaterialTheme.typography.bodyMedium,
+                            maxLines = 3,
+                            overflow = TextOverflow.Ellipsis
                         )
-                        Spacer(Modifier.height(3.dp))
+
                         Row(verticalAlignment = Alignment.CenterVertically) {
                             Text(
                                 "Άνοιγμα υπολογιστή",
                                 color = ElectricBlue,
-                                fontWeight = FontWeight.Bold
+                                style = MaterialTheme.typography.bodyMedium,
+                                fontWeight = FontWeight.Bold,
+                                maxLines = 1
                             )
                             Spacer(Modifier.width(5.dp))
                             Icon(
@@ -132,23 +143,11 @@ fun HomeScreen(
                         }
                     }
 
-                    FloatingVial(
+                    StoreVialImage(
                         productKey = "retatrutide",
                         imageIndex = imageIndex,
-                        modifier = Modifier
-                            .size(width = 92.dp, height = 132.dp)
-                            .align(Alignment.CenterEnd)
-                            .offset(x = 8.dp, y = 4.dp),
-                        phase = 1
-                    )
-                    FloatingVial(
-                        productKey = "ghk-cu",
-                        imageIndex = imageIndex,
-                        modifier = Modifier
-                            .size(width = 70.dp, height = 104.dp)
-                            .align(Alignment.BottomEnd)
-                            .offset(x = (-56).dp, y = 10.dp),
-                        phase = 4
+                        modifier = Modifier.size(width = 104.dp, height = 190.dp),
+                        contentDescription = "Φιαλίδιο πεπτιδίου"
                     )
                 }
             }
