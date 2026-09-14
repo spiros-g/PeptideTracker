@@ -5,5 +5,5 @@
         android:top="4dp"
         android:right="4dp"
         android:bottom="4dp"
-        android:drawable="@drawable/app_icon_source" />
+        android:drawable="@drawable/app_icon_generated" />
 </layer-list>
