@@ -1,5 +1,7 @@
 package gr.peptidetracker.app.ui
 
+import gr.peptidetracker.app.i18n.t
+
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -38,12 +40,12 @@ fun PremiumTopBar(
             IconButton(
                 onClick = onBack,
                 modifier = Modifier
-                    .size(42.dp)
-                    .background(Color.White.copy(alpha = 0.08f), CircleShape)
+                    .size(48.dp)
+                    .background(MaterialTheme.colorScheme.onSurface.copy(alpha = 0.08f), CircleShape)
             ) {
                 Icon(
                     Icons.AutoMirrored.Rounded.ArrowBack,
-                    contentDescription = "Πίσω",
+                    contentDescription = t("Πίσω"),
                     tint = TextPrimary
                 )
             }
@@ -74,8 +76,8 @@ fun PremiumTopBar(
             IconButton(
                 onClick = onAction,
                 modifier = Modifier
-                    .size(42.dp)
-                    .background(Color.White.copy(alpha = 0.08f), CircleShape)
+                    .size(48.dp)
+                    .background(MaterialTheme.colorScheme.onSurface.copy(alpha = 0.08f), CircleShape)
             ) {
                 Icon(
                     actionIcon,

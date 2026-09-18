@@ -1,5 +1,7 @@
 package gr.peptidetracker.app.data
 
+import gr.peptidetracker.app.i18n.t
+
 import android.Manifest
 import android.app.Notification
 import android.app.NotificationChannel
@@ -27,6 +29,9 @@ class UpdateNotificationWorker(
 ) : CoroutineWorker(appContext, params) {
 
     override suspend fun doWork(): Result {
+        // Initialize persisted language before localized notification text is resolved.
+        LocalStore(applicationContext)
+
         if (!GitHubUpdateChecker.shouldUseGitHubUpdates(applicationContext)) {
             return Result.success()
         }
@@ -50,10 +55,10 @@ class UpdateNotificationWorker(
         manager.createNotificationChannel(
             NotificationChannel(
                 CHANNEL_ID,
-                "Ενημερώσεις εφαρμογής",
+                t("Ενημερώσεις εφαρμογής"),
                 NotificationManager.IMPORTANCE_DEFAULT
             ).apply {
-                description = "Ειδοποιήσεις για νέες εκδόσεις του Peptide Tracker"
+                description = t("Ειδοποιήσεις για νέες εκδόσεις του Peptide Tracker")
             }
         )
 
@@ -70,8 +75,8 @@ class UpdateNotificationWorker(
 
         val notification = Notification.Builder(applicationContext, CHANNEL_ID)
             .setSmallIcon(R.drawable.ic_launcher_monochrome)
-            .setContentTitle("Νέα έκδοση Peptide Tracker")
-            .setContentText("Η έκδοση " + update.version + " είναι διαθέσιμη για ενημέρωση.")
+            .setContentTitle(t("Νέα έκδοση Peptide Tracker"))
+            .setContentText(t("Η έκδοση ") + update.version + t(" είναι διαθέσιμη για ενημέρωση."))
             .setContentIntent(pendingIntent)
             .setAutoCancel(true)
             .setOnlyAlertOnce(true)
@@ -93,6 +98,12 @@ class UpdateNotificationWorker(
         private const val KEY_LAST_NOTIFIED_VERSION = "last_notified_version"
 
         fun schedule(context: Context) {
+            val workManager = WorkManager.getInstance(context)
+            if (!GitHubUpdateChecker.shouldUseGitHubUpdates(context)) {
+                workManager.cancelUniqueWork(UNIQUE_WORK_NAME)
+                return
+            }
+
             val request =
                 PeriodicWorkRequestBuilder<UpdateNotificationWorker>(
                     24,
@@ -105,7 +116,7 @@ class UpdateNotificationWorker(
                     )
                     .build()
 
-            WorkManager.getInstance(context).enqueueUniquePeriodicWork(
+            workManager.enqueueUniquePeriodicWork(
                 UNIQUE_WORK_NAME,
                 ExistingPeriodicWorkPolicy.KEEP,
                 request

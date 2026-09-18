@@ -68,13 +68,6 @@ val generateArtwork by tasks.registering {
         }
 
         rebuildPng(
-            partsDir = File(artworkSourceDir, "icon"),
-            outputName = "app_icon_generated.png",
-            expectedWidth = 160,
-            expectedHeight = 160
-        )
-
-        rebuildPng(
             partsDir = File(artworkSourceDir, "vial"),
             outputName = "peptide_vial_generated.png",
             expectedWidth = 192,
@@ -91,8 +84,8 @@ android {
         applicationId = "gr.peptidetracker.app"
         minSdk = 26
         targetSdk = 36
-        versionCode = 32
-        versionName = "4.7.2"
+        versionCode = 33
+        versionName = "4.8.0"
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
 
@@ -153,6 +146,7 @@ dependencies {
     androidTestImplementation(composeBom)
 
     implementation("androidx.activity:activity-compose:1.10.1")
+    implementation("androidx.core:core-ktx:1.16.0")
     implementation("androidx.compose.animation:animation")
     implementation("androidx.compose.foundation:foundation")
     implementation("androidx.compose.material3:material3")

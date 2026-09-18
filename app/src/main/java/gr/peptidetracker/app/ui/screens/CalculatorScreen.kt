@@ -1,5 +1,7 @@
 package gr.peptidetracker.app.ui.screens
 
+import gr.peptidetracker.app.i18n.t
+
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.expandVertically
 import androidx.compose.animation.fadeIn
@@ -173,8 +175,8 @@ fun CalculatorScreen(
     ) {
         item {
             PremiumTopBar(
-                title = "Υπολογιστής Ανασύστασης & Δοσομετρίας",
-                subtitle = "Βάλε τι έχει το φιαλίδιο, πόσο διαλύτη πρόσθεσες και την ποσότητα που θέλεις να μετατρέψεις."
+                title = t("Υπολογιστής Ανασύστασης & Δοσομετρίας"),
+                subtitle = t("Βάλε τι έχει το φιαλίδιο, πόσο διαλύτη πρόσθεσες και την ποσότητα που θέλεις να μετατρέψεις.")
             )
         }
 
@@ -206,7 +208,7 @@ fun CalculatorScreen(
                         verticalArrangement = Arrangement.spacedBy(6.dp)
                     ) {
                         Text(
-                            "ΑΝΑΣΥΣΤΑΣΗ & ΔΟΣΟΜΕΤΡΙΑ",
+                            t("ΑΝΑΣΥΣΤΑΣΗ & ΔΟΣΟΜΕΤΡΙΑ"),
                             color = ElectricCyan,
                             style = MaterialTheme.typography.labelLarge,
                             fontWeight = FontWeight.ExtraBold,
@@ -221,7 +223,7 @@ fun CalculatorScreen(
                         )
 
                         Text(
-                            "Καθαρή μαθηματική μετατροπή των τιμών που εισάγεις. Δεν επιλέγει ποσότητα ή πρόγραμμα χρήσης.",
+                            t("Καθαρή μαθηματική μετατροπή των τιμών που εισάγεις. Δεν επιλέγει ποσότητα ή πρόγραμμα χρήσης."),
                             color = MaterialTheme.colorScheme.onSurfaceVariant,
                             style = MaterialTheme.typography.bodySmall
                         )
@@ -231,7 +233,7 @@ fun CalculatorScreen(
                         productKey = peptideName.ifBlank { "retatrutide" },
                         imageIndex = imageIndex,
                         modifier = Modifier.size(width = 82.dp, height = 150.dp),
-                        contentDescription = "Φιαλίδιο πεπτιδίου"
+                        contentDescription = t("Φιαλίδιο πεπτιδίου")
                     )
                 }
             }
@@ -241,12 +243,12 @@ fun CalculatorScreen(
             GlassCard(modifier = Modifier.fillMaxWidth()) {
                 Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                     Text(
-                        "Πεπτίδιο",
+                        t("Πεπτίδιο"),
                         style = MaterialTheme.typography.titleMedium,
                         fontWeight = FontWeight.ExtraBold
                     )
                     Text(
-                        "Προαιρετικό για τον υπολογισμό. Χρειάζεται μόνο αν θέλεις να αποθηκεύσεις το αποτέλεσμα στο ημερολόγιο.",
+                        t("Προαιρετικό για τον υπολογισμό. Χρειάζεται μόνο αν θέλεις να αποθηκεύσεις το αποτέλεσμα στο ημερολόγιο."),
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                         style = MaterialTheme.typography.bodySmall
                     )
@@ -256,7 +258,7 @@ fun CalculatorScreen(
                             modifier = Modifier.fillMaxWidth()
                         ) {
                             Text(
-                                peptideName.ifBlank { "Επίλεξε πεπτίδιο" },
+                                peptideName.ifBlank { t("Επίλεξε πεπτίδιο") },
                                 maxLines = 1,
                                 overflow = TextOverflow.Ellipsis
                             )
@@ -286,7 +288,7 @@ fun CalculatorScreen(
                 horizontalArrangement = Arrangement.spacedBy(8.dp)
             ) {
                 ModeChip(
-                    text = "Ποσότητα → Μονάδες",
+                    text = t("Ποσότητα → Μονάδες"),
                     selected = !reverse,
                     modifier = Modifier.weight(1f),
                     onClick = {
@@ -295,7 +297,7 @@ fun CalculatorScreen(
                     }
                 )
                 ModeChip(
-                    text = "Μονάδες → Ποσότητα",
+                    text = t("Μονάδες → Ποσότητα"),
                     selected = reverse,
                     modifier = Modifier.weight(1f),
                     onClick = {
@@ -309,8 +311,8 @@ fun CalculatorScreen(
         item {
             CalculatorStep(
                 number = "01",
-                title = "Τι σύριγγα χρησιμοποιείς;",
-                subtitle = "U-100 = 100 μονάδες/mL, U-40 = 40 μονάδες/mL.",
+                title = t("Τι σύριγγα χρησιμοποιείς;"),
+                subtitle = t("U-100 = 100 μονάδες/mL, U-40 = 40 μονάδες/mL."),
                 icon = Icons.Rounded.Straighten,
                 accent = ElectricBlue
             ) {
@@ -325,7 +327,7 @@ fun CalculatorScreen(
                 )
                 Spacer(Modifier.height(8.dp))
                 Text(
-                    "Χωρητικότητα / μέγιστη ένδειξη",
+                    t("Χωρητικότητα / μέγιστη ένδειξη"),
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                     style = MaterialTheme.typography.bodySmall
                 )
@@ -344,8 +346,8 @@ fun CalculatorScreen(
         item {
             CalculatorStep(
                 number = "02",
-                title = "Τι περιέχει το φιαλίδιο;",
-                subtitle = "Βάλε τη συνολική ποσότητα που γράφει το φιαλίδιο πριν προσθέσεις διαλύτη.",
+                title = t("Τι περιέχει το φιαλίδιο;"),
+                subtitle = t("Βάλε τη συνολική ποσότητα που γράφει το φιαλίδιο πριν προσθέσεις διαλύτη."),
                 icon = Icons.Rounded.Science,
                 accent = ElectricViolet
             ) {
@@ -373,7 +375,7 @@ fun CalculatorScreen(
                 )
                 Spacer(Modifier.height(8.dp))
                 DecimalField(
-                    label = "Ποσότητα στο φιαλίδιο (" + vialUnit + ")",
+                    label = t("Ποσότητα στο φιαλίδιο (") + vialUnit + ")",
                     value = vialAmount,
                     onValueChange = {
                         vialAmount = it
@@ -386,8 +388,8 @@ fun CalculatorScreen(
         item {
             CalculatorStep(
                 number = "03",
-                title = "Πόσο διαλύτη πρόσθεσες;",
-                subtitle = "Βάλε τα συνολικά mL διαλύτη που πρόσθεσες στο φιαλίδιο.",
+                title = t("Πόσο διαλύτη πρόσθεσες;"),
+                subtitle = t("Βάλε τα συνολικά mL διαλύτη που πρόσθεσες στο φιαλίδιο."),
                 icon = Icons.Rounded.WaterDrop,
                 accent = ElectricCyan
             ) {
@@ -401,7 +403,7 @@ fun CalculatorScreen(
                 )
                 Spacer(Modifier.height(8.dp))
                 DecimalField(
-                    label = "Διαλύτης που πρόσθεσες (mL)",
+                    label = t("Διαλύτης που πρόσθεσες (mL)"),
                     value = diluentMl,
                     onValueChange = {
                         diluentMl = it
@@ -414,18 +416,18 @@ fun CalculatorScreen(
         item {
             CalculatorStep(
                 number = "04",
-                title = if (reverse) "Τι δείχνει η σύριγγα;" else "Ποια ποσότητα θέλεις να μετατρέψεις;",
+                title = if (reverse) t("Τι δείχνει η σύριγγα;") else t("Ποια ποσότητα θέλεις να μετατρέψεις;"),
                 subtitle = if (reverse) {
-                    "Βάλε τις μονάδες U-" + syringeUnitsPerMl + " και θα δεις σε τι ποσότητα αντιστοιχούν."
+                    t("Βάλε τις μονάδες U-") + syringeUnitsPerMl + t(" και θα δεις σε τι ποσότητα αντιστοιχούν.")
                 } else {
-                    "Βάλε την ποσότητα και θα δεις πόσα mL και πόσες μονάδες U-" + syringeUnitsPerMl + " αντιστοιχούν."
+                    t("Βάλε την ποσότητα και θα δεις πόσα mL και πόσες μονάδες U-") + syringeUnitsPerMl + t(" αντιστοιχούν.")
                 },
                 icon = Icons.Rounded.InvertColors,
                 accent = Color(0xFFFFB36B)
             ) {
                 if (reverse) {
                     DecimalField(
-                        label = "Μονάδες που δείχνει η σύριγγα (U-" + syringeUnitsPerMl + ")",
+                        label = t("Μονάδες που δείχνει η σύριγγα (U-") + syringeUnitsPerMl + ")",
                         value = syringeUnits,
                         onValueChange = {
                             syringeUnits = it
@@ -457,7 +459,7 @@ fun CalculatorScreen(
                     )
                     Spacer(Modifier.height(8.dp))
                     DecimalField(
-                        label = "Ποσότητα (" + targetUnit + ")",
+                        label = t("Ποσότητα (") + targetUnit + ")",
                         value = targetAmount,
                         onValueChange = {
                             targetAmount = it
@@ -530,7 +532,7 @@ fun CalculatorScreen(
                     }.onFailure {
                         output = emptyList()
                         lastCalculation = null
-                        error = "Συμπλήρωσε έγκυρες θετικές αριθμητικές τιμές."
+                        error = t("Συμπλήρωσε έγκυρες θετικές αριθμητικές τιμές.")
                     }
                 },
                 modifier = Modifier
@@ -541,7 +543,7 @@ fun CalculatorScreen(
             ) {
                 Icon(Icons.Rounded.Calculate, contentDescription = null)
                 Spacer(Modifier.width(8.dp))
-                Text("Υπολογισμός", fontWeight = FontWeight.ExtraBold)
+                Text(t("Υπολογισμός"), fontWeight = FontWeight.ExtraBold)
             }
         }
 
@@ -578,7 +580,7 @@ fun CalculatorScreen(
                 GlassCard(modifier = Modifier.fillMaxWidth()) {
                     Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
                         Text(
-                            "Ενέργειες αποτελέσματος",
+                            t("Ενέργειες αποτελέσματος"),
                             style = MaterialTheme.typography.titleMedium,
                             fontWeight = FontWeight.ExtraBold
                         )
@@ -599,13 +601,13 @@ fun CalculatorScreen(
                                         syringeUnits = calculation.syringeUnits
                                     )
                                     savedCalculations = store.savedCalculations()
-                                    infoMessage = "Ο υπολογισμός αποθηκεύτηκε."
+                                    infoMessage = t("Ο υπολογισμός αποθηκεύτηκε.")
                                 },
                                 modifier = Modifier.weight(1f)
                             ) {
                                 Icon(Icons.Rounded.Save, contentDescription = null, modifier = Modifier.size(18.dp))
                                 Spacer(Modifier.width(6.dp))
-                                Text("Αποθήκευση")
+                                Text(t("Αποθήκευση"))
                             }
 
                             Button(
@@ -615,12 +617,12 @@ fun CalculatorScreen(
                                             peptide = peptideName,
                                             amountValue = calculation.amountValue,
                                             unit = calculation.amountUnit,
-                                            note = "Από υπολογιστή ανασύστασης · " +
+                                            note = t("Από υπολογιστή ανασύστασης · ") +
                                                 PeptideCalculator.format(calculation.syringeUnits, 2) + " U",
                                             site = "",
                                             createdAt = System.currentTimeMillis()
                                         )
-                                        infoMessage = "Προστέθηκε στο ημερολόγιο."
+                                        infoMessage = t("Προστέθηκε στο ημερολόγιο.")
                                         onOpenHistory()
                                     }
                                 },
@@ -630,12 +632,12 @@ fun CalculatorScreen(
                             ) {
                                 Icon(Icons.Rounded.EventNote, contentDescription = null, modifier = Modifier.size(18.dp))
                                 Spacer(Modifier.width(6.dp))
-                                Text("Ημερολόγιο")
+                                Text(t("Ημερολόγιο"))
                             }
                         }
                         if (peptideName.isBlank()) {
                             Text(
-                                "Επίλεξε πεπτίδιο για να ενεργοποιηθεί η καταχώρηση στο ημερολόγιο.",
+                                t("Επίλεξε πεπτίδιο για να ενεργοποιηθεί η καταχώρηση στο ημερολόγιο."),
                                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                                 style = MaterialTheme.typography.bodySmall
                             )
@@ -665,7 +667,7 @@ fun CalculatorScreen(
                     Icon(Icons.Rounded.History, contentDescription = null, tint = ElectricViolet)
                     Spacer(Modifier.width(8.dp))
                     Text(
-                        "Αποθηκευμένοι υπολογισμοί",
+                        t("Αποθηκευμένοι υπολογισμοί"),
                         style = MaterialTheme.typography.titleMedium,
                         fontWeight = FontWeight.ExtraBold,
                         modifier = Modifier.weight(1f)
@@ -692,7 +694,7 @@ fun CalculatorScreen(
 
         item {
             Text(
-                "Ο υπολογιστής κάνει μόνο μαθηματική μετατροπή από τις τιμές που βάζεις. Δεν επιλέγει για εσένα ποια ποσότητα ή συχνότητα πρέπει να χρησιμοποιήσεις.",
+                t("Ο υπολογιστής κάνει μόνο μαθηματική μετατροπή από τις τιμές που βάζεις. Δεν επιλέγει για εσένα ποια ποσότητα ή συχνότητα πρέπει να χρησιμοποιήσεις."),
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                 style = MaterialTheme.typography.bodySmall,
                 modifier = Modifier.padding(horizontal = 4.dp)
@@ -716,7 +718,7 @@ private fun SavedCalculationCard(
                 verticalArrangement = Arrangement.spacedBy(3.dp)
             ) {
                 Text(
-                    row.peptide.ifBlank { "Χωρίς επιλεγμένο πεπτίδιο" },
+                    row.peptide.ifBlank { t("Χωρίς επιλεγμένο πεπτίδιο") },
                     fontWeight = FontWeight.ExtraBold,
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis
@@ -738,10 +740,10 @@ private fun SavedCalculationCard(
                 )
             }
             OutlinedButton(onClick = onLoad) {
-                Text("Φόρτωση")
+                Text(t("Φόρτωση"))
             }
             IconButton(onClick = onDelete) {
-                Icon(Icons.Outlined.Delete, contentDescription = "Διαγραφή")
+                Icon(Icons.Outlined.Delete, contentDescription = t("Διαγραφή"))
             }
         }
     }
@@ -908,45 +910,45 @@ private fun ResultCard(
             verticalArrangement = Arrangement.spacedBy(9.dp)
         ) {
             Text(
-                "ΑΠΟΤΕΛΕΣΜΑ",
+                t("ΑΠΟΤΕΛΕΣΜΑ"),
                 color = ElectricCyan,
                 style = MaterialTheme.typography.labelLarge,
                 fontWeight = FontWeight.ExtraBold
             )
             if (!reverse) {
                 ResultLine(
-                    label = "Ένδειξη σύριγγας U-" + syringeUnitsPerMl,
+                    label = t("Ένδειξη σύριγγας U-") + syringeUnitsPerMl,
                     value = output[0],
                     emphasize = true
                 )
                 ResultLine(
-                    label = "Αντίστοιχος όγκος",
+                    label = t("Αντίστοιχος όγκος"),
                     value = output[1]
                 )
                 ResultLine(
-                    label = "Συγκέντρωση μετά την ανάμιξη",
+                    label = t("Συγκέντρωση μετά την ανάμιξη"),
                     value = output[2]
                 )
                 ResultLine(
-                    label = "Ποσότητα ανά 1 μονάδα U-" + syringeUnitsPerMl,
+                    label = t("Ποσότητα ανά 1 μονάδα U-") + syringeUnitsPerMl,
                     value = output[3]
                 )
             } else {
                 ResultLine(
-                    label = "Ποσότητα",
+                    label = t("Ποσότητα"),
                     value = output[0],
                     emphasize = true
                 )
                 ResultLine(
-                    label = "Ίδια ποσότητα σε mcg",
+                    label = t("Ίδια ποσότητα σε mcg"),
                     value = output[1]
                 )
                 ResultLine(
-                    label = "Αντίστοιχος όγκος",
+                    label = t("Αντίστοιχος όγκος"),
                     value = output[2]
                 )
                 ResultLine(
-                    label = "Ποσότητα ανά 1 μονάδα U-" + syringeUnitsPerMl,
+                    label = t("Ποσότητα ανά 1 μονάδα U-") + syringeUnitsPerMl,
                     value = output[3]
                 )
             }
@@ -958,13 +960,13 @@ private fun ResultCard(
                     capacity = capacity
                 )
                 Text(
-                    "Σύριγγα U-" + syringeUnitsPerMl + " · μέγιστη ένδειξη " + capacity + " U",
+                    t("Σύριγγα U-") + syringeUnitsPerMl + t(" · μέγιστη ένδειξη ") + capacity + " U",
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                     style = MaterialTheme.typography.bodySmall
                 )
                 if (units > capacity) {
                     Text(
-                        "Το αποτέλεσμα υπερβαίνει την επιλεγμένη χωρητικότητα.",
+                        t("Το αποτέλεσμα υπερβαίνει την επιλεγμένη χωρητικότητα."),
                         color = MaterialTheme.colorScheme.error,
                         style = MaterialTheme.typography.bodySmall
                     )
@@ -981,7 +983,7 @@ private fun SyringeGauge(
 ) {
     val fraction = (units / capacity.toDouble()).coerceIn(0.0, 1.0).toFloat()
     val outline = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f)
-    val track = Color.White.copy(alpha = 0.06f)
+    val track = MaterialTheme.colorScheme.surfaceVariant
     val fill = ElectricCyan.copy(alpha = 0.28f)
 
     Canvas(

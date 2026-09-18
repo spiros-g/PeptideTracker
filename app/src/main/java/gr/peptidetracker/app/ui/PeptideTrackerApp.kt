@@ -1,5 +1,7 @@
 package gr.peptidetracker.app.ui
 
+import gr.peptidetracker.app.i18n.t
+
 import android.net.Uri
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.tween
@@ -11,6 +13,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
@@ -41,6 +44,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavType
@@ -118,10 +122,10 @@ fun PeptideTrackerApp(
     }
 
     val destinations = listOf(
-        MainDestination(Routes.Home, "Αρχική", Icons.Rounded.Home),
-        MainDestination(Routes.Library, "Πεπτίδια", Icons.Rounded.Science),
-        MainDestination(Routes.Calculator, "Υπολογιστής", Icons.Rounded.Calculate),
-        MainDestination(Routes.Tracker, "Ημερολόγιο", Icons.Rounded.QueryStats)
+        MainDestination(Routes.Home, t("Αρχική"), Icons.Rounded.Home),
+        MainDestination(Routes.Library, t("Πεπτίδια"), Icons.Rounded.Science),
+        MainDestination(Routes.Calculator, t("Υπολογιστής"), Icons.Rounded.Calculate),
+        MainDestination(Routes.Tracker, t("Ημερολόγιο"), Icons.Rounded.QueryStats)
     )
     val mainRoutes = destinations.map { it.route }.toSet()
     val backStackEntry by navController.currentBackStackEntryAsState()
@@ -147,7 +151,7 @@ fun PeptideTrackerApp(
         }
     }
 
-    AppTheme {
+    AppTheme(themeMode = store.appTheme()) {
         PremiumBackground {
             if (showOnboarding) {
                 OnboardingScreen(
@@ -312,11 +316,11 @@ fun PeptideTrackerApp(
             availableUpdate?.let { update ->
                 AlertDialog(
                     onDismissRequest = { availableUpdate = null },
-                    title = { Text("Νέα έκδοση ${update.version}") },
+                    title = { Text(t("Νέα έκδοση ${update.version}")) },
                     text = {
                         Text(
                             buildString {
-                                append("Υπάρχει νεότερη έκδοση του Peptide Tracker στο GitHub.")
+                                append(t("Υπάρχει νεότερη έκδοση του Peptide Tracker στο GitHub."))
                                 if (update.releaseNotes.isNotBlank()) {
                                     append("\n\n")
                                     append(update.releaseNotes.take(700))
@@ -333,12 +337,12 @@ fun PeptideTrackerApp(
                                 availableUpdate = null
                             }
                         ) {
-                            Text("Ενημέρωση τώρα")
+                            Text(t("Ενημέρωση τώρα"))
                         }
                     },
                     dismissButton = {
                         TextButton(onClick = { availableUpdate = null }) {
-                            Text("Αργότερα")
+                            Text(t("Αργότερα"))
                         }
                     }
                 )
@@ -362,9 +366,9 @@ private fun PremiumBottomBar(
             .background(
                 Brush.horizontalGradient(
                     listOf(
-                        Color(0xF20C131D),
-                        Color(0xF5141D29),
-                        Color(0xF20B121B)
+                        MaterialTheme.colorScheme.surface.copy(alpha = 0.98f),
+                        MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.94f),
+                        MaterialTheme.colorScheme.surface.copy(alpha = 0.98f)
                     )
                 )
             )
@@ -372,9 +376,9 @@ private fun PremiumBottomBar(
                 1.dp,
                 Brush.horizontalGradient(
                     listOf(
-                        Color.White.copy(alpha = 0.18f),
-                        ElectricBlue.copy(alpha = 0.16f),
-                        Color.White.copy(alpha = 0.08f)
+                        MaterialTheme.colorScheme.onSurface.copy(alpha = 0.14f),
+                        MaterialTheme.colorScheme.primary.copy(alpha = 0.16f),
+                        MaterialTheme.colorScheme.onSurface.copy(alpha = 0.06f)
                     )
                 ),
                 RoundedCornerShape(26.dp)
@@ -389,7 +393,11 @@ private fun PremiumBottomBar(
             destinations.forEach { destination ->
                 val active = selectedRoute == destination.route
                 val tint by animateColorAsState(
-                    targetValue = if (active) Color.White else TextMuted,
+                    targetValue = if (active) {
+                        MaterialTheme.colorScheme.onSurface
+                    } else {
+                        MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.74f)
+                    },
                     animationSpec = tween(170),
                     label = "navTint"
                 )
@@ -411,6 +419,7 @@ private fun PremiumBottomBar(
                         .clip(RoundedCornerShape(19.dp))
                         .clickable { onSelected(destination.route) }
                         .background(tileColor)
+                        .heightIn(min = 54.dp)
                         .padding(vertical = 8.dp),
                     horizontalAlignment = Alignment.CenterHorizontally,
                     verticalArrangement = Arrangement.spacedBy(3.dp)
@@ -426,7 +435,8 @@ private fun PremiumBottomBar(
                         color = tint,
                         style = MaterialTheme.typography.labelSmall,
                         fontWeight = if (active) FontWeight.ExtraBold else FontWeight.SemiBold,
-                        maxLines = 1
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis
                     )
                 }
             }

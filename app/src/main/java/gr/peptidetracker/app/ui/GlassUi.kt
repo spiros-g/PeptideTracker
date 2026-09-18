@@ -48,6 +48,7 @@ fun PremiumBackground(
     modifier: Modifier = Modifier,
     content: @Composable BoxScope.() -> Unit
 ) {
+    val colors = MaterialTheme.colorScheme
     val transition = rememberInfiniteTransition(label = "ambientMesh")
     val horizontalShift by transition.animateFloat(
         initialValue = -0.08f,
@@ -67,9 +68,9 @@ fun PremiumBackground(
             drawRect(
                 brush = Brush.verticalGradient(
                     colors = listOf(
-                        Color(0xFF04070B),
-                        Color(0xFF07101A),
-                        Color(0xFF05090F)
+                        colors.background,
+                        colors.surfaceVariant.copy(alpha = 0.55f),
+                        colors.background
                     )
                 )
             )
@@ -81,8 +82,8 @@ fun PremiumBackground(
             drawCircle(
                 brush = Brush.radialGradient(
                     colors = listOf(
-                        ElectricBlue.copy(alpha = 0.22f),
-                        ElectricViolet.copy(alpha = 0.08f),
+                        ElectricBlue.copy(alpha = 0.17f),
+                        ElectricViolet.copy(alpha = 0.06f),
                         Color.Transparent
                     ),
                     center = blueCenter,
@@ -99,8 +100,8 @@ fun PremiumBackground(
             drawCircle(
                 brush = Brush.radialGradient(
                     colors = listOf(
-                        ElectricCyan.copy(alpha = 0.14f),
-                        ElectricBlue.copy(alpha = 0.05f),
+                        ElectricCyan.copy(alpha = 0.11f),
+                        ElectricBlue.copy(alpha = 0.04f),
                         Color.Transparent
                     ),
                     center = cyanCenter,
@@ -113,11 +114,12 @@ fun PremiumBackground(
             val grid = 52.dp.toPx()
             val verticalLines = ceil(size.width / grid).toInt()
             val horizontalLines = ceil(size.height / grid).toInt()
+            val gridColor = colors.onBackground.copy(alpha = 0.026f)
 
             for (index in 0..verticalLines) {
                 val x = index * grid
                 drawLine(
-                    color = Color.White.copy(alpha = 0.018f),
+                    color = gridColor,
                     start = Offset(x, 0f),
                     end = Offset(x, size.height),
                     strokeWidth = 1f
@@ -127,7 +129,7 @@ fun PremiumBackground(
             for (index in 0..horizontalLines) {
                 val y = index * grid
                 drawLine(
-                    color = Color.White.copy(alpha = 0.015f),
+                    color = gridColor,
                     start = Offset(0f, y),
                     end = Offset(size.width, y),
                     strokeWidth = 1f
@@ -137,9 +139,9 @@ fun PremiumBackground(
             drawRect(
                 brush = Brush.verticalGradient(
                     listOf(
-                        Color.Black.copy(alpha = 0.05f),
+                        colors.scrim.copy(alpha = 0.015f),
                         Color.Transparent,
-                        Color.Black.copy(alpha = 0.22f)
+                        colors.scrim.copy(alpha = 0.06f)
                     )
                 )
             )
@@ -156,6 +158,7 @@ fun GlassCard(
     onClick: (() -> Unit)? = null,
     content: @Composable BoxScope.() -> Unit
 ) {
+    val colors = MaterialTheme.colorScheme
     val shape = RoundedCornerShape(26.dp)
     val interaction = remember { MutableInteractionSource() }
     val pressed by interaction.collectIsPressedAsState()
@@ -181,14 +184,20 @@ fun GlassCard(
                 scaleX = scale
                 scaleY = scale
             }
-            .shadow(20.dp, shape, clip = false)
+            .shadow(
+                elevation = 14.dp,
+                shape = shape,
+                clip = false,
+                ambientColor = colors.scrim.copy(alpha = 0.20f),
+                spotColor = colors.scrim.copy(alpha = 0.18f)
+            )
             .clip(shape)
             .background(
                 Brush.linearGradient(
                     listOf(
-                        Color(0xD91A2331),
-                        Color(0xC90F1722),
-                        Color(0xDB101925)
+                        colors.surface.copy(alpha = 0.96f),
+                        colors.surfaceVariant.copy(alpha = 0.86f),
+                        colors.surface.copy(alpha = 0.94f)
                     )
                 )
             )
@@ -196,9 +205,9 @@ fun GlassCard(
                 width = 1.dp,
                 brush = Brush.linearGradient(
                     listOf(
-                        Color.White.copy(alpha = 0.26f),
-                        ElectricBlue.copy(alpha = 0.18f),
-                        Color.White.copy(alpha = 0.07f)
+                        colors.onSurface.copy(alpha = 0.16f),
+                        ElectricBlue.copy(alpha = 0.15f),
+                        colors.onSurface.copy(alpha = 0.06f)
                     )
                 ),
                 shape = shape
@@ -213,7 +222,7 @@ fun GlassCard(
                     Brush.horizontalGradient(
                         listOf(
                             Color.Transparent,
-                            Color.White.copy(alpha = 0.22f),
+                            colors.onSurface.copy(alpha = 0.12f),
                             Color.Transparent
                         )
                     )
@@ -230,53 +239,53 @@ fun GlassCard(
 
 @Composable
 fun premiumButtonColors() = ButtonDefaults.buttonColors(
-    containerColor = ElectricBlue,
-    contentColor = Color.White,
-    disabledContainerColor = Color.White.copy(alpha = 0.08f),
-    disabledContentColor = Color.White.copy(alpha = 0.34f)
+    containerColor = MaterialTheme.colorScheme.primary,
+    contentColor = MaterialTheme.colorScheme.onPrimary,
+    disabledContainerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.72f),
+    disabledContentColor = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.52f)
 )
 
 @Composable
 fun premiumTextButtonColors() = ButtonDefaults.textButtonColors(
-    contentColor = TextPrimary,
-    disabledContentColor = TextMuted
+    contentColor = MaterialTheme.colorScheme.onSurface,
+    disabledContentColor = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.52f)
 )
 
 @Composable
 fun premiumFilterChipColors() = FilterChipDefaults.filterChipColors(
-    containerColor = Color.White.copy(alpha = 0.045f),
-    labelColor = TextSecondary,
-    iconColor = TextSecondary,
-    disabledContainerColor = Color.White.copy(alpha = 0.025f),
-    disabledLabelColor = TextMuted,
-    selectedContainerColor = ElectricBlue.copy(alpha = 0.22f),
-    selectedLabelColor = Color.White,
-    selectedLeadingIconColor = ElectricCyan,
-    selectedTrailingIconColor = Color.White
+    containerColor = MaterialTheme.colorScheme.surface.copy(alpha = 0.45f),
+    labelColor = MaterialTheme.colorScheme.onSurfaceVariant,
+    iconColor = MaterialTheme.colorScheme.onSurfaceVariant,
+    disabledContainerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.42f),
+    disabledLabelColor = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.48f),
+    selectedContainerColor = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.80f),
+    selectedLabelColor = MaterialTheme.colorScheme.onPrimaryContainer,
+    selectedLeadingIconColor = MaterialTheme.colorScheme.secondary,
+    selectedTrailingIconColor = MaterialTheme.colorScheme.onPrimaryContainer
 )
 
 @Composable
 fun premiumTextFieldColors() = OutlinedTextFieldDefaults.colors(
-    focusedTextColor = Color.White,
-    unfocusedTextColor = Color.White,
-    disabledTextColor = TextMuted,
-    errorTextColor = Color.White,
-    focusedContainerColor = Color.White.copy(alpha = 0.045f),
-    unfocusedContainerColor = Color.White.copy(alpha = 0.03f),
-    disabledContainerColor = Color.White.copy(alpha = 0.02f),
-    errorContainerColor = Color.White.copy(alpha = 0.035f),
-    cursorColor = ElectricCyan,
+    focusedTextColor = MaterialTheme.colorScheme.onSurface,
+    unfocusedTextColor = MaterialTheme.colorScheme.onSurface,
+    disabledTextColor = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.56f),
+    errorTextColor = MaterialTheme.colorScheme.onSurface,
+    focusedContainerColor = MaterialTheme.colorScheme.surface.copy(alpha = 0.72f),
+    unfocusedContainerColor = MaterialTheme.colorScheme.surface.copy(alpha = 0.52f),
+    disabledContainerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.38f),
+    errorContainerColor = MaterialTheme.colorScheme.errorContainer.copy(alpha = 0.32f),
+    cursorColor = MaterialTheme.colorScheme.secondary,
     errorCursorColor = MaterialTheme.colorScheme.error,
-    focusedBorderColor = ElectricBlue.copy(alpha = 0.78f),
-    unfocusedBorderColor = Color.White.copy(alpha = 0.16f),
-    disabledBorderColor = Color.White.copy(alpha = 0.08f),
+    focusedBorderColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.82f),
+    unfocusedBorderColor = MaterialTheme.colorScheme.outlineVariant,
+    disabledBorderColor = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.52f),
     errorBorderColor = MaterialTheme.colorScheme.error,
-    focusedLabelColor = ElectricBlue,
-    unfocusedLabelColor = TextSecondary,
-    disabledLabelColor = TextMuted,
+    focusedLabelColor = MaterialTheme.colorScheme.primary,
+    unfocusedLabelColor = MaterialTheme.colorScheme.onSurfaceVariant,
+    disabledLabelColor = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.52f),
     errorLabelColor = MaterialTheme.colorScheme.error,
-    focusedPlaceholderColor = TextMuted,
-    unfocusedPlaceholderColor = TextMuted
+    focusedPlaceholderColor = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.72f),
+    unfocusedPlaceholderColor = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.72f)
 )
 
 @Suppress("UNUSED_PARAMETER")

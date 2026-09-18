@@ -10,9 +10,8 @@
 - In-app privacy/safety information.
 - Release signing configuration wired through local keystore.properties.
 - Local signing material and Android machine-specific files excluded through .gitignore.
-- Local compile.bat validation for unit tests, lint and debug APK builds.
-- Local build-release.bat release gate for unit tests, release lint and signed AAB creation.
-- GitHub Actions workflow retained as manual-only while hosted Actions quota is unavailable.
+- GitHub Actions validation for unit tests, Android lint and debug/release builds.
+- Signed GitHub release workflow for APK/AAB publication.
 - Current beta contains no AdMob/UMP SDK.
 
 ## Required before public production release
@@ -26,7 +25,7 @@
 - Confirm store text does not imply diagnosis, treatment or personalized dosage recommendations.
 - Add final screenshots, feature graphic, category and support contact.
 - Test multiple Android versions, screen sizes and large-font accessibility.
-- Run a successful local build and commit the generated Room schema JSON under app/schemas.
+- Run a successful CI validation build and commit the generated Room schema JSON under app/schemas.
 - Test legacy-data-to-Room migration using a copy of real pre-Room data.
 - Test plain/encrypted backup restore and reminder rescheduling.
 - Review every peptide profile and its displayed review date before submission.

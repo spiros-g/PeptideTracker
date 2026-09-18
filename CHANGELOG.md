@@ -1,5 +1,15 @@
 # Changelog
 
+## 4.8.0 — multilingual cleanup
+
+- Rebranded user-facing names from Peptide Tracker GR to Peptide Tracker while preserving the Android application ID for upgrade compatibility.
+- Added Greek and English localization across the UI, notifications, updater, tracker tools and peptide library.
+- Added an in-app language selector for System, Greek and English.
+- Removed obsolete Windows compile/release batch scripts and dead launcher-artwork chunks.
+- Cleaned the Android validation workflow and debug artifact naming.
+- Increased app version to 4.8.0 (versionCode 33).
+
+
 ## 4.7.2 — in-app updater
 
 - Added automatic background checks for new GitHub releases and Android notifications when an update is available.

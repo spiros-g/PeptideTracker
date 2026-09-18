@@ -1,5 +1,7 @@
 package gr.peptidetracker.app.data
 
+import gr.peptidetracker.app.i18n.t
+
 import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageInfo
@@ -24,7 +26,7 @@ object UpdateInstaller {
         context: Context,
         update: AppUpdateInfo
     ): File = withContext(Dispatchers.IO) {
-        val apkUrl = update.apkUrl ?: error("Η έκδοση δεν περιέχει APK.")
+        val apkUrl = update.apkUrl ?: error(t("Η έκδοση δεν περιέχει APK."))
 
         val updateDir = File(context.cacheDir, "updates").apply { mkdirs() }
         updateDir.listFiles()?.forEach { old ->
@@ -40,14 +42,14 @@ object UpdateInstaller {
         update.apkSha256?.let { expected ->
             val actual = sha256(tempFile)
             check(actual.equals(expected, ignoreCase = true)) {
-                "Το checksum του APK δεν ταιριάζει με το GitHub release."
+                t("Το checksum του APK δεν ταιριάζει με το GitHub release.")
             }
         }
 
         validatePackage(context, tempFile, update.version)
 
         check(tempFile.renameTo(finalFile)) {
-            "Δεν ήταν δυνατή η προετοιμασία του APK."
+            t("Δεν ήταν δυνατή η προετοιμασία του APK.")
         }
 
         finalFile
@@ -68,7 +70,7 @@ object UpdateInstaller {
 
     fun launchInstaller(context: Context, apkFile: File) {
         check(apkFile.isFile && apkFile.length() > 0L) {
-            "Το αρχείο ενημέρωσης δεν είναι διαθέσιμο."
+            t("Το αρχείο ενημέρωσης δεν είναι διαθέσιμο.")
         }
 
         val uri = FileProvider.getUriForFile(
@@ -96,12 +98,12 @@ object UpdateInstaller {
 
         try {
             check(connection.responseCode in 200..299) {
-                "Η λήψη απέτυχε (HTTP " + connection.responseCode + ")."
+                t("Η λήψη απέτυχε (HTTP ") + connection.responseCode + ")."
             }
 
             val announcedSize = connection.contentLengthLong
             if (announcedSize > MAX_APK_BYTES) {
-                error("Το APK είναι μεγαλύτερο από το επιτρεπόμενο όριο.")
+                error(t("Το APK είναι μεγαλύτερο από το επιτρεπόμενο όριο."))
             }
 
             var total = 0L
@@ -113,7 +115,7 @@ object UpdateInstaller {
                         if (read < 0) break
                         total += read
                         if (total > MAX_APK_BYTES) {
-                            error("Το APK είναι μεγαλύτερο από το επιτρεπόμενο όριο.")
+                            error(t("Το APK είναι μεγαλύτερο από το επιτρεπόμενο όριο."))
                         }
                         output.write(buffer, 0, read)
                     }
@@ -121,7 +123,7 @@ object UpdateInstaller {
             }
 
             check(total > 1_000_000L) {
-                "Το αρχείο ενημέρωσης είναι ασυνήθιστα μικρό."
+                t("Το αρχείο ενημέρωσης είναι ασυνήθιστα μικρό.")
             }
         } catch (error: Throwable) {
             destination.delete()
@@ -138,30 +140,30 @@ object UpdateInstaller {
     ) {
         val packageManager = context.packageManager
         val archive = archivePackageInfo(packageManager, apkFile)
-            ?: error("Το ληφθέν αρχείο δεν είναι έγκυρο Android APK.")
+            ?: error(t("Το ληφθέν αρχείο δεν είναι έγκυρο Android APK."))
         val installed = installedPackageInfo(packageManager, context.packageName)
 
         check(archive.packageName == context.packageName) {
-            "Το APK ανήκει σε διαφορετική εφαρμογή."
+            t("Το APK ανήκει σε διαφορετική εφαρμογή.")
         }
 
         val archiveVersion = archive.versionName.orEmpty().trim()
         check(archiveVersion == expectedVersion) {
-            "Η έκδοση του APK (" + archiveVersion +
-                ") δεν ταιριάζει με την αναμενόμενη (" + expectedVersion + ")."
+            t("Η έκδοση του APK (") + archiveVersion +
+                t(") δεν ταιριάζει με την αναμενόμενη (") + expectedVersion + ")."
         }
 
         check(versionCodeOf(archive) > versionCodeOf(installed)) {
-            "Το APK δεν έχει νεότερο versionCode από την εγκατεστημένη εφαρμογή."
+            t("Το APK δεν έχει νεότερο versionCode από την εγκατεστημένη εφαρμογή.")
         }
 
         val installedSigners = signerDigests(installed)
         val archiveSigners = signerDigests(archive)
         check(installedSigners.isNotEmpty() && archiveSigners.isNotEmpty()) {
-            "Δεν ήταν δυνατή η επαλήθευση της υπογραφής του APK."
+            t("Δεν ήταν δυνατή η επαλήθευση της υπογραφής του APK.")
         }
         check(installedSigners.any { it in archiveSigners }) {
-            "Η υπογραφή του APK δεν ταιριάζει με την εγκατεστημένη εφαρμογή."
+            t("Η υπογραφή του APK δεν ταιριάζει με την εγκατεστημένη εφαρμογή.")
         }
 
         check(
@@ -170,7 +172,7 @@ object UpdateInstaller {
                 BuildConfig.VERSION_NAME
             )
         ) {
-            "Το APK δεν είναι νεότερο από την τρέχουσα έκδοση."
+            t("Το APK δεν είναι νεότερο από την τρέχουσα έκδοση.")
         }
     }
 

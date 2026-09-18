@@ -1,5 +1,8 @@
 package gr.peptidetracker.app.ui.screens
 
+import gr.peptidetracker.app.i18n.isGreekLanguage
+import gr.peptidetracker.app.i18n.t
+
 import android.app.DatePickerDialog
 import android.app.TimePickerDialog
 import android.content.Context
@@ -8,6 +11,8 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -171,7 +176,7 @@ fun TrackerScreen(
         if (summary == null) {
             pendingRestoreRaw = null
             pendingRestoreSummary = null
-            dataMessage = "Το αρχείο backup δεν είναι έγκυρο."
+            dataMessage = t("Το αρχείο backup δεν είναι έγκυρο.")
         } else {
             pendingRestoreRaw = raw
             pendingRestoreSummary = summary
@@ -185,11 +190,11 @@ fun TrackerScreen(
             runCatching {
                 context.contentResolver.openOutputStream(uri)?.bufferedWriter()?.use {
                     it.write(store.exportJson())
-                } ?: error("Δεν ήταν δυνατή η εγγραφή του αρχείου.")
+                } ?: error(t("Δεν ήταν δυνατή η εγγραφή του αρχείου."))
             }.onSuccess {
-                dataMessage = "Το backup αποθηκεύτηκε."
+                dataMessage = t("Το backup αποθηκεύτηκε.")
             }.onFailure {
-                dataMessage = "Αποτυχία αποθήκευσης backup."
+                dataMessage = t("Αποτυχία αποθήκευσης backup.")
             }
         }
     }
@@ -208,13 +213,13 @@ fun TrackerScreen(
                     withContext(Dispatchers.IO) {
                         context.contentResolver.openOutputStream(uri)?.use {
                             it.write(bytes)
-                        } ?: error("Δεν ήταν δυνατή η εγγραφή του αρχείου.")
+                        } ?: error(t("Δεν ήταν δυνατή η εγγραφή του αρχείου."))
                     }
                 }
                 dataMessage = if (result.isSuccess) {
-                    "Το κρυπτογραφημένο backup αποθηκεύτηκε."
+                    t("Το κρυπτογραφημένο backup αποθηκεύτηκε.")
                 } else {
-                    "Αποτυχία κρυπτογραφημένου backup."
+                    t("Αποτυχία κρυπτογραφημένου backup.")
                 }
             }
         }
@@ -227,11 +232,11 @@ fun TrackerScreen(
             runCatching {
                 context.contentResolver.openOutputStream(uri)?.bufferedWriter()?.use {
                     it.write(store.exportEntriesCsv())
-                } ?: error("Δεν ήταν δυνατή η εγγραφή του αρχείου.")
+                } ?: error(t("Δεν ήταν δυνατή η εγγραφή του αρχείου."))
             }.onSuccess {
-                dataMessage = "Το CSV αποθηκεύτηκε."
+                dataMessage = t("Το CSV αποθηκεύτηκε.")
             }.onFailure {
-                dataMessage = "Αποτυχία εξαγωγής CSV."
+                dataMessage = t("Αποτυχία εξαγωγής CSV.")
             }
         }
     }
@@ -242,7 +247,7 @@ fun TrackerScreen(
         if (uri != null) {
             runCatching {
                 context.contentResolver.openInputStream(uri)?.use { it.readBytes() }
-                    ?: error("Κενό αρχείο.")
+                    ?: error(t("Κενό αρχείο."))
             }.onSuccess { bytes ->
                 if (BackupCrypto.isEncrypted(bytes)) {
                     pendingEncryptedRestore = bytes
@@ -254,7 +259,7 @@ fun TrackerScreen(
             }.onFailure {
                 pendingRestoreRaw = null
                 pendingRestoreSummary = null
-                dataMessage = "Το αρχείο backup δεν είναι έγκυρο."
+                dataMessage = t("Το αρχείο backup δεν είναι έγκυρο.")
             }
         }
     }
@@ -300,8 +305,8 @@ fun TrackerScreen(
             verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
             PremiumTopBar(
-                title = "Ημερολόγιο",
-                subtitle = "Χρήσεις, ενεργά φιαλίδια, απόθεμα και προσωπικές μετρήσεις."
+                title = t("Ημερολόγιο"),
+                subtitle = t("Χρήσεις, ενεργά φιαλίδια, απόθεμα και προσωπικές μετρήσεις.")
             )
 
             Column(verticalArrangement = Arrangement.spacedBy(7.dp)) {
@@ -309,15 +314,15 @@ fun TrackerScreen(
                     Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.spacedBy(7.dp)
                 ) {
-                    TrackerTab("Χρήσεις", section == 0, Modifier.weight(1f)) { section = 0 }
-                    TrackerTab("Απόθεμα", section == 1, Modifier.weight(1f)) { section = 1 }
+                    TrackerTab(t("Χρήσεις"), section == 0, Modifier.weight(1f)) { section = 0 }
+                    TrackerTab(t("Απόθεμα"), section == 1, Modifier.weight(1f)) { section = 1 }
                 }
                 Row(
                     Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.spacedBy(7.dp)
                 ) {
-                    TrackerTab("Μετρήσεις", section == 2, Modifier.weight(1f)) { section = 2 }
-                    TrackerTab("Στατιστικά", section == 3, Modifier.weight(1f)) { section = 3 }
+                    TrackerTab(t("Μετρήσεις"), section == 2, Modifier.weight(1f)) { section = 2 }
+                    TrackerTab(t("Στατιστικά"), section == 3, Modifier.weight(1f)) { section = 3 }
                 }
             }
 
@@ -327,7 +332,7 @@ fun TrackerScreen(
             ) {
                 Icon(Icons.Rounded.Backup, contentDescription = null, modifier = Modifier.size(18.dp))
                 Spacer(Modifier.width(6.dp))
-                Text("Αντίγραφα ασφαλείας & εξαγωγή")
+                Text(t("Αντίγραφα ασφαλείας & εξαγωγή"))
             }
 
             if (dataMessage.isNotBlank()) {
@@ -388,7 +393,7 @@ fun TrackerScreen(
                         entry.inventoryId == row.id && entry.inventoryAppliedMg != null
                     }
                     if (hasLinkedUsage) {
-                        dataMessage = "Δεν μπορεί να διαγραφεί απόθεμα που συνδέεται με καταγραφές. Διέγραψε ή αποσύνδεσε πρώτα τις σχετικές καταγραφές."
+                        dataMessage = t("Δεν μπορεί να διαγραφεί απόθεμα που συνδέεται με καταγραφές. Διέγραψε ή αποσύνδεσε πρώτα τις σχετικές καταγραφές.")
                     } else {
                         pendingDeleteInventory = row
                     }
@@ -462,10 +467,10 @@ fun TrackerScreen(
                     reloadAll()
                     showLogDialog = false
                     repeatLogTemplate = null
-                    dataMessage = ""
+                    dataMessage = t("Η καταγραφή αποθηκεύτηκε.")
                     haptics.performHapticFeedback(HapticFeedbackType.LongPress)
                 } else {
-                    dataMessage = "Δεν υπάρχει αρκετό υπόλοιπο στο συνδεδεμένο ενεργό vial για αυτή την καταγραφή."
+                    dataMessage = t("Δεν υπάρχει αρκετό υπόλοιπο στο συνδεδεμένο ενεργό vial για αυτή την καταγραφή.")
                 }
             }
         )
@@ -509,6 +514,7 @@ fun TrackerScreen(
                     )
                 }
                 inventory = store.inventory()
+                dataMessage = t("Το απόθεμα αποθηκεύτηκε.")
                 showInventoryDialog = false
             }
         )
@@ -526,6 +532,7 @@ fun TrackerScreen(
                     store.updateProgress(current.id, weight, waist, note, createdAt)
                 }
                 progress = store.progress()
+                dataMessage = t("Η μέτρηση αποθηκεύτηκε.")
                 showProgressDialog = false
             }
         )
@@ -537,25 +544,25 @@ fun TrackerScreen(
             containerColor = GlassSurfaceStrong,
             titleContentColor = TextPrimary,
             textContentColor = TextPrimary,
-            title = { Text("Δεδομένα εφαρμογής") },
+            title = { Text(t("Δεδομένα εφαρμογής")) },
             text = {
                 Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
                     Text(
-                        "Το backup περιλαμβάνει ημερολόγιο, απόθεμα, μετρήσεις, αγαπημένα και βασικές ρυθμίσεις. Όλα παραμένουν τοπικά εκτός αν εσύ αποθηκεύσεις ή μοιραστείς το αρχείο.",
+                        t("Το backup περιλαμβάνει ημερολόγιο, απόθεμα, μετρήσεις, αγαπημένα και βασικές ρυθμίσεις. Όλα παραμένουν τοπικά εκτός αν εσύ αποθηκεύσεις ή μοιραστείς το αρχείο."),
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                         style = MaterialTheme.typography.bodySmall
                     )
                     Button(
                         onClick = {
                             showDataTools = false
-                            backupLauncher.launch("PeptideTrackerGR-backup.json")
+                            backupLauncher.launch("PeptideTracker-backup.json")
                         },
                         modifier = Modifier.fillMaxWidth(),
                         colors = premiumButtonColors()
                     ) {
                         Icon(Icons.Rounded.Save, contentDescription = null)
                         Spacer(Modifier.width(7.dp))
-                        Text("Αποθήκευση backup")
+                        Text(t("Αποθήκευση backup"))
                     }
                     OutlinedButton(
                         onClick = {
@@ -565,7 +572,7 @@ fun TrackerScreen(
                         },
                         modifier = Modifier.fillMaxWidth()
                     ) {
-                        Text("Κρυπτογραφημένο backup")
+                        Text(t("Κρυπτογραφημένο backup"))
                     }
                     OutlinedButton(
                         onClick = {
@@ -576,16 +583,16 @@ fun TrackerScreen(
                     ) {
                         Icon(Icons.Rounded.Restore, contentDescription = null)
                         Spacer(Modifier.width(7.dp))
-                        Text("Επαναφορά backup")
+                        Text(t("Επαναφορά backup"))
                     }
                     OutlinedButton(
                         onClick = {
                             showDataTools = false
-                            csvLauncher.launch("PeptideTrackerGR-history.csv")
+                            csvLauncher.launch("PeptideTracker-history.csv")
                         },
                         modifier = Modifier.fillMaxWidth()
                     ) {
-                        Text("Εξαγωγή ημερολογίου σε CSV")
+                        Text(t("Εξαγωγή ημερολογίου σε CSV"))
                     }
                     if (store.hasPreRestoreBackup()) {
                         OutlinedButton(
@@ -594,21 +601,21 @@ fun TrackerScreen(
                                 val ok = store.restorePreRestoreBackup()
                                 if (ok) {
                                     reloadAll()
-                                    dataMessage = "Επαναφέρθηκε το snapshot πριν από το τελευταίο restore."
+                                    dataMessage = t("Επαναφέρθηκε το snapshot πριν από το τελευταίο restore.")
                                 } else {
-                                    dataMessage = "Δεν ήταν δυνατή η επαναφορά του προηγούμενου snapshot."
+                                    dataMessage = t("Δεν ήταν δυνατή η επαναφορά του προηγούμενου snapshot.")
                                 }
                             },
                             modifier = Modifier.fillMaxWidth()
                         ) {
-                            Text("Επαναφορά πριν το τελευταίο restore")
+                            Text(t("Επαναφορά πριν το τελευταίο restore"))
                         }
                     }
                 }
             },
             confirmButton = {
                 TextButton(onClick = { showDataTools = false }, colors = premiumTextButtonColors()) {
-                    Text("Κλείσιμο")
+                    Text(t("Κλείσιμο"))
                 }
             }
         )
@@ -616,14 +623,14 @@ fun TrackerScreen(
 
     if (showEncryptedBackupPassword) {
         PasswordDialog(
-            title = "Κρυπτογραφημένο backup",
-            text = "Όρισε κωδικό τουλάχιστον 6 χαρακτήρων. Χωρίς αυτόν τον κωδικό το backup δεν μπορεί να επαναφερθεί.",
+            title = t("Κρυπτογραφημένο backup"),
+            text = t("Όρισε κωδικό τουλάχιστον 6 χαρακτήρων. Χωρίς αυτόν τον κωδικό το backup δεν μπορεί να επαναφερθεί."),
             password = encryptedBackupPassword,
             onPasswordChange = { encryptedBackupPassword = it },
-            confirmText = "Δημιουργία",
+            confirmText = t("Δημιουργία"),
             onConfirm = {
                 showEncryptedBackupPassword = false
-                encryptedBackupLauncher.launch("PeptideTrackerGR-secure.ptbackup")
+                encryptedBackupLauncher.launch("PeptideTracker-secure.ptbackup")
             },
             onDismiss = {
                 encryptedBackupPassword = ""
@@ -634,11 +641,11 @@ fun TrackerScreen(
 
     if (showEncryptedRestorePassword) {
         PasswordDialog(
-            title = "Ξεκλείδωμα backup",
-            text = "Πληκτρολόγησε τον κωδικό του κρυπτογραφημένου backup.",
+            title = t("Ξεκλείδωμα backup"),
+            text = t("Πληκτρολόγησε τον κωδικό του κρυπτογραφημένου backup."),
             password = encryptedRestorePassword,
             onPasswordChange = { encryptedRestorePassword = it },
-            confirmText = "Ξεκλείδωμα",
+            confirmText = t("Ξεκλείδωμα"),
             onConfirm = {
                 val bytes = pendingEncryptedRestore
                 val password = encryptedRestorePassword
@@ -652,7 +659,7 @@ fun TrackerScreen(
                         }
                     }
                     if (raw == null) {
-                        dataMessage = "Λάθος κωδικός ή κατεστραμμένο κρυπτογραφημένο backup."
+                        dataMessage = t("Λάθος κωδικός ή κατεστραμμένο κρυπτογραφημένο backup.")
                     } else {
                         queueRestore(raw)
                         pendingEncryptedRestore = null
@@ -677,21 +684,21 @@ fun TrackerScreen(
             containerColor = GlassSurfaceStrong,
             titleContentColor = TextPrimary,
             textContentColor = TextPrimary,
-            title = { Text("Επαναφορά backup") },
+            title = { Text(t("Επαναφορά backup")) },
             text = {
                 Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                     Text(
-                        "Μπορείς να συγχωνεύσεις το backup με τα τρέχοντα δεδομένα ή να τα αντικαταστήσεις. Πριν από πλήρη αντικατάσταση αποθηκεύεται αυτόματα εσωτερικό snapshot ασφαλείας.",
+                        t("Μπορείς να συγχωνεύσεις το backup με τα τρέχοντα δεδομένα ή να τα αντικαταστήσεις. Πριν από πλήρη αντικατάσταση αποθηκεύεται αυτόματα εσωτερικό snapshot ασφαλείας."),
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                         style = MaterialTheme.typography.bodySmall
                     )
                     Text("Schema v" + summary.schema, fontWeight = FontWeight.Bold)
-                    Text("Καταγραφές: " + summary.entries)
-                    Text("Απόθεμα: " + summary.inventory)
-                    Text("Μετρήσεις: " + summary.progress)
-                    Text("Υπενθυμίσεις: " + summary.reminders)
-                    Text("Αποθηκευμένοι υπολογισμοί: " + summary.savedCalculations)
-                    Text("Προσαρμοσμένα πεπτίδια: " + summary.customPeptides)
+                    Text(t("Καταγραφές: ") + summary.entries)
+                    Text(t("Απόθεμα: ") + summary.inventory)
+                    Text(t("Μετρήσεις: ") + summary.progress)
+                    Text(t("Υπενθυμίσεις: ") + summary.reminders)
+                    Text(t("Αποθηκευμένοι υπολογισμοί: ") + summary.savedCalculations)
+                    Text(t("Προσαρμοσμένα πεπτίδια: ") + summary.customPeptides)
                 }
             },
             confirmButton = {
@@ -702,16 +709,16 @@ fun TrackerScreen(
                             val ok = raw != null && store.mergeJson(raw)
                             if (ok) {
                                 reloadAll()
-                                dataMessage = "Το backup συγχωνεύτηκε με τα τρέχοντα δεδομένα."
+                                dataMessage = t("Το backup συγχωνεύτηκε με τα τρέχοντα δεδομένα.")
                                 haptics.performHapticFeedback(HapticFeedbackType.LongPress)
                             } else {
-                                dataMessage = "Η συγχώνευση απέτυχε. Τα τρέχοντα δεδομένα διατηρήθηκαν."
+                                dataMessage = t("Η συγχώνευση απέτυχε. Τα τρέχοντα δεδομένα διατηρήθηκαν.")
                             }
                             pendingRestoreRaw = null
                             pendingRestoreSummary = null
                         }
                     ) {
-                        Text("Συγχώνευση")
+                        Text(t("Συγχώνευση"))
                     }
                     Button(
                         onClick = {
@@ -719,17 +726,17 @@ fun TrackerScreen(
                             val ok = raw != null && store.restoreJson(raw)
                             if (ok) {
                                 reloadAll()
-                                dataMessage = "Το backup επαναφέρθηκε και οι ενεργές υπενθυμίσεις επαναπρογραμματίστηκαν."
+                                dataMessage = t("Το backup επαναφέρθηκε και οι ενεργές υπενθυμίσεις επαναπρογραμματίστηκαν.")
                                 haptics.performHapticFeedback(HapticFeedbackType.LongPress)
                             } else {
-                                dataMessage = "Η επαναφορά απέτυχε. Τα προηγούμενα δεδομένα διατηρήθηκαν."
+                                dataMessage = t("Η επαναφορά απέτυχε. Τα προηγούμενα δεδομένα διατηρήθηκαν.")
                             }
                             pendingRestoreRaw = null
                             pendingRestoreSummary = null
                         },
                         colors = premiumButtonColors()
                     ) {
-                        Text("Αντικατάσταση")
+                        Text(t("Αντικατάσταση"))
                     }
                 }
             },
@@ -741,7 +748,7 @@ fun TrackerScreen(
                     },
                     colors = premiumTextButtonColors()
                 ) {
-                    Text("Άκυρο")
+                    Text(t("Άκυρο"))
                 }
             }
         )
@@ -749,11 +756,11 @@ fun TrackerScreen(
 
     pendingDeleteLog?.let { row ->
         ConfirmDeleteDialog(
-            title = "Διαγραφή καταγραφής;",
+            title = t("Διαγραφή καταγραφής;"),
             text = if (row.inventoryAppliedMg != null) {
-                "Η καταγραφή θα διαγραφεί και η ποσότητα που είχε αφαιρεθεί θα επιστραφεί στο συνδεδεμένο απόθεμα."
+                t("Η καταγραφή θα διαγραφεί και η ποσότητα που είχε αφαιρεθεί θα επιστραφεί στο συνδεδεμένο απόθεμα.")
             } else {
-                "Η καταγραφή θα διαγραφεί οριστικά."
+                t("Η καταγραφή θα διαγραφεί οριστικά.")
             },
             onConfirm = {
                 val deleted = store.deleteEntry(row.id)
@@ -763,8 +770,8 @@ fun TrackerScreen(
                     scope.launch {
                         if (
                             snackbarHostState.showSnackbar(
-                                message = "Η καταγραφή διαγράφηκε.",
-                                actionLabel = "ΑΝΑΙΡΕΣΗ",
+                                message = t("Η καταγραφή διαγράφηκε."),
+                                actionLabel = t("ΑΝΑΙΡΕΣΗ"),
                                 withDismissAction = true
                             ) == SnackbarResult.ActionPerformed
                         ) {
@@ -780,8 +787,8 @@ fun TrackerScreen(
 
     pendingDeleteInventory?.let { row ->
         ConfirmDeleteDialog(
-            title = "Διαγραφή αποθέματος;",
-            text = row.peptide + " θα αφαιρεθεί από το απόθεμα.",
+            title = t("Διαγραφή αποθέματος;"),
+            text = row.peptide + t(" θα αφαιρεθεί από το απόθεμα."),
             onConfirm = {
                 store.deleteInventory(row.id)
                 reloadAll()
@@ -789,8 +796,8 @@ fun TrackerScreen(
                 scope.launch {
                     if (
                         snackbarHostState.showSnackbar(
-                            message = "Το απόθεμα διαγράφηκε.",
-                            actionLabel = "ΑΝΑΙΡΕΣΗ",
+                            message = t("Το απόθεμα διαγράφηκε."),
+                            actionLabel = t("ΑΝΑΙΡΕΣΗ"),
                             withDismissAction = true
                         ) == SnackbarResult.ActionPerformed
                     ) {
@@ -805,8 +812,8 @@ fun TrackerScreen(
 
     pendingDeleteProgress?.let { row ->
         ConfirmDeleteDialog(
-            title = "Διαγραφή μέτρησης;",
-            text = "Η μέτρηση " + formatCompact(row.weight) + " kg θα διαγραφεί.",
+            title = t("Διαγραφή μέτρησης;"),
+            text = t("Η μέτρηση ") + formatCompact(row.weight) + t(" kg θα διαγραφεί."),
             onConfirm = {
                 store.deleteProgress(row.id)
                 reloadAll()
@@ -814,8 +821,8 @@ fun TrackerScreen(
                 scope.launch {
                     if (
                         snackbarHostState.showSnackbar(
-                            message = "Η μέτρηση διαγράφηκε.",
-                            actionLabel = "ΑΝΑΙΡΕΣΗ",
+                            message = t("Η μέτρηση διαγράφηκε."),
+                            actionLabel = t("ΑΝΑΙΡΕΣΗ"),
                             withDismissAction = true
                         ) == SnackbarResult.ActionPerformed
                     ) {
@@ -856,7 +863,7 @@ private fun PasswordDialog(
                     value = password,
                     onValueChange = onPasswordChange,
                     modifier = Modifier.fillMaxWidth(),
-                    label = { Text("Κωδικός") },
+                    label = { Text(t("Κωδικός")) },
                     singleLine = true,
                     visualTransformation = PasswordVisualTransformation(),
                     colors = premiumTextFieldColors()
@@ -874,7 +881,7 @@ private fun PasswordDialog(
         },
         dismissButton = {
             TextButton(onClick = onDismiss, colors = premiumTextButtonColors()) {
-                Text("Άκυρο")
+                Text(t("Άκυρο"))
             }
         }
     )
@@ -896,12 +903,12 @@ private fun ConfirmDeleteDialog(
         text = { Text(text, color = MaterialTheme.colorScheme.onSurfaceVariant) },
         confirmButton = {
             Button(onClick = onConfirm, colors = premiumButtonColors()) {
-                Text("Διαγραφή")
+                Text(t("Διαγραφή"))
             }
         },
         dismissButton = {
             TextButton(onClick = onDismiss, colors = premiumTextButtonColors()) {
-                Text("Άκυρο")
+                Text(t("Άκυρο"))
             }
         }
     )
@@ -938,7 +945,7 @@ private fun LogsSection(
     onRepeat: (TrackerEntry) -> Unit,
     onDelete: (TrackerEntry) -> Unit
 ) {
-    var filter by rememberSaveable { mutableStateOf("Όλα") }
+    var filter by rememberSaveable { mutableStateOf(t("Όλα")) }
     var calendarMode by rememberSaveable { mutableStateOf(false) }
     var monthOffset by rememberSaveable { mutableIntStateOf(0) }
     var selectedDayStart by rememberSaveable { mutableStateOf<Long?>(null) }
@@ -946,8 +953,8 @@ private fun LogsSection(
     val dayMs = 24L * 60L * 60L * 1000L
     val todayCount = rows.count { it.createdAt >= now - dayMs }
     val weekCount = rows.count { it.createdAt >= now - 7L * dayMs }
-    val filters = listOf("Όλα") + rows.map { it.peptide }.distinct().sorted()
-    val filteredByPeptide = if (filter == "Όλα") rows else rows.filter { it.peptide == filter }
+    val filters = listOf(t("Όλα")) + rows.map { it.peptide }.distinct().sorted()
+    val filteredByPeptide = if (filter == t("Όλα")) rows else rows.filter { it.peptide == filter }
     val visible = selectedDayStart?.let { start ->
         filteredByPeptide.filter { it.createdAt >= start && it.createdAt < start + dayMs }
     } ?: filteredByPeptide
@@ -959,11 +966,11 @@ private fun LogsSection(
     ) {
         item {
             SectionHero(
-                title = "Χρήσεις πεπτιδίων",
-                subtitle = rows.size.toString() + " συνολικά · " + todayCount + " τελευταίο 24ωρο · " + weekCount + " τελευταίες 7 ημέρες",
+                title = t("Χρήσεις πεπτιδίων"),
+                subtitle = rows.size.toString() + t(" συνολικά · ") + todayCount + t(" τελευταίο 24ωρο · ") + weekCount + t(" τελευταίες 7 ημέρες"),
                 icon = Icons.AutoMirrored.Rounded.EventNote,
                 accent = ElectricBlue,
-                buttonText = "Νέα χρήση",
+                buttonText = t("Νέα χρήση"),
                 onAdd = onAdd
             )
         }
@@ -979,7 +986,7 @@ private fun LogsSection(
                         calendarMode = false
                         selectedDayStart = null
                     },
-                    label = { Text("Λίστα") },
+                    label = { Text(t("Λίστα")) },
                     modifier = Modifier.weight(1f),
                     colors = premiumFilterChipColors()
                 )
@@ -994,7 +1001,7 @@ private fun LogsSection(
                                 modifier = Modifier.size(17.dp)
                             )
                             Spacer(Modifier.width(5.dp))
-                            Text("Ημερολόγιο")
+                            Text(t("Ημερολόγιο"))
                         }
                     },
                     modifier = Modifier.weight(1f),
@@ -1041,14 +1048,14 @@ private fun LogsSection(
             item {
                 EmptyTrackerState(
                     title = when {
-                        rows.isEmpty() -> "Δεν έχεις καταγράψει χρήση"
-                        selectedDayStart != null -> "Δεν υπάρχουν εγγραφές για αυτή την ημέρα"
-                        else -> "Δεν υπάρχουν εγγραφές για αυτό το φίλτρο"
+                        rows.isEmpty() -> t("Δεν έχεις καταγράψει χρήση")
+                        selectedDayStart != null -> t("Δεν υπάρχουν εγγραφές για αυτή την ημέρα")
+                        else -> t("Δεν υπάρχουν εγγραφές για αυτό το φίλτρο")
                     },
                     text = when {
-                        rows.isEmpty() -> "Πρόσθεσε μια καταγραφή με πεπτίδιο, ποσότητα, μονάδα και ημερομηνία/ώρα."
-                        selectedDayStart != null -> "Διάλεξε άλλη ημέρα ή γύρισε στη λίστα."
-                        else -> "Διάλεξε άλλο πεπτίδιο ή επίλεξε «Όλα»."
+                        rows.isEmpty() -> t("Πρόσθεσε μια καταγραφή με πεπτίδιο, ποσότητα, μονάδα και ημερομηνία/ώρα.")
+                        selectedDayStart != null -> t("Διάλεξε άλλη ημέρα ή γύρισε στη λίστα.")
+                        else -> t("Διάλεξε άλλο πεπτίδιο ή επίλεξε «Όλα».")
                     },
                     icon = Icons.AutoMirrored.Rounded.EventNote
                 )
@@ -1098,7 +1105,11 @@ private fun UsageCalendar(
         }
     }.eachCount()
     val monthLabel = SimpleDateFormat("LLLL yyyy", Locale.getDefault()).format(calendar.time)
-    val weekDays = listOf("Δ", "Τ", "Τ", "Π", "Π", "Σ", "Κ")
+    val weekDays = if (isGreekLanguage()) {
+        listOf("Δ", "Τ", "Τ", "Π", "Π", "Σ", "Κ")
+    } else {
+        listOf("M", "T", "W", "T", "F", "S", "S")
+    }
 
     GlassCard(modifier = Modifier.fillMaxWidth()) {
         Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
@@ -1108,14 +1119,14 @@ private fun UsageCalendar(
                 horizontalArrangement = Arrangement.SpaceBetween
             ) {
                 IconButton(onClick = onPreviousMonth) {
-                    Icon(Icons.Rounded.ChevronLeft, contentDescription = "Προηγούμενος μήνας")
+                    Icon(Icons.Rounded.ChevronLeft, contentDescription = t("Προηγούμενος μήνας"))
                 }
                 Text(
                     monthLabel.replaceFirstChar { if (it.isLowerCase()) it.titlecase(Locale.getDefault()) else it.toString() },
                     fontWeight = FontWeight.ExtraBold
                 )
                 IconButton(onClick = onNextMonth) {
-                    Icon(Icons.Rounded.ChevronRight, contentDescription = "Επόμενος μήνας")
+                    Icon(Icons.Rounded.ChevronRight, contentDescription = t("Επόμενος μήνας"))
                 }
             }
 
@@ -1158,7 +1169,7 @@ private fun UsageCalendar(
                                         when {
                                             selected -> ElectricBlue.copy(alpha = 0.30f)
                                             count > 0 -> ElectricCyan.copy(alpha = 0.10f)
-                                            else -> Color.White.copy(alpha = 0.025f)
+                                            else -> MaterialTheme.colorScheme.surface.copy(alpha = 0.52f)
                                         }
                                     )
                                     .clickable { onSelectDay(dayStart) },
@@ -1208,11 +1219,11 @@ private fun InventorySection(
     ) {
         item {
             SectionHero(
-                title = "Απόθεμα φιαλιδίων",
-                subtitle = totalVials.toString() + " διαθέσιμα · " + activeCount + " ενεργά · " + lowStock + " χαμηλού αποθέματος",
+                title = t("Απόθεμα φιαλιδίων"),
+                subtitle = totalVials.toString() + t(" διαθέσιμα · ") + activeCount + t(" ενεργά · ") + lowStock + t(" χαμηλού αποθέματος"),
                 icon = Icons.Rounded.Inventory2,
                 accent = ElectricViolet,
-                buttonText = "Προσθήκη",
+                buttonText = t("Προσθήκη"),
                 onAdd = onAdd
             )
         }
@@ -1220,8 +1231,8 @@ private fun InventorySection(
         if (rows.isEmpty()) {
             item {
                 EmptyTrackerState(
-                    title = "Το απόθεμα είναι άδειο",
-                    text = "Πρόσθεσε τα φιαλίδιά σου. Μπορείς μετά να ορίσεις ποιο είναι ενεργό και να βλέπεις την υπόλοιπη ποσότητα.",
+                    title = t("Το απόθεμα είναι άδειο"),
+                    text = t("Πρόσθεσε τα φιαλίδιά σου. Μπορείς μετά να ορίσεις ποιο είναι ενεργό και να βλέπεις την υπόλοιπη ποσότητα."),
                     icon = Icons.Rounded.Inventory2
                 )
             }
@@ -1256,11 +1267,11 @@ private fun ProgressSection(
     ) {
         item {
             SectionHero(
-                title = "Μετρήσεις σώματος",
-                subtitle = rows.size.toString() + " αποθηκευμένες μετρήσεις",
+                title = t("Μετρήσεις σώματος"),
+                subtitle = rows.size.toString() + t(" αποθηκευμένες μετρήσεις"),
                 icon = Icons.Rounded.MonitorWeight,
                 accent = ElectricCyan,
-                buttonText = "Μέτρηση",
+                buttonText = t("Μέτρηση"),
                 onAdd = onAdd
             )
         }
@@ -1272,8 +1283,8 @@ private fun ProgressSection(
         if (rows.isEmpty()) {
             item {
                 EmptyTrackerState(
-                    title = "Δεν έχεις αποθηκεύσει μετρήσεις",
-                    text = "Πρόσθεσε βάρος και προαιρετικά περίμετρο μέσης για να βλέπεις την τάση με τον χρόνο.",
+                    title = t("Δεν έχεις αποθηκεύσει μετρήσεις"),
+                    text = t("Πρόσθεσε βάρος και προαιρετικά περίμετρο μέσης για να βλέπεις την τάση με τον χρόνο."),
                     icon = Icons.Rounded.MonitorWeight
                 )
             }
@@ -1333,8 +1344,8 @@ private fun StatisticsSection(
     ) {
         item {
             SectionHero(
-                title = "Στατιστικά",
-                subtitle = "Σύνοψη από τις δικές σου καταγραφές, το απόθεμα και τις μετρήσεις.",
+                title = t("Στατιστικά"),
+                subtitle = t("Σύνοψη από τις δικές σου καταγραφές, το απόθεμα και τις μετρήσεις."),
                 icon = Icons.Rounded.QueryStats,
                 accent = ElectricBlue
             )
@@ -1347,17 +1358,17 @@ private fun StatisticsSection(
             ) {
                 StatisticsMetricCard(
                     value = weekLogs.toString(),
-                    label = "Χρήσεις 7ημ.",
+                    label = t("Χρήσεις 7ημ."),
                     modifier = Modifier.weight(1f)
                 )
                 StatisticsMetricCard(
                     value = monthLogs.toString(),
-                    label = "Χρήσεις 30ημ.",
+                    label = t("Χρήσεις 30ημ."),
                     modifier = Modifier.weight(1f)
                 )
                 StatisticsMetricCard(
                     value = distinctPeptides.toString(),
-                    label = "Πεπτίδια",
+                    label = t("Πεπτίδια"),
                     modifier = Modifier.weight(1f)
                 )
             }
@@ -1367,13 +1378,13 @@ private fun StatisticsSection(
             GlassCard(modifier = Modifier.fillMaxWidth()) {
                 Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
                     Text(
-                        "Δραστηριότητα ανά πεπτίδιο",
+                        t("Δραστηριότητα ανά πεπτίδιο"),
                         fontWeight = FontWeight.ExtraBold,
                         style = MaterialTheme.typography.titleMedium
                     )
                     if (usageCounts.isEmpty()) {
                         Text(
-                            "Δεν υπάρχουν ακόμη καταγραφές χρήσης.",
+                            t("Δεν υπάρχουν ακόμη καταγραφές χρήσης."),
                             color = MaterialTheme.colorScheme.onSurfaceVariant,
                             style = MaterialTheme.typography.bodySmall
                         )
@@ -1393,7 +1404,7 @@ private fun StatisticsSection(
                                     )
                                     Spacer(Modifier.width(10.dp))
                                     Text(
-                                        item.value.toString() + " καταγραφές",
+                                        item.value.toString() + t(" καταγραφές"),
                                         color = ElectricCyan,
                                         style = MaterialTheme.typography.bodySmall,
                                         fontWeight = FontWeight.Bold
@@ -1406,7 +1417,7 @@ private fun StatisticsSection(
                                         .height(6.dp)
                                         .clip(RoundedCornerShape(99.dp)),
                                     color = ElectricCyan,
-                                    trackColor = Color.White.copy(alpha = 0.09f)
+                                    trackColor = MaterialTheme.colorScheme.surfaceVariant
                                 )
                             }
                         }
@@ -1419,15 +1430,15 @@ private fun StatisticsSection(
             GlassCard(modifier = Modifier.fillMaxWidth()) {
                 Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                     Text(
-                        "Απόθεμα",
+                        t("Απόθεμα"),
                         fontWeight = FontWeight.ExtraBold,
                         style = MaterialTheme.typography.titleMedium
                     )
-                    StatisticsRow("Συνολικά vial", totalVials.toString())
-                    StatisticsRow("Ενεργά vial", activeVials.toString())
-                    StatisticsRow("Με καταχωρημένη ανασύσταση", reconstitutedVials.toString())
+                    StatisticsRow(t("Συνολικά vial"), totalVials.toString())
+                    StatisticsRow(t("Ενεργά vial"), activeVials.toString())
+                    StatisticsRow(t("Με καταχωρημένη ανασύσταση"), reconstitutedVials.toString())
                     StatisticsRow(
-                        "Εκτιμώμενη συνολική ποσότητα",
+                        t("Εκτιμώμενη συνολική ποσότητα"),
                         formatCompact(estimatedInventoryMg) + " mg"
                     )
                 }
@@ -1438,26 +1449,26 @@ private fun StatisticsSection(
             GlassCard(modifier = Modifier.fillMaxWidth()) {
                 Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                     Text(
-                        "Μετρήσεις σώματος",
+                        t("Μετρήσεις σώματος"),
                         fontWeight = FontWeight.ExtraBold,
                         style = MaterialTheme.typography.titleMedium
                     )
                     if (newestWeight == null) {
                         Text(
-                            "Δεν υπάρχουν ακόμη μετρήσεις βάρους.",
+                            t("Δεν υπάρχουν ακόμη μετρήσεις βάρους."),
                             color = MaterialTheme.colorScheme.onSurfaceVariant,
                             style = MaterialTheme.typography.bodySmall
                         )
                     } else {
-                        StatisticsRow("Τελευταίο βάρος", formatCompact(newestWeight) + " kg")
+                        StatisticsRow(t("Τελευταίο βάρος"), formatCompact(newestWeight) + " kg")
                         if (weightDelta != null) {
                             StatisticsRow(
-                                "Μεταβολή από πρώτη μέτρηση",
+                                t("Μεταβολή από πρώτη μέτρηση"),
                                 (if (weightDelta > 0) "+" else "") +
                                     String.format("%.1f", weightDelta) + " kg"
                             )
                         }
-                        StatisticsRow("Αποθηκευμένες μετρήσεις", progress.size.toString())
+                        StatisticsRow(t("Αποθηκευμένες μετρήσεις"), progress.size.toString())
                     }
                 }
             }
@@ -1466,8 +1477,8 @@ private fun StatisticsSection(
         if (topUsage != null) {
             item {
                 Text(
-                    "Πιο συχνά καταγεγραμμένο: " + topUsage.key +
-                        " (" + topUsage.value + " καταγραφές). Τα στατιστικά περιγράφουν μόνο τα δεδομένα που έχεις αποθηκεύσει.",
+                    t("Πιο συχνά καταγεγραμμένο: ") + topUsage.key +
+                        " (" + topUsage.value + t(" καταγραφές). Τα στατιστικά περιγράφουν μόνο τα δεδομένα που έχεις αποθηκεύσει."),
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                     style = MaterialTheme.typography.bodySmall,
                     modifier = Modifier.padding(horizontal = 4.dp)
@@ -1543,31 +1554,41 @@ private fun SectionHero(
     onAdd: (() -> Unit)? = null
 ) {
     GlassCard(modifier = Modifier.fillMaxWidth()) {
-        Row(
-            Modifier.fillMaxWidth(),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Box(
-                Modifier
-                    .size(48.dp)
-                    .clip(RoundedCornerShape(16.dp))
-                    .background(accent.copy(alpha = 0.14f)),
-                contentAlignment = Alignment.Center
+        Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+            Row(
+                Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically
             ) {
-                Icon(icon, contentDescription = null, tint = accent)
-            }
-            Spacer(Modifier.width(12.dp))
-            Column(Modifier.weight(1f)) {
-                Text(title, style = MaterialTheme.typography.titleLarge)
-                Text(
-                    subtitle,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    style = MaterialTheme.typography.bodySmall
-                )
+                Box(
+                    Modifier
+                        .size(48.dp)
+                        .clip(RoundedCornerShape(16.dp))
+                        .background(accent.copy(alpha = 0.14f)),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Icon(icon, contentDescription = null, tint = accent)
+                }
+                Spacer(Modifier.width(12.dp))
+                Column(Modifier.weight(1f)) {
+                    Text(title, style = MaterialTheme.typography.titleLarge)
+                    Text(
+                        subtitle,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        style = MaterialTheme.typography.bodySmall
+                    )
+                }
             }
             if (buttonText != null && onAdd != null) {
-                Button(onClick = onAdd, colors = premiumButtonColors()) {
-                    Icon(Icons.Rounded.Add, contentDescription = null, modifier = Modifier.size(18.dp))
+                Button(
+                    onClick = onAdd,
+                    modifier = Modifier.fillMaxWidth(),
+                    colors = premiumButtonColors()
+                ) {
+                    Icon(
+                        Icons.Rounded.Add,
+                        contentDescription = null,
+                        modifier = Modifier.size(18.dp)
+                    )
                     Spacer(Modifier.width(5.dp))
                     Text(buttonText)
                 }
@@ -1608,55 +1629,78 @@ private fun LogCard(
     onDelete: () -> Unit
 ) {
     GlassCard(modifier = Modifier.fillMaxWidth(), onClick = onEdit) {
-        Row(verticalAlignment = Alignment.CenterVertically) {
-            StoreVialImage(
-                productKey = row.peptide,
-                imageIndex = imageIndex,
-                modifier = Modifier.size(width = 54.dp, height = 74.dp)
-            )
-            Spacer(Modifier.width(13.dp))
-            Column(Modifier.weight(1f)) {
-                Text(
-                    row.peptide,
-                    fontWeight = FontWeight.ExtraBold,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis
+        Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                StoreVialImage(
+                    productKey = row.peptide,
+                    imageIndex = imageIndex,
+                    modifier = Modifier.size(width = 54.dp, height = 74.dp)
                 )
-                Text(row.amount, color = ElectricCyan, fontWeight = FontWeight.Bold)
-                if (row.site.isNotBlank()) {
+                Spacer(Modifier.width(13.dp))
+                Column(Modifier.weight(1f)) {
                     Text(
-                        "Σημείο: " + row.site,
-                        color = ElectricViolet,
-                        style = MaterialTheme.typography.bodySmall
-                    )
-                }
-                if (row.note.isNotBlank()) {
-                    Text(
-                        row.note,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        style = MaterialTheme.typography.bodySmall,
-                        maxLines = 2,
+                        row.peptide,
+                        fontWeight = FontWeight.ExtraBold,
+                        maxLines = 1,
                         overflow = TextOverflow.Ellipsis
                     )
+                    Text(row.amount, color = ElectricCyan, fontWeight = FontWeight.Bold)
+                    if (row.site.isNotBlank()) {
+                        Text(
+                            t("Σημείο: ") + row.site,
+                            color = ElectricViolet,
+                            style = MaterialTheme.typography.bodySmall
+                        )
+                    }
+                    if (row.note.isNotBlank()) {
+                        Text(
+                            row.note,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            style = MaterialTheme.typography.bodySmall,
+                            maxLines = 2,
+                            overflow = TextOverflow.Ellipsis
+                        )
+                    }
+                    Text(
+                        DateFormat.getDateTimeInstance(
+                            DateFormat.SHORT,
+                            DateFormat.SHORT
+                        ).format(Date(row.createdAt)),
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        style = MaterialTheme.typography.labelSmall
+                    )
                 }
-                Text(
-                    DateFormat.getDateTimeInstance(DateFormat.SHORT, DateFormat.SHORT).format(Date(row.createdAt)),
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    style = MaterialTheme.typography.labelSmall
-                )
             }
-            IconButton(onClick = onRepeat) {
-                Icon(Icons.Rounded.Replay, contentDescription = "Επανάληψη καταγραφής")
-            }
-            IconButton(onClick = onEdit) {
-                Icon(Icons.Outlined.Edit, contentDescription = "Επεξεργασία")
-            }
-            IconButton(onClick = onDelete) {
-                Icon(
-                    Icons.Outlined.Delete,
-                    contentDescription = "Διαγραφή",
-                    tint = MaterialTheme.colorScheme.onSurfaceVariant
-                )
+
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.End
+            ) {
+                TextButton(onClick = onRepeat, colors = premiumTextButtonColors()) {
+                    Icon(
+                        Icons.Rounded.Replay,
+                        contentDescription = null,
+                        modifier = Modifier.size(18.dp)
+                    )
+                    Spacer(Modifier.width(4.dp))
+                    Text(t("Επανάληψη"))
+                }
+                TextButton(onClick = onEdit, colors = premiumTextButtonColors()) {
+                    Icon(
+                        Icons.Outlined.Edit,
+                        contentDescription = null,
+                        modifier = Modifier.size(18.dp)
+                    )
+                    Spacer(Modifier.width(4.dp))
+                    Text(t("Επεξεργασία"))
+                }
+                IconButton(onClick = onDelete) {
+                    Icon(
+                        Icons.Outlined.Delete,
+                        contentDescription = t("Διαγραφή"),
+                        tint = MaterialTheme.colorScheme.error
+                    )
+                }
             }
         }
     }
@@ -1695,9 +1739,9 @@ private fun InventoryCard(
                         Spacer(Modifier.width(7.dp))
                         Text(
                             when {
-                                row.active -> "ΕΝΕΡΓΟ"
-                                row.quantity <= 0 -> "ΑΔΕΙΟ"
-                                else -> "ΚΛΕΙΣΤΟ"
+                                row.active -> t("ΕΝΕΡΓΟ")
+                                row.quantity <= 0 -> t("ΑΔΕΙΟ")
+                                else -> t("ΚΛΕΙΣΤΟ")
                             },
                             color = when {
                                 row.active -> ElectricCyan
@@ -1714,7 +1758,7 @@ private fun InventoryCard(
                         fontWeight = FontWeight.Bold
                     )
                     Text(
-                        row.batch.ifBlank { "Χωρίς παρτίδα" },
+                        row.batch.ifBlank { t("Χωρίς παρτίδα") },
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                         style = MaterialTheme.typography.bodySmall
                     )
@@ -1727,7 +1771,7 @@ private fun InventoryCard(
                     }
                     row.expiryDate?.let { expiry ->
                         Text(
-                            "Λήξη: " + DateFormat.getDateInstance(DateFormat.MEDIUM).format(Date(expiry)),
+                            t("Λήξη: ") + DateFormat.getDateInstance(DateFormat.MEDIUM).format(Date(expiry)),
                             color = if (expiry < System.currentTimeMillis()) NeonRose else MaterialTheme.colorScheme.onSurfaceVariant,
                             style = MaterialTheme.typography.bodySmall,
                             fontWeight = if (expiry < System.currentTimeMillis()) FontWeight.Bold else FontWeight.Normal
@@ -1744,13 +1788,13 @@ private fun InventoryCard(
                     }
                     if (row.isReconstituted) {
                         Text(
-                            "Ανασύσταση: " + formatCompact(row.diluentMl ?: 0.0) + " mL · U-" + row.syringeUnitsPerMl,
+                            t("Ανασύσταση: ") + formatCompact(row.diluentMl ?: 0.0) + " mL · U-" + row.syringeUnitsPerMl,
                             color = MaterialTheme.colorScheme.onSurfaceVariant,
                             style = MaterialTheme.typography.bodySmall
                         )
                         row.mcgPerSyringeUnit?.let { mcgPerUnit ->
                             Text(
-                                formatCompact(mcgPerUnit) + " mcg ανά μονάδα U-" + row.syringeUnitsPerMl,
+                                formatCompact(mcgPerUnit) + t(" mcg ανά μονάδα U-") + row.syringeUnitsPerMl,
                                 color = ElectricViolet,
                                 style = MaterialTheme.typography.bodySmall,
                                 fontWeight = FontWeight.Bold
@@ -1758,14 +1802,14 @@ private fun InventoryCard(
                         }
                     } else {
                         Text(
-                            "Δεν έχει καταχωρηθεί ανασύσταση",
+                            t("Δεν έχει καταχωρηθεί ανασύσταση"),
                             color = MaterialTheme.colorScheme.onSurfaceVariant,
                             style = MaterialTheme.typography.bodySmall
                         )
                     }
                     if (row.active) {
                         Text(
-                            "Υπόλοιπο ενεργού φιαλιδίου: " + formatCompact(remaining) + " mg",
+                            t("Υπόλοιπο ενεργού φιαλιδίου: ") + formatCompact(remaining) + " mg",
                             color = ElectricCyan,
                             style = MaterialTheme.typography.bodySmall,
                             fontWeight = FontWeight.Bold
@@ -1782,7 +1826,7 @@ private fun InventoryCard(
                         .height(7.dp)
                         .clip(RoundedCornerShape(99.dp)),
                     color = ElectricCyan,
-                    trackColor = Color.White.copy(alpha = 0.09f)
+                    trackColor = MaterialTheme.colorScheme.surfaceVariant
                 )
             }
 
@@ -1798,7 +1842,7 @@ private fun InventoryCard(
                     ) {
                         Icon(Icons.Rounded.CheckCircle, contentDescription = null, modifier = Modifier.size(17.dp))
                         Spacer(Modifier.width(4.dp))
-                        Text("Ενεργό")
+                        Text(t("Ενεργό"))
                     }
                 }
                 TextButton(
@@ -1808,13 +1852,13 @@ private fun InventoryCard(
                 ) {
                     Icon(Icons.Rounded.Calculate, contentDescription = null, modifier = Modifier.size(17.dp))
                     Spacer(Modifier.width(4.dp))
-                    Text("Υπολογιστής")
+                    Text(t("Υπολογιστής"))
                 }
                 IconButton(onClick = onEdit) {
-                    Icon(Icons.Outlined.Edit, contentDescription = "Επεξεργασία")
+                    Icon(Icons.Outlined.Edit, contentDescription = t("Επεξεργασία"))
                 }
                 IconButton(onClick = onDelete) {
-                    Icon(Icons.Outlined.Delete, contentDescription = "Διαγραφή")
+                    Icon(Icons.Outlined.Delete, contentDescription = t("Διαγραφή"))
                 }
             }
         }
@@ -1836,7 +1880,7 @@ private fun ProgressOverview(rows: List<ProgressEntry>) {
             ) {
                 Column {
                     Text(
-                        "Τάση βάρους",
+                        t("Τάση βάρους"),
                         color = ElectricCyan,
                         style = MaterialTheme.typography.labelLarge,
                         fontWeight = FontWeight.ExtraBold
@@ -1913,7 +1957,7 @@ private fun ProgressCard(
                 )
                 if (row.waist != null) {
                     Text(
-                        "Μέση: " + formatCompact(row.waist) + " cm",
+                        t("Μέση: ") + formatCompact(row.waist) + " cm",
                         color = ElectricCyan,
                         style = MaterialTheme.typography.bodyMedium
                     )
@@ -1932,10 +1976,10 @@ private fun ProgressCard(
                 )
             }
             IconButton(onClick = onEdit) {
-                Icon(Icons.Outlined.Edit, contentDescription = "Επεξεργασία")
+                Icon(Icons.Outlined.Edit, contentDescription = t("Επεξεργασία"))
             }
             IconButton(onClick = onDelete) {
-                Icon(Icons.Outlined.Delete, contentDescription = "Διαγραφή")
+                Icon(Icons.Outlined.Delete, contentDescription = t("Διαγραφή"))
             }
         }
     }
@@ -1992,15 +2036,17 @@ private fun LogEditorDialog(
         containerColor = GlassSurfaceStrong,
         titleContentColor = TextPrimary,
         textContentColor = TextPrimary,
-        title = { Text(if (current == null) "Νέα καταγραφή χρήσης" else "Επεξεργασία καταγραφής") },
+        title = { Text(if (current == null) t("Νέα καταγραφή χρήσης") else t("Επεξεργασία καταγραφής")) },
         text = {
             LazyColumn(
-                modifier = Modifier.fillMaxWidth(),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .heightIn(max = 520.dp),
                 verticalArrangement = Arrangement.spacedBy(10.dp)
             ) {
                 item {
                     Text(
-                        "Καταγράφεις μια χρήση που έχει ήδη αποφασιστεί. Το app δεν προτείνει ποσότητα.",
+                        t("Καταγράφεις μια χρήση που έχει ήδη αποφασιστεί. Το app δεν προτείνει ποσότητα."),
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                         style = MaterialTheme.typography.bodySmall
                     )
@@ -2011,7 +2057,7 @@ private fun LogEditorDialog(
                             onClick = { peptideMenu = true },
                             modifier = Modifier.fillMaxWidth()
                         ) {
-                            Text(peptide.ifBlank { "Επίλεξε πεπτίδιο" }, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                            Text(peptide.ifBlank { t("Επίλεξε πεπτίδιο") }, maxLines = 1, overflow = TextOverflow.Ellipsis)
                         }
                         DropdownMenu(
                             expanded = peptideMenu,
@@ -2035,7 +2081,7 @@ private fun LogEditorDialog(
                         value = amount,
                         onValueChange = { amount = it.replace(',', '.') },
                         modifier = Modifier.fillMaxWidth(),
-                        label = { Text("Ποσότητα") },
+                        label = { Text(t("Ποσότητα")) },
                         singleLine = true,
                         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
                         colors = premiumTextFieldColors()
@@ -2065,7 +2111,7 @@ private fun LogEditorDialog(
                         value = site,
                         onValueChange = { site = it },
                         modifier = Modifier.fillMaxWidth(),
-                        label = { Text("Σημείο / site (προαιρετικά)") },
+                        label = { Text(t("Σημείο / site (προαιρετικά)")) },
                         singleLine = true,
                         colors = premiumTextFieldColors()
                     )
@@ -2075,7 +2121,7 @@ private fun LogEditorDialog(
                         value = note,
                         onValueChange = { note = it },
                         modifier = Modifier.fillMaxWidth(),
-                        label = { Text("Σημείωση (προαιρετικά)") },
+                        label = { Text(t("Σημείωση (προαιρετικά)")) },
                         colors = premiumTextFieldColors()
                     )
                 }
@@ -2105,12 +2151,12 @@ private fun LogEditorDialog(
                             verticalAlignment = Alignment.CenterVertically
                         ) {
                             Column(Modifier.weight(1f)) {
-                                Text("Σύνδεση με ενεργό φιαλίδιο", fontWeight = FontWeight.Bold)
+                                Text(t("Σύνδεση με ενεργό φιαλίδιο"), fontWeight = FontWeight.Bold)
                                 Text(
                                     if (canSubtract) {
-                                        "Προαιρετικά αφαίρεσε την ποσότητα από το ενεργό φιαλίδιο."
+                                        t("Προαιρετικά αφαίρεσε την ποσότητα από το ενεργό φιαλίδιο.")
                                     } else {
-                                        "Η αυτόματη αφαίρεση γίνεται μόνο για mg ή mcg και μόνο σε νέα εγγραφή."
+                                        t("Η αυτόματη αφαίρεση γίνεται μόνο για mg ή mcg και μόνο σε νέα εγγραφή.")
                                     },
                                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                                     style = MaterialTheme.typography.bodySmall
@@ -2143,12 +2189,12 @@ private fun LogEditorDialog(
                 enabled = peptide.isNotBlank() && value != null && value > 0,
                 colors = premiumButtonColors()
             ) {
-                Text(if (current == null) "Καταγραφή" else "Αποθήκευση")
+                Text(if (current == null) t("Καταγραφή") else t("Αποθήκευση"))
             }
         },
         dismissButton = {
             TextButton(onClick = onDismiss, colors = premiumTextButtonColors()) {
-                Text("Άκυρο")
+                Text(t("Άκυρο"))
             }
         }
     )
@@ -2188,15 +2234,37 @@ private fun InventoryEditorDialog(
     val quantityValue = quantity.toIntOrNull()
     val diluentValue = diluent.replace(',', '.').toDoubleOrNull()
     val remainingValue = remaining.replace(',', '.').toDoubleOrNull()
+    val purchaseDateValue = purchaseDate
+    val expiryDateValue = expiryDate
+
+    val inventoryValidationMessage = when {
+        current == null && quantityValue != null && quantityValue <= 0 ->
+            t("Χρειάζεται τουλάχιστον ένα φιαλίδιο.")
+        purchaseDateValue != null &&
+            expiryDateValue != null &&
+            expiryDateValue < purchaseDateValue ->
+            t("Η ημερομηνία λήξης δεν μπορεί να είναι πριν από την ημερομηνία αγοράς.")
+        current != null &&
+            remainingValue != null &&
+            vialValue != null &&
+            remainingValue > vialValue ->
+            t("Το υπόλοιπο δεν μπορεί να είναι μεγαλύτερο από την περιεκτικότητα του φιαλιδίου.")
+        else -> null
+    }
 
     AlertDialog(
         onDismissRequest = onDismiss,
         containerColor = GlassSurfaceStrong,
         titleContentColor = TextPrimary,
         textContentColor = TextPrimary,
-        title = { Text(if (current == null) "Προσθήκη στο απόθεμα" else "Επεξεργασία αποθέματος") },
+        title = { Text(if (current == null) t("Προσθήκη στο απόθεμα") else t("Επεξεργασία αποθέματος")) },
         text = {
-            Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+            Column(
+                modifier = Modifier
+                    .heightIn(max = 520.dp)
+                    .verticalScroll(rememberScrollState()),
+                verticalArrangement = Arrangement.spacedBy(10.dp)
+            ) {
                 Box {
                     OutlinedButton(
                         onClick = { peptideMenu = true },
@@ -2223,7 +2291,7 @@ private fun InventoryEditorDialog(
                     value = vial,
                     onValueChange = { vial = it.replace(',', '.') },
                     modifier = Modifier.fillMaxWidth(),
-                    label = { Text("Περιεκτικότητα κάθε φιαλιδίου (mg)") },
+                    label = { Text(t("Περιεκτικότητα κάθε φιαλιδίου (mg)")) },
                     singleLine = true,
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
                     colors = premiumTextFieldColors()
@@ -2232,7 +2300,7 @@ private fun InventoryEditorDialog(
                     value = quantity,
                     onValueChange = { quantity = it.filter(Char::isDigit) },
                     modifier = Modifier.fillMaxWidth(),
-                    label = { Text("Πλήθος φιαλιδίων") },
+                    label = { Text(t("Πλήθος φιαλιδίων")) },
                     singleLine = true,
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
                     colors = premiumTextFieldColors()
@@ -2241,7 +2309,7 @@ private fun InventoryEditorDialog(
                     value = batch,
                     onValueChange = { batch = it },
                     modifier = Modifier.fillMaxWidth(),
-                    label = { Text("Lot / batch (προαιρετικά)") },
+                    label = { Text(t("Lot / batch (προαιρετικά)")) },
                     singleLine = true,
                     colors = premiumTextFieldColors()
                 )
@@ -2249,7 +2317,7 @@ private fun InventoryEditorDialog(
                     value = vendor,
                     onValueChange = { vendor = it },
                     modifier = Modifier.fillMaxWidth(),
-                    label = { Text("Vendor / source (προαιρετικά)") },
+                    label = { Text(t("Vendor / source (προαιρετικά)")) },
                     singleLine = true,
                     colors = premiumTextFieldColors()
                 )
@@ -2268,8 +2336,8 @@ private fun InventoryEditorDialog(
                     ) {
                         Text(
                             purchaseDate?.let {
-                                "Αγορά: " + DateFormat.getDateInstance(DateFormat.SHORT).format(Date(it))
-                            } ?: "Ημ/νία αγοράς"
+                                t("Αγορά: ") + DateFormat.getDateInstance(DateFormat.SHORT).format(Date(it))
+                            } ?: t("Ημ/νία αγοράς")
                         )
                     }
                     OutlinedButton(
@@ -2283,8 +2351,8 @@ private fun InventoryEditorDialog(
                     ) {
                         Text(
                             expiryDate?.let {
-                                "Λήξη: " + DateFormat.getDateInstance(DateFormat.SHORT).format(Date(it))
-                            } ?: "Ημ/νία λήξης"
+                                t("Λήξη: ") + DateFormat.getDateInstance(DateFormat.SHORT).format(Date(it))
+                            } ?: t("Ημ/νία λήξης")
                         )
                     }
                 }
@@ -2296,25 +2364,25 @@ private fun InventoryEditorDialog(
                         },
                         colors = premiumTextButtonColors()
                     ) {
-                        Text("Καθαρισμός ημερομηνιών")
+                        Text(t("Καθαρισμός ημερομηνιών"))
                     }
                 }
                 OutlinedTextField(
                     value = inventoryNote,
                     onValueChange = { inventoryNote = it },
                     modifier = Modifier.fillMaxWidth(),
-                    label = { Text("Σημειώσεις αποθέματος (προαιρετικά)") },
+                    label = { Text(t("Σημειώσεις αποθέματος (προαιρετικά)")) },
                     colors = premiumTextFieldColors()
                 )
                 Text(
-                    "Ανασύσταση φιαλιδίου (προαιρετικά)",
+                    t("Ανασύσταση φιαλιδίου (προαιρετικά)"),
                     fontWeight = FontWeight.Bold
                 )
                 OutlinedTextField(
                     value = diluent,
                     onValueChange = { diluent = it.replace(',', '.') },
                     modifier = Modifier.fillMaxWidth(),
-                    label = { Text("Διαλύτης που προστέθηκε (mL)") },
+                    label = { Text(t("Διαλύτης που προστέθηκε (mL)")) },
                     singleLine = true,
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
                     colors = premiumTextFieldColors()
@@ -2336,10 +2404,10 @@ private fun InventoryEditorDialog(
                 Text(
                     if (diluentValue != null && diluentValue > 0 && vialValue != null && vialValue > 0) {
                         val mcgPerUnit = (vialValue / diluentValue) * 1000.0 / syringeUnitsPerMl
-                        "Συγκέντρωση: " + formatCompact(vialValue / diluentValue) +
-                            " mg/mL · " + formatCompact(mcgPerUnit) + " mcg/μονάδα"
+                        t("Συγκέντρωση: ") + formatCompact(vialValue / diluentValue) +
+                            " mg/mL · " + formatCompact(mcgPerUnit) + t(" mcg/μονάδα")
                     } else {
-                        "Άφησέ το κενό αν το vial δεν έχει ανασυσταθεί ακόμη."
+                        t("Άφησέ το κενό αν το vial δεν έχει ανασυσταθεί ακόμη.")
                     },
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                     style = MaterialTheme.typography.bodySmall
@@ -2349,10 +2417,17 @@ private fun InventoryEditorDialog(
                         value = remaining,
                         onValueChange = { remaining = it.replace(',', '.') },
                         modifier = Modifier.fillMaxWidth(),
-                        label = { Text("Υπόλοιπο ενεργού vial (mg)") },
+                        label = { Text(t("Υπόλοιπο ενεργού vial (mg)")) },
                         singleLine = true,
                         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
                         colors = premiumTextFieldColors()
+                    )
+                }
+                if (inventoryValidationMessage != null) {
+                    Text(
+                        inventoryValidationMessage,
+                        color = MaterialTheme.colorScheme.error,
+                        style = MaterialTheme.typography.bodySmall
                     )
                 }
             }
@@ -2376,17 +2451,19 @@ private fun InventoryEditorDialog(
                 },
                 enabled = peptide.isNotBlank() &&
                     vialValue != null && vialValue > 0 &&
-                    quantityValue != null && quantityValue >= 0 &&
+                    quantityValue != null &&
+                    (if (current == null) quantityValue > 0 else quantityValue >= 0) &&
                     (diluent.isBlank() || (diluentValue != null && diluentValue > 0)) &&
-                    (current == null || remainingValue == null || remainingValue >= 0),
+                    (current == null || remainingValue == null || remainingValue >= 0) &&
+                    inventoryValidationMessage == null,
                 colors = premiumButtonColors()
             ) {
-                Text("Αποθήκευση")
+                Text(t("Αποθήκευση"))
             }
         },
         dismissButton = {
             TextButton(onClick = onDismiss, colors = premiumTextButtonColors()) {
-                Text("Άκυρο")
+                Text(t("Άκυρο"))
             }
         }
     )
@@ -2407,19 +2484,21 @@ private fun ProgressEditorDialog(
     val weightValue = weight.replace(',', '.').toDoubleOrNull()
     val waistValue = waist.replace(',', '.').toDoubleOrNull()
 
+    val waistError = waist.isNotBlank() && (waistValue == null || waistValue <= 0)
+
     AlertDialog(
         onDismissRequest = onDismiss,
         containerColor = GlassSurfaceStrong,
         titleContentColor = TextPrimary,
         textContentColor = TextPrimary,
-        title = { Text(if (current == null) "Νέα μέτρηση σώματος" else "Επεξεργασία μέτρησης") },
+        title = { Text(if (current == null) t("Νέα μέτρηση σώματος") else t("Επεξεργασία μέτρησης")) },
         text = {
             Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
                 OutlinedTextField(
                     value = weight,
                     onValueChange = { weight = it.replace(',', '.') },
                     modifier = Modifier.fillMaxWidth(),
-                    label = { Text("Βάρος (kg)") },
+                    label = { Text(t("Βάρος (kg)")) },
                     singleLine = true,
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
                     colors = premiumTextFieldColors()
@@ -2428,8 +2507,14 @@ private fun ProgressEditorDialog(
                     value = waist,
                     onValueChange = { waist = it.replace(',', '.') },
                     modifier = Modifier.fillMaxWidth(),
-                    label = { Text("Περίμετρος μέσης (cm, προαιρετικά)") },
+                    label = { Text(t("Περίμετρος μέσης (cm, προαιρετικά)")) },
                     singleLine = true,
+                    isError = waistError,
+                    supportingText = {
+                        if (waistError) {
+                            Text(t("Η περίμετρος μέσης πρέπει να είναι θετικός αριθμός."))
+                        }
+                    },
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
                     colors = premiumTextFieldColors()
                 )
@@ -2437,7 +2522,7 @@ private fun ProgressEditorDialog(
                     value = note,
                     onValueChange = { note = it },
                     modifier = Modifier.fillMaxWidth(),
-                    label = { Text("Σημείωση") },
+                    label = { Text(t("Σημείωση")) },
                     colors = premiumTextFieldColors()
                 )
                 if (current != null) {
@@ -2455,15 +2540,15 @@ private fun ProgressEditorDialog(
                 onClick = {
                     onSave(weightValue ?: return@Button, waistValue, note.trim(), timestamp)
                 },
-                enabled = weightValue != null && weightValue > 0,
+                enabled = weightValue != null && weightValue > 0 && !waistError,
                 colors = premiumButtonColors()
             ) {
-                Text("Αποθήκευση")
+                Text(t("Αποθήκευση"))
             }
         },
         dismissButton = {
             TextButton(onClick = onDismiss, colors = premiumTextButtonColors()) {
-                Text("Άκυρο")
+                Text(t("Άκυρο"))
             }
         }
     )

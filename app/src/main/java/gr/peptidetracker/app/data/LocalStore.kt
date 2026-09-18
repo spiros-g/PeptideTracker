@@ -6,6 +6,7 @@ import androidx.room.Ignore
 import androidx.room.PrimaryKey
 import gr.peptidetracker.app.domain.InventoryLedger
 import gr.peptidetracker.app.domain.ReminderCadence
+import gr.peptidetracker.app.i18n.setLanguageOverride
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
 import org.json.JSONArray
@@ -111,6 +112,10 @@ class LocalStore(context: Context) {
     private val dao = database.dao()
 
     init {
+        setLanguageOverride(
+            prefs.getString(KEY_APP_LANGUAGE, LANGUAGE_SYSTEM)
+                ?.takeUnless { it == LANGUAGE_SYSTEM }
+        )
         migrateLegacyToRoomIfNeeded()
     }
 
@@ -127,6 +132,27 @@ class LocalStore(context: Context) {
     fun setDefaultSyringeUnitsPerMl(value: Int) {
         require(value == 40 || value == 100)
         prefs.edit().putInt("default_syringe_units_per_ml", value).apply()
+    }
+
+    fun appLanguage(): String =
+        prefs.getString(KEY_APP_LANGUAGE, LANGUAGE_SYSTEM)
+            ?.takeIf { it == LANGUAGE_SYSTEM || it == "el" || it == "en" }
+            ?: LANGUAGE_SYSTEM
+
+    fun setAppLanguage(value: String) {
+        require(value == LANGUAGE_SYSTEM || value == "el" || value == "en")
+        prefs.edit().putString(KEY_APP_LANGUAGE, value).apply()
+        setLanguageOverride(value.takeUnless { it == LANGUAGE_SYSTEM })
+    }
+
+    fun appTheme(): String =
+        prefs.getString(KEY_APP_THEME, THEME_SYSTEM)
+            ?.takeIf { it == THEME_SYSTEM || it == THEME_DARK || it == THEME_LIGHT }
+            ?: THEME_SYSTEM
+
+    fun setAppTheme(value: String) {
+        require(value == THEME_SYSTEM || value == THEME_DARK || value == THEME_LIGHT)
+        prefs.edit().putString(KEY_APP_THEME, value).apply()
     }
 
     fun onboardingComplete() = prefs.getBoolean("onboarding_complete", false)
@@ -439,6 +465,7 @@ class LocalStore(context: Context) {
 
     fun addProgress(weight: Double, waist: Double?, note: String) {
         require(weight > 0)
+        require(waist == null || waist > 0)
         val now = System.currentTimeMillis()
         val next = progress().toMutableList()
         next += ProgressEntry(now, weight, waist, safe(note), now)
@@ -447,6 +474,7 @@ class LocalStore(context: Context) {
 
     fun updateProgress(id: Long, weight: Double, waist: Double?, note: String, createdAt: Long) {
         require(weight > 0)
+        require(waist == null || waist > 0)
         saveProgress(
             progress().map {
                 if (it.id == id) it.copy(
@@ -486,6 +514,7 @@ class LocalStore(context: Context) {
         require(peptide.isNotBlank() && vial > 0 && quantity > 0)
         require(diluentMl == null || diluentMl > 0)
         require(syringeUnitsPerMl == 40 || syringeUnitsPerMl == 100)
+        require(purchaseDate == null || expiryDate == null || expiryDate >= purchaseDate)
         val next = inventory().toMutableList()
         next += InventoryEntry(
             id = uniqueId(),
@@ -553,6 +582,8 @@ class LocalStore(context: Context) {
         require(peptide.isNotBlank() && vialMg > 0 && quantity >= 0)
         require(diluentMl == null || diluentMl > 0)
         require(syringeUnitsPerMl == 40 || syringeUnitsPerMl == 100)
+        require(purchaseDate == null || expiryDate == null || expiryDate >= purchaseDate)
+        require(remainingMg == null || remainingMg in 0.0..vialMg)
         saveInventory(
             inventory().map {
                 if (it.id == id) {
@@ -1254,6 +1285,12 @@ class LocalStore(context: Context) {
         const val KEY_PRE_RESTORE_BACKUP = "pre_restore_backup_json"
         const val KEY_ROOM_MIGRATED = "room_migrated_v1"
         const val KEY_LAST_UPDATE_CHECK_AT = "last_update_check_at"
+        const val KEY_APP_LANGUAGE = "app_language"
+        const val KEY_APP_THEME = "app_theme"
+        const val LANGUAGE_SYSTEM = "system"
+        const val THEME_SYSTEM = "system"
+        const val THEME_DARK = "dark"
+        const val THEME_LIGHT = "light"
         const val UPDATE_CHECK_INTERVAL_MS = 24L * 60L * 60L * 1000L
     }
 }
