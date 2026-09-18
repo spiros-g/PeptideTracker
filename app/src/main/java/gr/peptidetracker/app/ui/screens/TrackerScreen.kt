@@ -2007,7 +2007,7 @@ private fun LogEditorDialog(
                 ?: current?.amount?.substringBefore(" ")?.replace(',', '.')
                 ?: template?.amountValue?.let(::formatCompact)
                 ?: template?.amount?.substringBefore(" ")?.replace(',', '.')
-                ?: "100"
+                ?: ""
         )
     }
     var unit by remember(current) {
