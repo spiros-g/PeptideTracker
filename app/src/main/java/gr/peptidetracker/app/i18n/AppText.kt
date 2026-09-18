@@ -2,8 +2,21 @@ package gr.peptidetracker.app.i18n
 
 import java.util.Locale
 
+@Volatile
+private var languageOverride: String? = null
+
+fun setLanguageOverride(value: String?) {
+    languageOverride = value
+        ?.trim()
+        ?.lowercase()
+        ?.takeIf { it == "el" || it == "en" }
+}
+
+fun currentLanguageTag(): String =
+    languageOverride ?: Locale.getDefault().language.lowercase()
+
 fun isGreekLanguage(): Boolean =
-    Locale.getDefault().language.equals("el", ignoreCase = true)
+    currentLanguageTag() == "el"
 
 fun t(greek: String): String {
     if (isGreekLanguage()) return greek
@@ -179,6 +192,12 @@ private val uiEnglishTranslations = mapOf(
     "Το Android system cloud backup για τα δεδομένα της εφαρμογής είναι απενεργοποιημένο. Backup δημιουργείται μόνο όταν το επιλέξεις εσύ. Υπάρχει απλή JSON εξαγωγή και κρυπτογραφημένη εξαγωγή με κωδικό· για προσωπικές καταγραφές προτείνεται η κρυπτογραφημένη επιλογή." to "Android system cloud backup for app data is disabled. A backup is created only when you choose to create one. Plain JSON export and password-encrypted export are available; encrypted backup is recommended for personal records.",
     "Χρήση εφαρμογής" to "App use",
     "Το Peptide Tracker GR είναι εργαλείο καταγραφής, οργάνωσης και μαθηματικών μετατροπών. Δεν αποτελεί ιατροτεχνολογικό προϊόν, δεν κάνει διάγνωση και δεν παρέχει εξατομικευμένη ιατρική συμβουλή, θεραπευτικό πρωτόκολλο ή σύσταση δοσολογίας." to "Peptide Tracker is a tracking, organization and mathematical conversion tool. It is not a medical device, does not diagnose, and does not provide personalized medical advice, treatment protocols or dosage recommendations.",
+    "Το Peptide Tracker είναι εργαλείο καταγραφής, οργάνωσης και μαθηματικών μετατροπών. Δεν αποτελεί ιατροτεχνολογικό προϊόν, δεν κάνει διάγνωση και δεν παρέχει εξατομικευμένη ιατρική συμβουλή, θεραπευτικό πρωτόκολλο ή σύσταση δοσολογίας." to "Peptide Tracker is a tracking, organization and mathematical conversion tool. It is not a medical device, does not diagnose, and does not provide personalized medical advice, treatment protocols or dosage recommendations.",
+    "Γλώσσα εφαρμογής" to "App language",
+    "Επίλεξε Ελληνικά, Αγγλικά ή ακολούθησε τη γλώσσα της συσκευής." to "Choose Greek, English, or follow the device language.",
+    "Σύστημα" to "System",
+    "Ελληνικά" to "Greek",
+    "Αγγλικά" to "English",
     "Για δημοσίευση στο Google Play απαιτείται επιπλέον δημόσια προσβάσιμη πολιτική απορρήτου με στοιχεία υπευθύνου και επικοινωνίας." to "Google Play publication also requires a publicly accessible privacy policy with controller and contact details.",
     "Οι ειδοποιήσεις ενεργοποιήθηκαν." to "Notifications enabled.",
     "Χωρίς άδεια ειδοποιήσεων οι υπενθυμίσεις αποθηκεύονται αλλά παραμένουν ανενεργές." to "Without notification permission, reminders are saved but remain inactive.",
