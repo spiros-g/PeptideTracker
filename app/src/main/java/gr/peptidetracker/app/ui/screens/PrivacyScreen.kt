@@ -1,5 +1,7 @@
 package gr.peptidetracker.app.ui.screens
 
+import gr.peptidetracker.app.i18n.t
+
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
@@ -33,8 +35,8 @@ fun PrivacyScreen(onBack: () -> Unit) {
     ) {
         item {
             PremiumTopBar(
-                title = "Ιδιωτικότητα & ασφάλεια",
-                subtitle = "Πώς χειρίζεται η εφαρμογή τα δεδομένα σου.",
+                title = t("Ιδιωτικότητα & ασφάλεια"),
+                subtitle = t("Πώς χειρίζεται η εφαρμογή τα δεδομένα σου."),
                 onBack = onBack
             )
         }
@@ -43,9 +45,9 @@ fun PrivacyScreen(onBack: () -> Unit) {
             GlassCard(modifier = Modifier.fillMaxWidth()) {
                 Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                     Icon(Icons.Rounded.Lock, contentDescription = null, tint = ElectricCyan)
-                    Text("Τοπική αποθήκευση", fontWeight = FontWeight.ExtraBold)
+                    Text(t("Τοπική αποθήκευση"), fontWeight = FontWeight.ExtraBold)
                     Text(
-                        "Οι καταγραφές χρήσης, το απόθεμα, οι μετρήσεις, οι υπενθυμίσεις και οι αποθηκευμένοι υπολογισμοί τηρούνται στη συσκευή. Η εφαρμογή δεν απαιτεί λογαριασμό και δεν διαθέτει δικό της cloud sync.",
+                        t("Οι καταγραφές χρήσης, το απόθεμα, οι μετρήσεις, οι υπενθυμίσεις και οι αποθηκευμένοι υπολογισμοί τηρούνται στη συσκευή. Η εφαρμογή δεν απαιτεί λογαριασμό και δεν διαθέτει δικό της cloud sync."),
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                 }
@@ -58,7 +60,7 @@ fun PrivacyScreen(onBack: () -> Unit) {
                     Icon(Icons.Rounded.Security, contentDescription = null, tint = ElectricBlue)
                     Text("Backup", fontWeight = FontWeight.ExtraBold)
                     Text(
-                        "Το Android system cloud backup για τα δεδομένα της εφαρμογής είναι απενεργοποιημένο. Backup δημιουργείται μόνο όταν το επιλέξεις εσύ. Υπάρχει απλή JSON εξαγωγή και κρυπτογραφημένη εξαγωγή με κωδικό· για προσωπικές καταγραφές προτείνεται η κρυπτογραφημένη επιλογή.",
+                        t("Το Android system cloud backup για τα δεδομένα της εφαρμογής είναι απενεργοποιημένο. Backup δημιουργείται μόνο όταν το επιλέξεις εσύ. Υπάρχει απλή JSON εξαγωγή και κρυπτογραφημένη εξαγωγή με κωδικό· για προσωπικές καταγραφές προτείνεται η κρυπτογραφημένη επιλογή."),
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                 }
@@ -69,9 +71,9 @@ fun PrivacyScreen(onBack: () -> Unit) {
             GlassCard(modifier = Modifier.fillMaxWidth()) {
                 Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                     Icon(Icons.Rounded.Shield, contentDescription = null, tint = ElectricCyan)
-                    Text("Χρήση εφαρμογής", fontWeight = FontWeight.ExtraBold)
+                    Text(t("Χρήση εφαρμογής"), fontWeight = FontWeight.ExtraBold)
                     Text(
-                        "Το Peptide Tracker GR είναι εργαλείο καταγραφής, οργάνωσης και μαθηματικών μετατροπών. Δεν αποτελεί ιατροτεχνολογικό προϊόν, δεν κάνει διάγνωση και δεν παρέχει εξατομικευμένη ιατρική συμβουλή, θεραπευτικό πρωτόκολλο ή σύσταση δοσολογίας.",
+                        t("Το Peptide Tracker είναι εργαλείο καταγραφής, οργάνωσης και μαθηματικών μετατροπών. Δεν αποτελεί ιατροτεχνολογικό προϊόν, δεν κάνει διάγνωση και δεν παρέχει εξατομικευμένη ιατρική συμβουλή, θεραπευτικό πρωτόκολλο ή σύσταση δοσολογίας."),
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                 }
@@ -80,7 +82,7 @@ fun PrivacyScreen(onBack: () -> Unit) {
 
         item {
             Text(
-                "Για δημοσίευση στο Google Play απαιτείται επιπλέον δημόσια προσβάσιμη πολιτική απορρήτου με στοιχεία υπευθύνου και επικοινωνίας.",
+                t("Για δημοσίευση στο Google Play απαιτείται επιπλέον δημόσια προσβάσιμη πολιτική απορρήτου με στοιχεία υπευθύνου και επικοινωνίας."),
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                 style = MaterialTheme.typography.bodySmall
             )
