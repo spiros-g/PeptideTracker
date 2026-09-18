@@ -84,8 +84,8 @@ android {
         applicationId = "gr.peptidetracker.app"
         minSdk = 26
         targetSdk = 36
-        versionCode = 34
-        versionName = "4.8.1"
+        versionCode = 35
+        versionName = "4.8.2"
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
 
