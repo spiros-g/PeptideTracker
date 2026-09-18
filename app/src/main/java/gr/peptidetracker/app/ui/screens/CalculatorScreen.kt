@@ -983,7 +983,7 @@ private fun SyringeGauge(
 ) {
     val fraction = (units / capacity.toDouble()).coerceIn(0.0, 1.0).toFloat()
     val outline = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f)
-    val track = Color.White.copy(alpha = 0.06f)
+    val track = MaterialTheme.colorScheme.surfaceVariant
     val fill = ElectricCyan.copy(alpha = 0.28f)
 
     Canvas(
