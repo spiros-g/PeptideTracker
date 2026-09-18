@@ -1,5 +1,7 @@
 package gr.peptidetracker.app.ui.screens
 
+import gr.peptidetracker.app.i18n.t
+
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.biometric.BiometricManager
@@ -99,9 +101,9 @@ fun SettingsScreen(
     var updateMessage by remember {
         mutableStateOf(
             if (githubUpdatesEnabled) {
-                "Έλεγχος για διαθέσιμη έκδοση..."
+                t("Έλεγχος για διαθέσιμη έκδοση...")
             } else {
-                "Οι ενημερώσεις αυτής της εγκατάστασης διαχειρίζονται από το Play Store."
+                t("Οι ενημερώσεις αυτής της εγκατάστασης διαχειρίζονται από το Play Store.")
             }
         )
     }
@@ -114,14 +116,14 @@ fun SettingsScreen(
         if (apk != null && UpdateInstaller.canInstallPackages(context)) {
             runCatching { UpdateInstaller.launchInstaller(context, apk) }
                 .onSuccess {
-                    updateMessage = "Ο Android installer άνοιξε. Επιβεβαίωσε την ενημέρωση."
+                    updateMessage = t("Ο Android installer άνοιξε. Επιβεβαίωσε την ενημέρωση.")
                     pendingApk = null
                 }
                 .onFailure {
-                    updateMessage = "Δεν ήταν δυνατό να ανοίξει ο installer."
+                    updateMessage = t("Δεν ήταν δυνατό να ανοίξει ο installer.")
                 }
         } else if (apk != null) {
-            updateMessage = "Χρειάζεται άδεια «Εγκατάσταση άγνωστων εφαρμογών» για το Peptide Tracker."
+            updateMessage = t("Χρειάζεται άδεια «Εγκατάσταση άγνωστων εφαρμογών» για το Peptide Tracker.")
         }
     }
 
@@ -129,14 +131,14 @@ fun SettingsScreen(
         if (!githubUpdatesEnabled || checkingUpdate || downloadingUpdate) return
         coroutineScope.launch {
             checkingUpdate = true
-            updateMessage = "Έλεγχος για ενημέρωση..."
+            updateMessage = t("Έλεγχος για ενημέρωση...")
             store.markUpdateCheck()
             val update = GitHubUpdateChecker.check(BuildConfig.VERSION_NAME)
             updateInfo = update
             updateMessage = if (update == null) {
-                "Έχεις την τελευταία έκδοση (v" + BuildConfig.VERSION_NAME + ")."
+                t("Έχεις την τελευταία έκδοση (v") + BuildConfig.VERSION_NAME + ")."
             } else {
-                "Διαθέσιμη έκδοση v" + update.version + "."
+                t("Διαθέσιμη έκδοση v") + update.version + "."
             }
             checkingUpdate = false
         }
@@ -146,7 +148,7 @@ fun SettingsScreen(
         if (downloadingUpdate || checkingUpdate) return
         coroutineScope.launch {
             downloadingUpdate = true
-            updateMessage = "Λήψη και επαλήθευση v" + update.version + "..."
+            updateMessage = t("Λήψη και επαλήθευση v") + update.version + "..."
             runCatching {
                 UpdateInstaller.downloadAndValidate(context, update)
             }.onSuccess { apk ->
@@ -154,14 +156,14 @@ fun SettingsScreen(
                 if (UpdateInstaller.canInstallPackages(context)) {
                     runCatching { UpdateInstaller.launchInstaller(context, apk) }
                         .onSuccess {
-                            updateMessage = "Ο Android installer άνοιξε. Επιβεβαίωσε την ενημέρωση."
+                            updateMessage = t("Ο Android installer άνοιξε. Επιβεβαίωσε την ενημέρωση.")
                             pendingApk = null
                         }
                         .onFailure {
-                            updateMessage = "Δεν ήταν δυνατό να ανοίξει ο Android installer."
+                            updateMessage = t("Δεν ήταν δυνατό να ανοίξει ο Android installer.")
                         }
                 } else {
-                    updateMessage = "Ενεργοποίησε «Να επιτρέπεται από αυτήν την πηγή» και γύρνα πίσω."
+                    updateMessage = t("Ενεργοποίησε «Να επιτρέπεται από αυτήν την πηγή» και γύρνα πίσω.")
                     unknownSourcesLauncher.launch(
                         UpdateInstaller.unknownSourcesIntent(context)
                     )
@@ -169,7 +171,7 @@ fun SettingsScreen(
             }.onFailure { error ->
                 updateMessage = error.message
                     ?.takeIf { it.isNotBlank() }
-                    ?: "Η ενημέρωση απέτυχε."
+                    ?: t("Η ενημέρωση απέτυχε.")
             }
             downloadingUpdate = false
         }
@@ -188,8 +190,8 @@ fun SettingsScreen(
     ) {
         item {
             PremiumTopBar(
-                title = "Ρυθμίσεις",
-                subtitle = "Ασφάλεια, ιδιωτικότητα, προεπιλογές και δεδομένα εφαρμογής.",
+                title = t("Ρυθμίσεις"),
+                subtitle = t("Ασφάλεια, ιδιωτικότητα, προεπιλογές και δεδομένα εφαρμογής."),
                 onBack = onBack
             )
         }
@@ -206,12 +208,12 @@ fun SettingsScreen(
                         )
                         Column(Modifier.weight(1f)) {
                             Text(
-                                "Ενημερώσεις εφαρμογής",
+                                t("Ενημερώσεις εφαρμογής"),
                                 fontWeight = FontWeight.ExtraBold,
                                 style = MaterialTheme.typography.titleMedium
                             )
                             Text(
-                                "Εγκατεστημένη έκδοση v" + BuildConfig.VERSION_NAME,
+                                t("Εγκατεστημένη έκδοση v") + BuildConfig.VERSION_NAME,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                                 style = MaterialTheme.typography.bodySmall
                             )
@@ -237,9 +239,9 @@ fun SettingsScreen(
                             ) {
                                 Text(
                                     if (downloadingUpdate) {
-                                        "Λήψη ενημέρωσης..."
+                                        t("Λήψη ενημέρωσης...")
                                     } else {
-                                        "Ενημέρωση σε v" + available.version
+                                        t("Ενημέρωση σε v") + available.version
                                     }
                                 )
                             }
@@ -251,9 +253,9 @@ fun SettingsScreen(
                             ) {
                                 Text(
                                     if (checkingUpdate) {
-                                        "Έλεγχος..."
+                                        t("Έλεγχος...")
                                     } else {
-                                        "Έλεγχος για ενημέρωση"
+                                        t("Έλεγχος για ενημέρωση")
                                     }
                                 )
                             }
@@ -275,15 +277,15 @@ fun SettingsScreen(
                         )
                         Column(Modifier.weight(1f)) {
                             Text(
-                                "Κλείδωμα εφαρμογής",
+                                t("Κλείδωμα εφαρμογής"),
                                 fontWeight = FontWeight.ExtraBold,
                                 style = MaterialTheme.typography.titleMedium
                             )
                             Text(
                                 if (lockSupported) {
-                                    "Ξεκλείδωμα με βιομετρικά ή PIN/κλείδωμα συσκευής. Ενεργοποιείται ξανά μετά από 30 δευτερόλεπτα στο background."
+                                    t("Ξεκλείδωμα με βιομετρικά ή PIN/κλείδωμα συσκευής. Ενεργοποιείται ξανά μετά από 30 δευτερόλεπτα στο background.")
                                 } else {
-                                    "Δεν είναι διαθέσιμο συμβατό βιομετρικό ή κλείδωμα συσκευής."
+                                    t("Δεν είναι διαθέσιμο συμβατό βιομετρικό ή κλείδωμα συσκευής.")
                                 },
                                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                                 style = MaterialTheme.typography.bodySmall
@@ -313,15 +315,15 @@ fun SettingsScreen(
                     )
                     Column(Modifier.weight(1f)) {
                         Text(
-                            "Ιδιωτικότητα ειδοποιήσεων",
+                            t("Ιδιωτικότητα ειδοποιήσεων"),
                             fontWeight = FontWeight.ExtraBold,
                             style = MaterialTheme.typography.titleMedium
                         )
                         Text(
                             if (notificationDetails) {
-                                "Οι ειδοποιήσεις μπορούν να εμφανίζουν όνομα πεπτιδίου και σημείωση."
+                                t("Οι ειδοποιήσεις μπορούν να εμφανίζουν όνομα πεπτιδίου και σημείωση.")
                             } else {
-                                "Στην οθόνη κλειδώματος εμφανίζεται μόνο γενική υπενθύμιση."
+                                t("Στην οθόνη κλειδώματος εμφανίζεται μόνο γενική υπενθύμιση.")
                             },
                             color = MaterialTheme.colorScheme.onSurfaceVariant,
                             style = MaterialTheme.typography.bodySmall
@@ -350,12 +352,12 @@ fun SettingsScreen(
                         )
                         Column {
                             Text(
-                                "Προεπιλεγμένη σύριγγα",
+                                t("Προεπιλεγμένη σύριγγα"),
                                 fontWeight = FontWeight.ExtraBold,
                                 style = MaterialTheme.typography.titleMedium
                             )
                             Text(
-                                "Χρησιμοποιείται ως αρχική επιλογή στον υπολογιστή.",
+                                t("Χρησιμοποιείται ως αρχική επιλογή στον υπολογιστή."),
                                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                                 style = MaterialTheme.typography.bodySmall
                             )
@@ -395,12 +397,12 @@ fun SettingsScreen(
                         )
                         Column(Modifier.weight(1f)) {
                             Text(
-                                "Προσαρμοσμένα πεπτίδια",
+                                t("Προσαρμοσμένα πεπτίδια"),
                                 fontWeight = FontWeight.ExtraBold,
                                 style = MaterialTheme.typography.titleMedium
                             )
                             Text(
-                                "Πρόσθεσε όνομα για ημερολόγιο, απόθεμα και υπενθυμίσεις. Δεν δημιουργείται επιστημονικό προφίλ ή οδηγία.",
+                                t("Πρόσθεσε όνομα για ημερολόγιο, απόθεμα και υπενθυμίσεις. Δεν δημιουργείται επιστημονικό προφίλ ή οδηγία."),
                                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                                 style = MaterialTheme.typography.bodySmall
                             )
@@ -423,7 +425,7 @@ fun SettingsScreen(
                                     customPeptides = store.customPeptides()
                                 }
                             ) {
-                                Icon(Icons.Outlined.Delete, contentDescription = "Διαγραφή " + name)
+                                Icon(Icons.Outlined.Delete, contentDescription = t("Διαγραφή ") + name)
                             }
                         }
                     }
@@ -435,7 +437,7 @@ fun SettingsScreen(
                         },
                         modifier = Modifier.fillMaxWidth()
                     ) {
-                        Text("Προσθήκη προσαρμοσμένου πεπτιδίου")
+                        Text(t("Προσθήκη προσαρμοσμένου πεπτιδίου"))
                     }
                 }
             }
@@ -453,12 +455,12 @@ fun SettingsScreen(
                         )
                         Column {
                             Text(
-                                "Αντίγραφα ασφαλείας & εξαγωγή",
+                                t("Αντίγραφα ασφαλείας & εξαγωγή"),
                                 fontWeight = FontWeight.ExtraBold,
                                 style = MaterialTheme.typography.titleMedium
                             )
                             Text(
-                                "Απλό ή κρυπτογραφημένο backup, επαναφορά με προεπισκόπηση και εξαγωγή ημερολογίου σε CSV.",
+                                t("Απλό ή κρυπτογραφημένο backup, επαναφορά με προεπισκόπηση και εξαγωγή ημερολογίου σε CSV."),
                                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                                 style = MaterialTheme.typography.bodySmall
                             )
@@ -469,7 +471,7 @@ fun SettingsScreen(
                         modifier = Modifier.fillMaxWidth(),
                         colors = premiumButtonColors()
                     ) {
-                        Text("Άνοιγμα εργαλείων δεδομένων")
+                        Text(t("Άνοιγμα εργαλείων δεδομένων"))
                     }
                 }
             }
@@ -487,12 +489,12 @@ fun SettingsScreen(
                         )
                         Column {
                             Text(
-                                "Εισαγωγικές οθόνες",
+                                t("Εισαγωγικές οθόνες"),
                                 fontWeight = FontWeight.ExtraBold,
                                 style = MaterialTheme.typography.titleMedium
                             )
                             Text(
-                                "Μπορείς να ξαναδείς την εισαγωγή χωρίς να διαγραφούν δεδομένα.",
+                                t("Μπορείς να ξαναδείς την εισαγωγή χωρίς να διαγραφούν δεδομένα."),
                                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                                 style = MaterialTheme.typography.bodySmall
                             )
@@ -505,7 +507,7 @@ fun SettingsScreen(
                         },
                         modifier = Modifier.fillMaxWidth()
                     ) {
-                        Text("Εμφάνιση εισαγωγής ξανά")
+                        Text(t("Εμφάνιση εισαγωγής ξανά"))
                     }
                 }
             }
@@ -522,17 +524,17 @@ fun SettingsScreen(
                             modifier = Modifier.size(22.dp)
                         )
                         Text(
-                            "Σχετικά & ιδιωτικότητα",
+                            t("Σχετικά & ιδιωτικότητα"),
                             fontWeight = FontWeight.ExtraBold,
                             style = MaterialTheme.typography.titleMedium
                         )
                     }
                     Text(
-                        "Peptide Tracker GR v" + BuildConfig.VERSION_NAME,
+                        "Peptide Tracker v" + BuildConfig.VERSION_NAME,
                         fontWeight = FontWeight.Bold
                     )
                     Text(
-                        "Οι καταγραφές, το απόθεμα, οι μετρήσεις και οι υπενθυμίσεις αποθηκεύονται στη συσκευή. Το Android cloud backup είναι απενεργοποιημένο. Για ευαίσθητα exports προτίμησε το κρυπτογραφημένο backup.",
+                        t("Οι καταγραφές, το απόθεμα, οι μετρήσεις και οι υπενθυμίσεις αποθηκεύονται στη συσκευή. Το Android cloud backup είναι απενεργοποιημένο. Για ευαίσθητα exports προτίμησε το κρυπτογραφημένο backup."),
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                         style = MaterialTheme.typography.bodySmall
                     )
@@ -540,7 +542,7 @@ fun SettingsScreen(
                         onClick = onOpenPrivacy,
                         modifier = Modifier.fillMaxWidth()
                     ) {
-                        Text("Ιδιωτικότητα & ασφάλεια")
+                        Text(t("Ιδιωτικότητα & ασφάλεια"))
                     }
                 }
             }
@@ -555,11 +557,11 @@ fun SettingsScreen(
             containerColor = GlassSurfaceStrong,
             titleContentColor = TextPrimary,
             textContentColor = TextPrimary,
-            title = { Text("Νέο προσαρμοσμένο πεπτίδιο") },
+            title = { Text(t("Νέο προσαρμοσμένο πεπτίδιο")) },
             text = {
                 Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                     Text(
-                        "Το όνομα θα είναι διαθέσιμο μόνο για tracking. Δεν προστίθενται claims, δοσολογίες ή επιστημονικές πληροφορίες.",
+                        t("Το όνομα θα είναι διαθέσιμο μόνο για tracking. Δεν προστίθενται claims, δοσολογίες ή επιστημονικές πληροφορίες."),
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                         style = MaterialTheme.typography.bodySmall
                     )
@@ -567,7 +569,7 @@ fun SettingsScreen(
                         value = customName,
                         onValueChange = { customName = it },
                         modifier = Modifier.fillMaxWidth(),
-                        label = { Text("Όνομα") },
+                        label = { Text(t("Όνομα")) },
                         singleLine = true,
                         colors = premiumTextFieldColors()
                     )
@@ -584,7 +586,7 @@ fun SettingsScreen(
                     enabled = customName.trim().length >= 2,
                     colors = premiumButtonColors()
                 ) {
-                    Text("Προσθήκη")
+                    Text(t("Προσθήκη"))
                 }
             },
             dismissButton = {
@@ -592,7 +594,7 @@ fun SettingsScreen(
                     onClick = { showCustomDialog = false },
                     colors = premiumTextButtonColors()
                 ) {
-                    Text("Άκυρο")
+                    Text(t("Άκυρο"))
                 }
             }
         )
