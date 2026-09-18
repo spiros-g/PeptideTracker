@@ -1,5 +1,7 @@
 package gr.peptidetracker.app.ui.screens
 
+import gr.peptidetracker.app.i18n.t
+
 import android.Manifest
 import android.app.DatePickerDialog
 import android.app.TimePickerDialog
@@ -102,14 +104,14 @@ fun RemindersScreen(
         ActivityResultContracts.RequestPermission()
     ) { granted ->
         if (granted) {
-            message = "Οι ειδοποιήσεις ενεργοποιήθηκαν."
+            message = t("Οι ειδοποιήσεις ενεργοποιήθηκαν.")
             pendingEnableId?.let { id ->
                 store.setReminderEnabled(id, true)?.let {
                     ReminderScheduler.schedule(context, it)
                 }
             }
         } else {
-            message = "Χωρίς άδεια ειδοποιήσεων οι υπενθυμίσεις αποθηκεύονται αλλά παραμένουν ανενεργές."
+            message = t("Χωρίς άδεια ειδοποιήσεων οι υπενθυμίσεις αποθηκεύονται αλλά παραμένουν ανενεργές.")
         }
 
         pendingEnableId = null
@@ -138,8 +140,8 @@ fun RemindersScreen(
     ) {
         item {
             PremiumTopBar(
-                title = "Πλάνο & Υπενθυμίσεις",
-                subtitle = "Όρισε δικές σου ημερομηνίες και ώρες. Οι ειδοποιήσεις μπορεί να καθυστερήσουν ελαφρώς από το Android για εξοικονόμηση ενέργειας."
+                title = t("Πλάνο & Υπενθυμίσεις"),
+                subtitle = t("Όρισε δικές σου ημερομηνίες και ώρες. Οι ειδοποιήσεις μπορεί να καθυστερήσουν ελαφρώς από το Android για εξοικονόμηση ενέργειας.")
             )
         }
 
@@ -165,15 +167,15 @@ fun RemindersScreen(
                     Spacer(Modifier.width(12.dp))
                     Column(Modifier.weight(1f)) {
                         Text(
-                            enabledCount.toString() + " ενεργές",
+                            enabledCount.toString() + t(" ενεργές"),
                             style = MaterialTheme.typography.titleLarge,
                             fontWeight = FontWeight.ExtraBold
                         )
                         Text(
                             if (nextReminder == null) {
-                                "Δεν υπάρχει επόμενη ενεργή υπενθύμιση."
+                                t("Δεν υπάρχει επόμενη ενεργή υπενθύμιση.")
                             } else {
-                                "Επόμενη: " + DateFormat.getDateTimeInstance(
+                                t("Επόμενη: ") + DateFormat.getDateTimeInstance(
                                     DateFormat.SHORT,
                                     DateFormat.SHORT
                                 ).format(Date(nextReminder.scheduledAt))
@@ -196,7 +198,7 @@ fun RemindersScreen(
                     ) {
                         Icon(Icons.Rounded.Add, contentDescription = null, modifier = Modifier.size(18.dp))
                         Spacer(Modifier.width(5.dp))
-                        Text("Νέα")
+                        Text(t("Νέα"))
                     }
                 }
             }
@@ -213,9 +215,9 @@ fun RemindersScreen(
                         )
                         Spacer(Modifier.width(10.dp))
                         Column(Modifier.weight(1f)) {
-                            Text("Οι ειδοποιήσεις είναι κλειστές", fontWeight = FontWeight.ExtraBold)
+                            Text(t("Οι ειδοποιήσεις είναι κλειστές"), fontWeight = FontWeight.ExtraBold)
                             Text(
-                                "Οι υπενθυμίσεις μπορούν να αποθηκευτούν, αλλά δεν θα εμφανιστούν ως Android notifications.",
+                                t("Οι υπενθυμίσεις μπορούν να αποθηκευτούν, αλλά δεν θα εμφανιστούν ως Android notifications."),
                                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                                 style = MaterialTheme.typography.bodySmall
                             )
@@ -226,7 +228,7 @@ fun RemindersScreen(
                             },
                             colors = premiumTextButtonColors()
                         ) {
-                            Text("Άδεια")
+                            Text(t("Άδεια"))
                         }
                     }
                 }
@@ -258,9 +260,9 @@ fun RemindersScreen(
                             tint = ElectricBlue,
                             modifier = Modifier.size(42.dp)
                         )
-                        Text("Δεν έχεις υπενθυμίσεις", fontWeight = FontWeight.ExtraBold)
+                        Text(t("Δεν έχεις υπενθυμίσεις"), fontWeight = FontWeight.ExtraBold)
                         Text(
-                            "Πρόσθεσε ημερομηνία και ώρα για κάτι που έχεις ήδη αποφασίσει να καταγράψεις. Δεν δημιουργούνται αυτόματα πρωτόκολλα ή δοσολογίες.",
+                            t("Πρόσθεσε ημερομηνία και ώρα για κάτι που έχεις ήδη αποφασίσει να καταγράψεις. Δεν δημιουργούνται αυτόματα πρωτόκολλα ή δοσολογίες."),
                             color = MaterialTheme.colorScheme.onSurfaceVariant,
                             style = MaterialTheme.typography.bodySmall
                         )
@@ -302,7 +304,7 @@ fun RemindersScreen(
 
         item {
             Text(
-                "Οι υπενθυμίσεις είναι προσωπικές καταχωρήσεις χρόνου. Η εφαρμογή δεν επιλέγει πεπτίδιο, ποσότητα ή συχνότητα για εσένα και δεν εγγυάται εκτέλεση στο ακριβές δευτερόλεπτο.",
+                t("Οι υπενθυμίσεις είναι προσωπικές καταχωρήσεις χρόνου. Η εφαρμογή δεν επιλέγει πεπτίδιο, ποσότητα ή συχνότητα για εσένα και δεν εγγυάται εκτέλεση στο ακριβές δευτερόλεπτο."),
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                 style = MaterialTheme.typography.bodySmall,
                 modifier = Modifier.padding(horizontal = 4.dp)
@@ -349,9 +351,9 @@ fun RemindersScreen(
                 }
 
                 if (requestedEnabled && !notificationsAllowed()) {
-                    message = "Η υπενθύμιση αποθηκεύτηκε ανενεργή μέχρι να επιτρέψεις notifications."
+                    message = t("Η υπενθύμιση αποθηκεύτηκε ανενεργή μέχρι να επιτρέψεις notifications.")
                 } else {
-                    message = "Η υπενθύμιση αποθηκεύτηκε."
+                    message = t("Η υπενθύμιση αποθηκεύτηκε.")
                 }
 
                 showEditor = false
@@ -416,10 +418,10 @@ private fun ReminderCard(
                 onCheckedChange = onToggle
             )
             IconButton(onClick = onEdit) {
-                Icon(Icons.Outlined.Edit, contentDescription = "Επεξεργασία")
+                Icon(Icons.Outlined.Edit, contentDescription = t("Επεξεργασία"))
             }
             IconButton(onClick = onDelete) {
-                Icon(Icons.Outlined.Delete, contentDescription = "Διαγραφή")
+                Icon(Icons.Outlined.Delete, contentDescription = t("Διαγραφή"))
             }
         }
     }
@@ -461,12 +463,12 @@ private fun ReminderEditorDialog(
         titleContentColor = TextPrimary,
         textContentColor = TextPrimary,
         title = {
-            Text(if (current == null) "Νέα υπενθύμιση" else "Επεξεργασία υπενθύμισης")
+            Text(if (current == null) t("Νέα υπενθύμιση") else t("Επεξεργασία υπενθύμισης"))
         },
         text = {
             Column(verticalArrangement = Arrangement.spacedBy(11.dp)) {
                 Text(
-                    "Καταχώρησε μόνο το δικό σου πλάνο. Δεν παρέχεται πρόταση δοσολογίας ή συχνότητας.",
+                    t("Καταχώρησε μόνο το δικό σου πλάνο. Δεν παρέχεται πρόταση δοσολογίας ή συχνότητας."),
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                     style = MaterialTheme.typography.bodySmall
                 )
@@ -477,7 +479,7 @@ private fun ReminderEditorDialog(
                         modifier = Modifier.fillMaxWidth()
                     ) {
                         Text(
-                            peptide.ifBlank { "Επίλεξε πεπτίδιο" },
+                            peptide.ifBlank { t("Επίλεξε πεπτίδιο") },
                             maxLines = 1,
                             overflow = TextOverflow.Ellipsis
                         )
@@ -526,7 +528,7 @@ private fun ReminderEditorDialog(
                     }
                 }
 
-                Text("Επανάληψη", fontWeight = FontWeight.Bold)
+                Text(t("Επανάληψη"), fontWeight = FontWeight.Bold)
                 Box {
                     OutlinedButton(
                         onClick = { repeatMenu = true },
@@ -554,7 +556,7 @@ private fun ReminderEditorDialog(
                     value = note,
                     onValueChange = { note = it },
                     modifier = Modifier.fillMaxWidth(),
-                    label = { Text("Σημείωση (προαιρετικά)") },
+                    label = { Text(t("Σημείωση (προαιρετικά)")) },
                     colors = premiumTextFieldColors()
                 )
 
@@ -563,10 +565,10 @@ private fun ReminderEditorDialog(
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     Column(Modifier.weight(1f)) {
-                        Text("Ενεργή υπενθύμιση", fontWeight = FontWeight.Bold)
+                        Text(t("Ενεργή υπενθύμιση"), fontWeight = FontWeight.Bold)
                         if (!notificationsAllowed) {
                             Text(
-                                "Χρειάζεται άδεια Android notifications.",
+                                t("Χρειάζεται άδεια Android notifications."),
                                 color = MaterialTheme.colorScheme.error,
                                 style = MaterialTheme.typography.bodySmall
                             )
@@ -594,21 +596,21 @@ private fun ReminderEditorDialog(
                 enabled = peptide.isNotBlank() && scheduledAt > System.currentTimeMillis(),
                 colors = premiumButtonColors()
             ) {
-                Text("Αποθήκευση")
+                Text(t("Αποθήκευση"))
             }
         },
         dismissButton = {
             TextButton(onClick = onDismiss, colors = premiumTextButtonColors()) {
-                Text("Άκυρο")
+                Text(t("Άκυρο"))
             }
         }
     )
 }
 
 private fun reminderRepeatLabel(days: Int): String = when (days) {
-    0 -> "Μία φορά"
-    1 -> "Κάθε ημέρα"
-    else -> "Κάθε $days ημέρες"
+    0 -> t("Μία φορά")
+    1 -> t("Κάθε ημέρα")
+    else -> t("Κάθε $days ημέρες")
 }
 
 private fun showReminderDatePicker(
