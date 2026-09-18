@@ -2234,11 +2234,15 @@ private fun InventoryEditorDialog(
     val quantityValue = quantity.toIntOrNull()
     val diluentValue = diluent.replace(',', '.').toDoubleOrNull()
     val remainingValue = remaining.replace(',', '.').toDoubleOrNull()
+    val purchaseDateValue = purchaseDate
+    val expiryDateValue = expiryDate
 
     val inventoryValidationMessage = when {
         current == null && quantityValue != null && quantityValue <= 0 ->
             t("Χρειάζεται τουλάχιστον ένα φιαλίδιο.")
-        purchaseDate != null && expiryDate != null && expiryDate < purchaseDate ->
+        purchaseDateValue != null &&
+            expiryDateValue != null &&
+            expiryDateValue < purchaseDateValue ->
             t("Η ημερομηνία λήξης δεν μπορεί να είναι πριν από την ημερομηνία αγοράς.")
         current != null &&
             remainingValue != null &&
