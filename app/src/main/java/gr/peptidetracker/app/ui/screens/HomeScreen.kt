@@ -28,6 +28,7 @@ import androidx.compose.material.icons.rounded.Inventory2
 import androidx.compose.material.icons.rounded.NotificationsActive
 import androidx.compose.material.icons.rounded.Science
 import androidx.compose.material.icons.rounded.Settings
+import androidx.compose.material.icons.rounded.WarningAmber
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -68,8 +69,18 @@ fun HomeScreen(
     val favorites = peptideCatalog.filter { it.id in favoriteIds }
     val last = entries.firstOrNull()
     val activeVial = inventory.firstOrNull { it.active && it.quantity > 0 }
+    val now = System.currentTimeMillis()
+    val expiryWarningWindow = now + 30L * 24L * 60L * 60L * 1000L
+    val expiredCount = inventory.count {
+        it.quantity > 0 && it.expiryDate != null && it.expiryDate < now
+    }
+    val expiringSoonCount = inventory.count {
+        it.quantity > 0 &&
+            it.expiryDate != null &&
+            it.expiryDate in now..expiryWarningWindow
+    }
     val nextReminder = store.reminders()
-        .filter { it.enabled && it.scheduledAt >= System.currentTimeMillis() }
+        .filter { it.enabled && it.scheduledAt >= now }
         .minByOrNull { it.scheduledAt }
 
     LazyColumn(
@@ -361,6 +372,61 @@ fun HomeScreen(
                                     fontWeight = FontWeight.Bold
                                 )
                             }
+                        }
+                        Icon(
+                            Icons.AutoMirrored.Rounded.ArrowForward,
+                            contentDescription = null,
+                            tint = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
+                }
+            }
+        }
+
+        if (expiredCount > 0 || expiringSoonCount > 0) {
+            item {
+                GlassCard(
+                    modifier = Modifier.fillMaxWidth(),
+                    onClick = onOpenInventory
+                ) {
+                    Row(
+                        Modifier.fillMaxWidth(),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Box(
+                            Modifier
+                                .size(44.dp)
+                                .clip(RoundedCornerShape(14.dp))
+                                .background(MaterialTheme.colorScheme.error.copy(alpha = 0.12f)),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Icon(
+                                Icons.Rounded.WarningAmber,
+                                contentDescription = null,
+                                tint = MaterialTheme.colorScheme.error
+                            )
+                        }
+                        Spacer(Modifier.width(12.dp))
+                        Column(Modifier.weight(1f)) {
+                            Text(
+                                "Έλεγχος αποθέματος",
+                                fontWeight = FontWeight.ExtraBold
+                            )
+                            Text(
+                                buildString {
+                                    if (expiredCount > 0) {
+                                        append(expiredCount)
+                                        append(if (expiredCount == 1) " καταχώρηση έχει λήξει" else " καταχωρήσεις έχουν λήξει")
+                                    }
+                                    if (expiredCount > 0 && expiringSoonCount > 0) append(" · ")
+                                    if (expiringSoonCount > 0) {
+                                        append(expiringSoonCount)
+                                        append(if (expiringSoonCount == 1) " λήγει εντός 30 ημερών" else " λήγουν εντός 30 ημερών")
+                                    }
+                                },
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                style = MaterialTheme.typography.bodySmall
+                            )
                         }
                         Icon(
                             Icons.AutoMirrored.Rounded.ArrowForward,
