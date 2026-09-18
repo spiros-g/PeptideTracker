@@ -6,7 +6,7 @@
 - Made usage-log and linked-inventory mutations atomic in Room to prevent partial stock/history updates.
 - Added flexible user-defined reminder recurrence options from one-time through 30-day intervals.
 - Added home-screen warnings for expired inventory entries and inventory expiring within 30 days.
-- Added pull-request CI and release-variant compilation to the Android workflow.
+- Hardened local release validation: tests, release lint and signed AAB generation; hosted GitHub Actions remains manual-only while quota is unavailable.
 - Added signing/keystore and local Android files to .gitignore.
 - Increased app version to 4.7.0 (versionCode 30).
 
