@@ -143,6 +143,15 @@ class LocalStore(context: Context) {
     fun setNotificationDetailsVisible(value: Boolean) =
         prefs.edit().putBoolean("notification_details_visible", value).apply()
 
+    fun shouldCheckForUpdates(now: Long = System.currentTimeMillis()): Boolean {
+        val lastCheck = prefs.getLong(KEY_LAST_UPDATE_CHECK_AT, 0L)
+        return lastCheck <= 0L || now - lastCheck >= UPDATE_CHECK_INTERVAL_MS
+    }
+
+    fun markUpdateCheck(now: Long = System.currentTimeMillis()) {
+        prefs.edit().putLong(KEY_LAST_UPDATE_CHECK_AT, now).apply()
+    }
+
     fun favorites(): Set<String> = io { dao.favoriteIds().toSet() }
 
     fun toggleFavorite(id: String) {
@@ -1244,5 +1253,7 @@ class LocalStore(context: Context) {
         const val KEY_CALCULATIONS_V1 = "calculations_v1_json"
         const val KEY_PRE_RESTORE_BACKUP = "pre_restore_backup_json"
         const val KEY_ROOM_MIGRATED = "room_migrated_v1"
+        const val KEY_LAST_UPDATE_CHECK_AT = "last_update_check_at"
+        const val UPDATE_CHECK_INTERVAL_MS = 24L * 60L * 60L * 1000L
     }
 }

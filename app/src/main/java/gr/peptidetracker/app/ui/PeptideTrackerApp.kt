@@ -1,5 +1,6 @@
 package gr.peptidetracker.app.ui
 
+import android.content.Intent
 import android.net.Uri
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.tween
@@ -20,11 +21,14 @@ import androidx.compose.material.icons.rounded.Calculate
 import androidx.compose.material.icons.rounded.Home
 import androidx.compose.material.icons.rounded.QueryStats
 import androidx.compose.material.icons.rounded.Science
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.saveable.rememberSaveable
@@ -35,6 +39,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -44,6 +49,9 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
+import gr.peptidetracker.app.BuildConfig
+import gr.peptidetracker.app.data.AppUpdateInfo
+import gr.peptidetracker.app.data.GitHubUpdateChecker
 import gr.peptidetracker.app.data.LocalStore
 import gr.peptidetracker.app.data.peptideCatalog
 import gr.peptidetracker.app.ui.screens.CalculatorPreset
@@ -78,10 +86,23 @@ private object Routes {
 
 @Composable
 fun PeptideTrackerApp(store: LocalStore) {
+    val context = LocalContext.current
     var showOnboarding by rememberSaveable { mutableStateOf(!store.onboardingComplete()) }
+    var availableUpdate by remember { mutableStateOf<AppUpdateInfo?>(null) }
     val uiState: AppUiViewModel = viewModel()
     val navController = rememberNavController()
     val imageIndex = emptyMap<String, String>()
+
+    LaunchedEffect(showOnboarding) {
+        if (
+            !showOnboarding &&
+            GitHubUpdateChecker.shouldUseGitHubUpdates(context) &&
+            store.shouldCheckForUpdates()
+        ) {
+            store.markUpdateCheck()
+            availableUpdate = GitHubUpdateChecker.check(BuildConfig.VERSION_NAME)
+        }
+    }
 
     val destinations = listOf(
         MainDestination(Routes.Home, "Αρχική", Icons.Rounded.Home),
@@ -273,6 +294,46 @@ fun PeptideTrackerApp(store: LocalStore) {
                         }
                     }
                 }
+            }
+
+            availableUpdate?.let { update ->
+                AlertDialog(
+                    onDismissRequest = { availableUpdate = null },
+                    title = { Text("Νέα έκδοση ${update.version}") },
+                    text = {
+                        Text(
+                            buildString {
+                                append("Υπάρχει νεότερη έκδοση του Peptide Tracker στο GitHub.")
+                                if (update.releaseNotes.isNotBlank()) {
+                                    append("\n\n")
+                                    append(update.releaseNotes.take(700))
+                                }
+                            }
+                        )
+                    },
+                    confirmButton = {
+                        TextButton(
+                            onClick = {
+                                val target = update.apkUrl ?: update.releaseUrl
+                                if (target.isNotBlank()) {
+                                    runCatching {
+                                        context.startActivity(
+                                            Intent(Intent.ACTION_VIEW, Uri.parse(target))
+                                        )
+                                    }
+                                }
+                                availableUpdate = null
+                            }
+                        ) {
+                            Text(if (update.apkUrl != null) "Λήψη ενημέρωσης" else "Άνοιγμα release")
+                        }
+                    },
+                    dismissButton = {
+                        TextButton(onClick = { availableUpdate = null }) {
+                            Text("Αργότερα")
+                        }
+                    }
+                )
             }
         }
     }
