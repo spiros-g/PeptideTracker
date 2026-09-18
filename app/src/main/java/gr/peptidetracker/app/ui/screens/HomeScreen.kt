@@ -1,5 +1,7 @@
 package gr.peptidetracker.app.ui.screens
 
+import gr.peptidetracker.app.i18n.t
+
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -90,10 +92,10 @@ fun HomeScreen(
     ) {
         item {
             PremiumTopBar(
-                title = "Peptide Tracker GR",
-                subtitle = "Το κέντρο ελέγχου για ημερολόγιο, απόθεμα και υπολογισμούς.",
+                title = "Peptide Tracker",
+                subtitle = t("Το κέντρο ελέγχου για ημερολόγιο, απόθεμα και υπολογισμούς."),
                 actionIcon = Icons.Rounded.Settings,
-                actionDescription = "Ρυθμίσεις",
+                actionDescription = t("Ρυθμίσεις"),
                 onAction = onOpenSettings
             )
         }
@@ -127,7 +129,7 @@ fun HomeScreen(
                         verticalArrangement = Arrangement.spacedBy(8.dp)
                     ) {
                         Text(
-                            "ΑΝΑΣΥΣΤΑΣΗ & ΔΟΣΟΜΕΤΡΙΑ",
+                            t("ΑΝΑΣΥΣΤΑΣΗ & ΔΟΣΟΜΕΤΡΙΑ"),
                             color = ElectricCyan,
                             style = MaterialTheme.typography.labelLarge,
                             fontWeight = FontWeight.ExtraBold,
@@ -136,7 +138,7 @@ fun HomeScreen(
                         )
 
                         Text(
-                            "Υπολογιστής Ανασύστασης & Δοσολογίας",
+                            t("Υπολογιστής Ανασύστασης & Δοσολογίας"),
                             style = MaterialTheme.typography.headlineMedium,
                             fontWeight = FontWeight.ExtraBold,
                             maxLines = 3,
@@ -144,7 +146,7 @@ fun HomeScreen(
                         )
 
                         Text(
-                            "Βάλε τι έχει το φιαλίδιο και πόσο διαλύτη πρόσθεσες. Ο υπολογιστής σου δείχνει συγκέντρωση, όγκο και μονάδες U-100 ή U-40.",
+                            t("Βάλε τι έχει το φιαλίδιο και πόσο διαλύτη πρόσθεσες. Ο υπολογιστής σου δείχνει συγκέντρωση, όγκο και μονάδες U-100 ή U-40."),
                             color = MaterialTheme.colorScheme.onSurfaceVariant,
                             style = MaterialTheme.typography.bodyMedium,
                             maxLines = 3,
@@ -153,7 +155,7 @@ fun HomeScreen(
 
                         Row(verticalAlignment = Alignment.CenterVertically) {
                             Text(
-                                "Άνοιγμα υπολογιστή",
+                                t("Άνοιγμα υπολογιστή"),
                                 color = ElectricBlue,
                                 style = MaterialTheme.typography.bodyMedium,
                                 fontWeight = FontWeight.Bold,
@@ -173,7 +175,7 @@ fun HomeScreen(
                         productKey = "retatrutide",
                         imageIndex = imageIndex,
                         modifier = Modifier.size(width = 104.dp, height = 190.dp),
-                        contentDescription = "Φιαλίδιο πεπτιδίου"
+                        contentDescription = t("Φιαλίδιο πεπτιδίου")
                     )
                 }
             }
@@ -181,7 +183,7 @@ fun HomeScreen(
 
         item {
             Text(
-                "Γρήγορη πρόσβαση",
+                t("Γρήγορη πρόσβαση"),
                 style = MaterialTheme.typography.titleLarge
             )
         }
@@ -192,16 +194,16 @@ fun HomeScreen(
                 horizontalArrangement = Arrangement.spacedBy(12.dp)
             ) {
                 QuickActionCard(
-                    title = "Πεπτίδια",
-                    subtitle = peptideCatalog.size.toString() + " προφίλ",
+                    title = t("Πεπτίδια"),
+                    subtitle = peptideCatalog.size.toString() + t(" προφίλ"),
                     icon = Icons.Rounded.Science,
                     accent = ElectricViolet,
                     modifier = Modifier.weight(1f),
                     onClick = { onNavigate(1) }
                 )
                 QuickActionCard(
-                    title = "Ημερολόγιο",
-                    subtitle = entries.size.toString() + " χρήσεις πεπτιδίων",
+                    title = t("Ημερολόγιο"),
+                    subtitle = entries.size.toString() + t(" χρήσεις πεπτιδίων"),
                     icon = Icons.AutoMirrored.Rounded.EventNote,
                     accent = ElectricCyan,
                     modifier = Modifier.weight(1f),
@@ -216,16 +218,16 @@ fun HomeScreen(
                 horizontalArrangement = Arrangement.spacedBy(12.dp)
             ) {
                 QuickActionCard(
-                    title = "Νέα καταγραφή",
-                    subtitle = "Πρόσθεσε χρήση",
+                    title = t("Νέα καταγραφή"),
+                    subtitle = t("Πρόσθεσε χρήση"),
                     icon = Icons.Rounded.AddCircle,
                     accent = ElectricBlue,
                     modifier = Modifier.weight(1f),
                     onClick = onNewLog
                 )
                 QuickActionCard(
-                    title = "Απόθεμα",
-                    subtitle = inventory.sumOf { it.quantity }.toString() + " φιαλίδια",
+                    title = t("Απόθεμα"),
+                    subtitle = inventory.sumOf { it.quantity }.toString() + t(" φιαλίδια"),
                     icon = Icons.Rounded.Inventory2,
                     accent = ElectricViolet,
                     modifier = Modifier.weight(1f),
@@ -236,8 +238,8 @@ fun HomeScreen(
 
         item {
             QuickActionCard(
-                title = "Πλάνο & υπενθυμίσεις",
-                subtitle = if (nextReminder == null) "Οργάνωσε τις δικές σου υπενθυμίσεις" else "Δες ή άλλαξε την επόμενη υπενθύμιση",
+                title = t("Πλάνο & υπενθυμίσεις"),
+                subtitle = if (nextReminder == null) t("Οργάνωσε τις δικές σου υπενθυμίσεις") else t("Δες ή άλλαξε την επόμενη υπενθύμιση"),
                 icon = Icons.Rounded.NotificationsActive,
                 accent = ElectricCyan,
                 modifier = Modifier.fillMaxWidth(),
@@ -252,17 +254,17 @@ fun HomeScreen(
             ) {
                 MetricCard(
                     value = entries.size.toString(),
-                    label = "Χρήσεις",
+                    label = t("Χρήσεις"),
                     modifier = Modifier.weight(1f)
                 )
                 MetricCard(
                     value = inventory.sumOf { it.quantity }.toString(),
-                    label = "Φιαλίδια",
+                    label = t("Φιαλίδια"),
                     modifier = Modifier.weight(1f)
                 )
                 MetricCard(
                     value = favorites.size.toString(),
-                    label = "Αγαπημ.",
+                    label = t("Αγαπημ."),
                     modifier = Modifier.weight(1f)
                 )
             }
@@ -294,7 +296,7 @@ fun HomeScreen(
                         Spacer(Modifier.width(12.dp))
                         Column(Modifier.weight(1f)) {
                             Text(
-                                "Επόμενη υπενθύμιση",
+                                t("Επόμενη υπενθύμιση"),
                                 color = ElectricCyan,
                                 style = MaterialTheme.typography.labelLarge,
                                 fontWeight = FontWeight.ExtraBold
@@ -350,15 +352,15 @@ fun HomeScreen(
                         Spacer(Modifier.width(12.dp))
                         Column(Modifier.weight(1f)) {
                             Text(
-                                "Ενεργό φιαλίδιο",
+                                t("Ενεργό φιαλίδιο"),
                                 color = ElectricCyan,
                                 style = MaterialTheme.typography.labelLarge,
                                 fontWeight = FontWeight.ExtraBold
                             )
                             Text(activeVial.peptide, fontWeight = FontWeight.ExtraBold)
                             Text(
-                                activeVial.effectiveRemainingMg.toString() + " mg υπόλοιπο · " +
-                                    activeVial.quantity + " φιαλίδια συνολικά",
+                                activeVial.effectiveRemainingMg.toString() + t(" mg υπόλοιπο · ") +
+                                    activeVial.quantity + t(" φιαλίδια συνολικά"),
                                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                                 style = MaterialTheme.typography.bodySmall
                             )
@@ -409,19 +411,19 @@ fun HomeScreen(
                         Spacer(Modifier.width(12.dp))
                         Column(Modifier.weight(1f)) {
                             Text(
-                                "Έλεγχος αποθέματος",
+                                t("Έλεγχος αποθέματος"),
                                 fontWeight = FontWeight.ExtraBold
                             )
                             Text(
                                 buildString {
                                     if (expiredCount > 0) {
                                         append(expiredCount)
-                                        append(if (expiredCount == 1) " καταχώρηση έχει λήξει" else " καταχωρήσεις έχουν λήξει")
+                                        append(if (expiredCount == 1) t(" καταχώρηση έχει λήξει") else t(" καταχωρήσεις έχουν λήξει"))
                                     }
                                     if (expiredCount > 0 && expiringSoonCount > 0) append(" · ")
                                     if (expiringSoonCount > 0) {
                                         append(expiringSoonCount)
-                                        append(if (expiringSoonCount == 1) " λήγει εντός 30 ημερών" else " λήγουν εντός 30 ημερών")
+                                        append(if (expiringSoonCount == 1) t(" λήγει εντός 30 ημερών") else t(" λήγουν εντός 30 ημερών"))
                                     }
                                 },
                                 color = MaterialTheme.colorScheme.onSurfaceVariant,
@@ -440,7 +442,7 @@ fun HomeScreen(
 
         item {
             Text(
-                "Τελευταία δραστηριότητα",
+                t("Τελευταία δραστηριότητα"),
                 style = MaterialTheme.typography.titleLarge
             )
         }
@@ -463,9 +465,9 @@ fun HomeScreen(
                         )
                         Spacer(Modifier.width(14.dp))
                         Column {
-                            Text("Δεν έχεις καταγράψει χρήση", fontWeight = FontWeight.Bold)
+                            Text(t("Δεν έχεις καταγράψει χρήση"), fontWeight = FontWeight.Bold)
                             Text(
-                                "Όταν καταγράψεις ότι χρησιμοποίησες ένα πεπτίδιο, θα εμφανιστεί εδώ η τελευταία σου εγγραφή.",
+                                t("Όταν καταγράψεις ότι χρησιμοποίησες ένα πεπτίδιο, θα εμφανιστεί εδώ η τελευταία σου εγγραφή."),
                                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                                 style = MaterialTheme.typography.bodySmall
                             )
@@ -512,7 +514,7 @@ fun HomeScreen(
         if (favorites.isNotEmpty()) {
             item {
                 Text(
-                    "Αγαπημένα",
+                    t("Αγαπημένα"),
                     style = MaterialTheme.typography.titleLarge
                 )
             }
