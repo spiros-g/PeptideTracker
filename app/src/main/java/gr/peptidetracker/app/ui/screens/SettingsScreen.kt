@@ -1,11 +1,14 @@
 package gr.peptidetracker.app.ui.screens
 
 import android.app.Activity
+import android.content.Intent
+import android.net.Uri
 import gr.peptidetracker.app.i18n.t
 
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.biometric.BiometricManager
+import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
@@ -16,15 +19,20 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.Delete
 import androidx.compose.material.icons.rounded.Backup
+import androidx.compose.material.icons.rounded.BusinessCenter
 import androidx.compose.material.icons.rounded.Fingerprint
 import androidx.compose.material.icons.rounded.Info
 import androidx.compose.material.icons.rounded.Language
 import androidx.compose.material.icons.rounded.Notifications
+import androidx.compose.material.icons.rounded.OpenInNew
+import androidx.compose.material.icons.rounded.Palette
 import androidx.compose.material.icons.rounded.RestartAlt
 import androidx.compose.material.icons.rounded.Science
+import androidx.compose.material.icons.rounded.Storefront
 import androidx.compose.material.icons.rounded.Straighten
 import androidx.compose.material.icons.rounded.SystemUpdateAlt
 import androidx.compose.material3.AlertDialog
@@ -90,9 +98,13 @@ fun SettingsScreen(
     var appLock by remember { mutableStateOf(store.appLockEnabled()) }
     var notificationDetails by remember { mutableStateOf(store.notificationDetailsVisible()) }
     var appLanguage by remember { mutableStateOf(store.appLanguage()) }
+    var appTheme by remember { mutableStateOf(store.appTheme()) }
     var customPeptides by remember { mutableStateOf(store.customPeptides()) }
     var showCustomDialog by remember { mutableStateOf(false) }
+    var pendingDeleteCustom by remember { mutableStateOf<String?>(null) }
     var customName by remember { mutableStateOf("") }
+    var customError by remember { mutableStateOf("") }
+    var externalLinkError by remember { mutableStateOf("") }
 
     val coroutineScope = rememberCoroutineScope()
     val githubUpdatesEnabled = remember {
@@ -144,6 +156,15 @@ fun SettingsScreen(
                 t("Διαθέσιμη έκδοση v") + update.version + "."
             }
             checkingUpdate = false
+        }
+    }
+
+    fun openExternal(url: String) {
+        externalLinkError = ""
+        runCatching {
+            context.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(url)))
+        }.onFailure {
+            externalLinkError = t("Δεν ήταν δυνατό να ανοίξει ο σύνδεσμος.")
         }
     }
 
