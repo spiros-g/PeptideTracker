@@ -59,6 +59,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import gr.peptidetracker.app.BuildConfig
+import gr.peptidetracker.app.data.AppUpdateCheckResult
 import gr.peptidetracker.app.data.AppUpdateInfo
 import gr.peptidetracker.app.data.GitHubUpdateChecker
 import gr.peptidetracker.app.data.LocalStore
@@ -148,12 +149,23 @@ fun SettingsScreen(
             checkingUpdate = true
             updateMessage = t("Έλεγχος για ενημέρωση...")
             store.markUpdateCheck()
-            val update = GitHubUpdateChecker.check(BuildConfig.VERSION_NAME)
-            updateInfo = update
-            updateMessage = if (update == null) {
-                t("Έχεις την τελευταία έκδοση (v") + BuildConfig.VERSION_NAME + ")."
-            } else {
-                t("Διαθέσιμη έκδοση v") + update.version + "."
+            when (val result = GitHubUpdateChecker.checkDetailed(BuildConfig.VERSION_NAME)) {
+                is AppUpdateCheckResult.Available -> {
+                    updateInfo = result.update
+                    updateMessage = t("Διαθέσιμη έκδοση v") + result.update.version + "."
+                }
+
+                AppUpdateCheckResult.UpToDate -> {
+                    updateInfo = null
+                    updateMessage =
+                        t("Έχεις την τελευταία έκδοση (v") + BuildConfig.VERSION_NAME + ")."
+                }
+
+                AppUpdateCheckResult.Failed -> {
+                    updateInfo = null
+                    updateMessage =
+                        t("Η ενημέρωση δεν μπόρεσε να ελεγχθεί. Έλεγξε τη σύνδεσή σου και δοκίμασε ξανά.")
+                }
             }
             checkingUpdate = false
         }
