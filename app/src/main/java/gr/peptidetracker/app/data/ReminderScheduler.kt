@@ -200,6 +200,8 @@ private object ReminderNotifications {
             return
         }
 
+        // Initialize persisted language/privacy settings before localized notification text.
+        val store = LocalStore(context)
         val manager = context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
         ensureChannel(manager)
 
@@ -226,7 +228,7 @@ private object ReminderNotifications {
             PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
         )
 
-        val detailsVisible = LocalStore(context).notificationDetailsVisible()
+        val detailsVisible = store.notificationDetailsVisible()
         val body = if (!detailsVisible) {
             t("Έχεις προγραμματισμένη υπενθύμιση.")
         } else if (note.isBlank()) {
