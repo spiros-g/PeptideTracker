@@ -56,10 +56,12 @@ jobs:
           KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
           STORE_PASSWORD: ${{ secrets.ANDROID_STORE_PASSWORD }}
           KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+          KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
         run: |
           test -n "$KEYSTORE_BASE64"
           test -n "$STORE_PASSWORD"
           test -n "$KEY_ALIAS"
+          test -n "$KEY_PASSWORD"
 
       - name: Prepare and verify release keystore
         if: env.SHOULD_RELEASE == 'true'
@@ -67,19 +69,33 @@ jobs:
           KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
           STORE_PASSWORD: ${{ secrets.ANDROID_STORE_PASSWORD }}
           KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+          KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
         run: |
           printf '%s' "$KEYSTORE_BASE64" | base64 --decode > release.keystore
-          keytool -list             -keystore release.keystore             -storepass "$STORE_PASSWORD"             -alias "$KEY_ALIAS" >/dev/null
+          keytool -list -keystore release.keystore -storepass "$STORE_PASSWORD" -alias "$KEY_ALIAS" >/dev/null
 
           printf 'signing probe' > signing-probe.txt
-          jar cf signing-probe.jar signing-probe.txt
-          jarsigner             -keystore release.keystore             -storepass "$STORE_PASSWORD"             -keypass "$STORE_PASSWORD"             signing-probe.jar             "$KEY_ALIAS" >/dev/null
+          jar cf signing-probe-unsigned.jar signing-probe.txt
+
+          SELECTED_KEY_PASSWORD=""
+          cp signing-probe-unsigned.jar signing-probe-key.jar
+          if jarsigner -keystore release.keystore -storepass "$STORE_PASSWORD" -keypass "$KEY_PASSWORD" signing-probe-key.jar "$KEY_ALIAS" >/dev/null 2>&1; then
+            SELECTED_KEY_PASSWORD="$KEY_PASSWORD"
+          else
+            cp signing-probe-unsigned.jar signing-probe-store.jar
+            if jarsigner -keystore release.keystore -storepass "$STORE_PASSWORD" -keypass "$STORE_PASSWORD" signing-probe-store.jar "$KEY_ALIAS" >/dev/null 2>&1; then
+              SELECTED_KEY_PASSWORD="$STORE_PASSWORD"
+            else
+              echo "The configured keystore opens, but neither configured key password can unlock the private key."
+              exit 1
+            fi
+          fi
 
           cat > keystore.properties <<EOF
           storeFile=${{ github.workspace }}/release.keystore
           storePassword=$STORE_PASSWORD
           keyAlias=$KEY_ALIAS
-          keyPassword=$STORE_PASSWORD
+          keyPassword=$SELECTED_KEY_PASSWORD
           EOF
 
       - name: Unit tests
