@@ -2016,7 +2016,7 @@ private fun LogEditorDialog(
                 ?: current?.amount?.substringAfter(" ", "")?.takeIf { it in listOf("mg", "mcg", "units") }
                 ?: template?.unit?.takeIf { it.isNotBlank() }
                 ?: template?.amount?.substringAfter(" ", "")?.takeIf { it in listOf("mg", "mcg", "units") }
-                ?: "mcg"
+                ?: "mg"
         )
     }
     var note by remember(current, template) { mutableStateOf(current?.note ?: template?.note.orEmpty()) }
@@ -2079,7 +2079,7 @@ private fun LogEditorDialog(
                         Modifier.fillMaxWidth(),
                         horizontalArrangement = Arrangement.spacedBy(6.dp)
                     ) {
-                        listOf("mcg", "mg", "units").forEach { item ->
+                        listOf("mg", "mcg", "units").forEach { item ->
                             FilterChip(
                                 selected = unit == item,
                                 onClick = {
