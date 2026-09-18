@@ -1,5 +1,13 @@
 # Changelog
 
+## 4.8.10 — compact home calculator card
+
+- Reduced the oversized calculator hero card on the Home screen from a 274 dp minimum height to a compact 198 dp layout.
+- Reduced hero padding, vial artwork size and internal spacing so Quick access appears substantially higher on screen.
+- Shortened the calculator title and supporting copy while preserving the same tap target and navigation.
+- Removed the U-100 / U-40 wording from the Home hero copy.
+- Increased app version to 4.8.10 (versionCode 43).
+
 ## 4.8.9 — remove default syringe preference
 
 - Removed the Default syringe setting and its U-100 / U-40 controls from Settings.

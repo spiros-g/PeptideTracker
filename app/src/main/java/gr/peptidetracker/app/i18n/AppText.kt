@@ -133,6 +133,8 @@ private val uiEnglishTranslations = mapOf(
     "Το κέντρο ελέγχου για ημερολόγιο, απόθεμα και υπολογισμούς." to "Your control center for tracking, inventory and calculations.",
     "Ρυθμίσεις" to "Settings",
     "Υπολογιστής Ανασύστασης & Δοσολογίας" to "Reconstitution & Measurement Calculator",
+    "Υπολογιστής ανασύστασης" to "Reconstitution calculator",
+    "Βάλε ποσότητα φιαλιδίου και διαλύτη για άμεση μαθηματική μετατροπή." to "Enter vial amount and diluent for an immediate mathematical conversion.",
     "Βάλε τι έχει το φιαλίδιο και πόσο διαλύτη πρόσθεσες. Ο υπολογιστής σου δείχνει συγκέντρωση, όγκο και μονάδες U-100 ή U-40." to "Enter the vial amount and diluent added. The calculator shows concentration, volume and U-100 or U-40 units.",
     "Άνοιγμα υπολογιστή" to "Open calculator",
     "Γρήγορη πρόσβαση" to "Quick access",

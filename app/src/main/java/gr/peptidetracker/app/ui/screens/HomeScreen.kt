@@ -104,7 +104,7 @@ fun HomeScreen(
             GlassCard(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .heightIn(min = 274.dp),
+                    .heightIn(min = 198.dp),
                 contentPadding = PaddingValues(0.dp),
                 onClick = { onNavigate(2) }
             ) {
@@ -120,13 +120,13 @@ fun HomeScreen(
                                 )
                             )
                         )
-                        .padding(horizontal = 20.dp, vertical = 22.dp),
+                        .padding(horizontal = 18.dp, vertical = 16.dp),
                     verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.spacedBy(10.dp)
                 ) {
                     Column(
                         modifier = Modifier.weight(1f),
-                        verticalArrangement = Arrangement.spacedBy(8.dp)
+                        verticalArrangement = Arrangement.spacedBy(6.dp)
                     ) {
                         Text(
                             t("ΑΝΑΣΥΣΤΑΣΗ & ΔΟΣΟΜΕΤΡΙΑ"),
@@ -138,18 +138,18 @@ fun HomeScreen(
                         )
 
                         Text(
-                            t("Υπολογιστής Ανασύστασης & Δοσολογίας"),
-                            style = MaterialTheme.typography.headlineMedium,
+                            t("Υπολογιστής ανασύστασης"),
+                            style = MaterialTheme.typography.headlineSmall,
                             fontWeight = FontWeight.ExtraBold,
-                            maxLines = 3,
+                            maxLines = 2,
                             overflow = TextOverflow.Ellipsis
                         )
 
                         Text(
-                            t("Βάλε τι έχει το φιαλίδιο και πόσο διαλύτη πρόσθεσες. Ο υπολογιστής σου δείχνει συγκέντρωση, όγκο και μονάδες U-100 ή U-40."),
+                            t("Βάλε ποσότητα φιαλιδίου και διαλύτη για άμεση μαθηματική μετατροπή."),
                             color = MaterialTheme.colorScheme.onSurfaceVariant,
-                            style = MaterialTheme.typography.bodyMedium,
-                            maxLines = 3,
+                            style = MaterialTheme.typography.bodySmall,
+                            maxLines = 2,
                             overflow = TextOverflow.Ellipsis
                         )
 
@@ -174,7 +174,7 @@ fun HomeScreen(
                     StoreVialImage(
                         productKey = "retatrutide",
                         imageIndex = imageIndex,
-                        modifier = Modifier.size(width = 104.dp, height = 190.dp),
+                        modifier = Modifier.size(width = 82.dp, height = 148.dp),
                         contentDescription = t("Φιαλίδιο πεπτιδίου")
                     )
                 }
