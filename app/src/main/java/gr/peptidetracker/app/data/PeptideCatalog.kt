@@ -1,5 +1,6 @@
 package gr.peptidetracker.app.data
 
+import gr.peptidetracker.app.i18n.currentLanguageTag
 import gr.peptidetracker.app.i18n.t
 
 import android.net.Uri
@@ -106,7 +107,7 @@ private fun peptide(
     lastReviewed = lastReviewed
 )
 
-val peptideCatalog = listOf(
+private fun buildPeptideCatalog() = listOf(
     peptide(
         "retatrutide",
         "Retatrutide",
@@ -800,3 +801,26 @@ val peptideCatalog = listOf(
         "Pinealon EDR peptide"
     )
 )
+
+private val catalogLock = Any()
+
+@Volatile
+private var catalogSnapshot: Pair<String, List<PeptideInfo>>? = null
+
+val peptideCatalog: List<PeptideInfo>
+    get() {
+        val language = currentLanguageTag()
+        catalogSnapshot
+            ?.takeIf { it.first == language }
+            ?.second
+            ?.let { return it }
+
+        return synchronized(catalogLock) {
+            catalogSnapshot
+                ?.takeIf { it.first == language }
+                ?.second
+                ?: buildPeptideCatalog().also { catalog ->
+                    catalogSnapshot = language to catalog
+                }
+        }
+    }
