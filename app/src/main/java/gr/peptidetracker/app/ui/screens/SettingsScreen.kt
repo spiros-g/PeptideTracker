@@ -1,5 +1,6 @@
 package gr.peptidetracker.app.ui.screens
 
+import android.app.Activity
 import gr.peptidetracker.app.i18n.t
 
 import androidx.activity.compose.rememberLauncherForActivityResult
@@ -20,6 +21,7 @@ import androidx.compose.material.icons.outlined.Delete
 import androidx.compose.material.icons.rounded.Backup
 import androidx.compose.material.icons.rounded.Fingerprint
 import androidx.compose.material.icons.rounded.Info
+import androidx.compose.material.icons.rounded.Language
 import androidx.compose.material.icons.rounded.Notifications
 import androidx.compose.material.icons.rounded.RestartAlt
 import androidx.compose.material.icons.rounded.Science
@@ -87,6 +89,7 @@ fun SettingsScreen(
     var defaultSyringe by remember { mutableIntStateOf(store.defaultSyringeUnitsPerMl()) }
     var appLock by remember { mutableStateOf(store.appLockEnabled()) }
     var notificationDetails by remember { mutableStateOf(store.notificationDetailsVisible()) }
+    var appLanguage by remember { mutableStateOf(store.appLanguage()) }
     var customPeptides by remember { mutableStateOf(store.customPeptides()) }
     var showCustomDialog by remember { mutableStateOf(false) }
     var customName by remember { mutableStateOf("") }
@@ -194,6 +197,58 @@ fun SettingsScreen(
                 subtitle = t("Ασφάλεια, ιδιωτικότητα, προεπιλογές και δεδομένα εφαρμογής."),
                 onBack = onBack
             )
+        }
+
+        item {
+            GlassCard(modifier = Modifier.fillMaxWidth()) {
+                Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                        Icon(
+                            Icons.Rounded.Language,
+                            contentDescription = null,
+                            tint = ElectricBlue,
+                            modifier = Modifier.size(22.dp)
+                        )
+                        Column(Modifier.weight(1f)) {
+                            Text(
+                                t("Γλώσσα εφαρμογής"),
+                                fontWeight = FontWeight.ExtraBold,
+                                style = MaterialTheme.typography.titleMedium
+                            )
+                            Text(
+                                t("Επίλεξε Ελληνικά, Αγγλικά ή ακολούθησε τη γλώσσα της συσκευής."),
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                style = MaterialTheme.typography.bodySmall
+                            )
+                        }
+                    }
+
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        listOf(
+                            "system" to t("Σύστημα"),
+                            "el" to t("Ελληνικά"),
+                            "en" to t("Αγγλικά")
+                        ).forEach { (code, label) ->
+                            FilterChip(
+                                selected = appLanguage == code,
+                                onClick = {
+                                    if (appLanguage != code) {
+                                        appLanguage = code
+                                        store.setAppLanguage(code)
+                                        (context as? Activity)?.recreate()
+                                    }
+                                },
+                                label = { Text(label) },
+                                modifier = Modifier.weight(1f),
+                                colors = premiumFilterChipColors()
+                            )
+                        }
+                    }
+                }
+            }
         }
 
         item {
