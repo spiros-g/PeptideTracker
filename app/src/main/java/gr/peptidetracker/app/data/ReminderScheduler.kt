@@ -1,5 +1,7 @@
 package gr.peptidetracker.app.data
 
+import gr.peptidetracker.app.i18n.t
+
 import android.Manifest
 import android.app.Notification
 import android.app.NotificationChannel
@@ -185,8 +187,8 @@ class ReminderActionReceiver : BroadcastReceiver() {
 
 private object ReminderNotifications {
     private const val CHANNEL_ID = "peptide_tracker_reminders"
-    private const val CHANNEL_NAME = "Υπενθυμίσεις"
-    private const val CHANNEL_DESCRIPTION = "Προσωπικές υπενθυμίσεις που έχει ορίσει ο χρήστης"
+    private const val CHANNEL_NAME = t("Υπενθυμίσεις")
+    private const val CHANNEL_DESCRIPTION = t("Προσωπικές υπενθυμίσεις που έχει ορίσει ο χρήστης")
 
     fun show(context: Context, reminderId: Long, peptide: String, note: String) {
         if (
@@ -224,7 +226,7 @@ private object ReminderNotifications {
 
         val detailsVisible = LocalStore(context).notificationDetailsVisible()
         val body = if (!detailsVisible) {
-            "Έχεις προγραμματισμένη υπενθύμιση."
+            t("Έχεις προγραμματισμένη υπενθύμιση.")
         } else if (note.isBlank()) {
             peptide
         } else {
@@ -233,7 +235,7 @@ private object ReminderNotifications {
 
         val notification = Notification.Builder(context, CHANNEL_ID)
             .setSmallIcon(R.drawable.ic_launcher_monochrome)
-            .setContentTitle("Peptide Tracker · Υπενθύμιση")
+            .setContentTitle(t("Peptide Tracker · Υπενθύμιση"))
             .setContentText(body)
             .setStyle(Notification.BigTextStyle().bigText(body))
             .setContentIntent(openPendingIntent)
@@ -243,7 +245,7 @@ private object ReminderNotifications {
             .addAction(
                 Notification.Action.Builder(
                     Icon.createWithResource(context, R.drawable.ic_launcher_monochrome),
-                    "Σε 15′",
+                    t("Σε 15′"),
                     snoozePendingIntent
                 ).build()
             )
