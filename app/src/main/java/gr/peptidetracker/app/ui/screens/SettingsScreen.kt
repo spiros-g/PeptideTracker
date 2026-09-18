@@ -483,6 +483,10 @@ fun SettingsScreen(
         }
 
         item {
+            SettingsSectionTitle(t("Προτιμήσεις καταγραφής"))
+        }
+
+        item {
             GlassCard(modifier = Modifier.fillMaxWidth()) {
                 Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
                     Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
@@ -551,6 +555,14 @@ fun SettingsScreen(
                         }
                     }
 
+                    if (customPeptides.isEmpty()) {
+                        Text(
+                            t("Δεν έχεις προσθέσει προσαρμοσμένα πεπτίδια."),
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            style = MaterialTheme.typography.bodySmall
+                        )
+                    }
+
                     customPeptides.forEach { name ->
                         Row(
                             Modifier.fillMaxWidth(),
@@ -563,8 +575,7 @@ fun SettingsScreen(
                             )
                             IconButton(
                                 onClick = {
-                                    store.deleteCustomPeptide(name)
-                                    customPeptides = store.customPeptides()
+                                    pendingDeleteCustom = name
                                 }
                             ) {
                                 Icon(Icons.Outlined.Delete, contentDescription = t("Διαγραφή ") + name)
@@ -575,6 +586,7 @@ fun SettingsScreen(
                     OutlinedButton(
                         onClick = {
                             customName = ""
+                            customError = ""
                             showCustomDialog = true
                         },
                         modifier = Modifier.fillMaxWidth()
@@ -583,6 +595,10 @@ fun SettingsScreen(
                     }
                 }
             }
+        }
+
+        item {
+            SettingsSectionTitle(t("Δεδομένα"))
         }
 
         item {
@@ -656,8 +672,12 @@ fun SettingsScreen(
         }
 
         item {
+            SettingsSectionTitle(t("Σχετικά"))
+        }
+
+        item {
             GlassCard(modifier = Modifier.fillMaxWidth()) {
-                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
                     Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                         Icon(
                             Icons.Rounded.Info,
@@ -665,21 +685,100 @@ fun SettingsScreen(
                             tint = ElectricCyan,
                             modifier = Modifier.size(22.dp)
                         )
+                        Column(Modifier.weight(1f)) {
+                            Text(
+                                t("Σχετικά με την εφαρμογή"),
+                                fontWeight = FontWeight.ExtraBold,
+                                style = MaterialTheme.typography.titleMedium
+                            )
+                            Text(
+                                "Peptide Tracker v" + BuildConfig.VERSION_NAME,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                style = MaterialTheme.typography.bodySmall
+                            )
+                        }
+                    }
+
+                    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                        Icon(
+                            Icons.Rounded.BusinessCenter,
+                            contentDescription = null,
+                            tint = ElectricBlue,
+                            modifier = Modifier.size(20.dp)
+                        )
+                        Column(Modifier.weight(1f)) {
+                            Text(
+                                t("Δημιουργήθηκε από Kagon Digital Media & Commerce"),
+                                fontWeight = FontWeight.Bold
+                            )
+                            Text(
+                                t("Σχεδιασμός και ανάπτυξη του Peptide Tracker."),
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                style = MaterialTheme.typography.bodySmall
+                            )
+                        }
+                    }
+
+                    OutlinedButton(
+                        onClick = { openExternal("https://kagon.gr") },
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Icon(
+                            Icons.Rounded.OpenInNew,
+                            contentDescription = null,
+                            modifier = Modifier.size(18.dp)
+                        )
+                        Spacer(Modifier.size(6.dp))
+                        Text("kagon.gr")
+                    }
+
+                    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                        Icon(
+                            Icons.Rounded.Storefront,
+                            contentDescription = null,
+                            tint = ElectricViolet,
+                            modifier = Modifier.size(20.dp)
+                        )
+                        Column(Modifier.weight(1f)) {
+                            Text(
+                                "PeptidiaStore.gr",
+                                fontWeight = FontWeight.Bold
+                            )
+                            Text(
+                                t("Για προϊόντα πεπτιδίων και πληροφορίες αγοράς μπορείς να επισκεφθείς το PeptidiaStore.gr. Είναι εξωτερικός σύνδεσμος και το Peptide Tracker δεν μοιράζεται τα δεδομένα καταγραφής σου."),
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                style = MaterialTheme.typography.bodySmall
+                            )
+                        }
+                    }
+
+                    OutlinedButton(
+                        onClick = { openExternal("https://peptidiastore.gr") },
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Icon(
+                            Icons.Rounded.OpenInNew,
+                            contentDescription = null,
+                            modifier = Modifier.size(18.dp)
+                        )
+                        Spacer(Modifier.size(6.dp))
+                        Text("PeptidiaStore.gr")
+                    }
+
+                    if (externalLinkError.isNotBlank()) {
                         Text(
-                            t("Σχετικά & ιδιωτικότητα"),
-                            fontWeight = FontWeight.ExtraBold,
-                            style = MaterialTheme.typography.titleMedium
+                            externalLinkError,
+                            color = MaterialTheme.colorScheme.error,
+                            style = MaterialTheme.typography.bodySmall
                         )
                     }
-                    Text(
-                        "Peptide Tracker v" + BuildConfig.VERSION_NAME,
-                        fontWeight = FontWeight.Bold
-                    )
+
                     Text(
                         t("Οι καταγραφές, το απόθεμα, οι μετρήσεις και οι υπενθυμίσεις αποθηκεύονται στη συσκευή. Το Android cloud backup είναι απενεργοποιημένο. Για ευαίσθητα exports προτίμησε το κρυπτογραφημένο backup."),
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                         style = MaterialTheme.typography.bodySmall
                     )
+
                     OutlinedButton(
                         onClick = onOpenPrivacy,
                         modifier = Modifier.fillMaxWidth()
@@ -691,6 +790,43 @@ fun SettingsScreen(
         }
 
         item { Spacer(Modifier.height(8.dp)) }
+    }
+
+    pendingDeleteCustom?.let { name ->
+        AlertDialog(
+            onDismissRequest = { pendingDeleteCustom = null },
+            containerColor = GlassSurfaceStrong,
+            titleContentColor = TextPrimary,
+            textContentColor = TextPrimary,
+            title = { Text(t("Διαγραφή προσαρμοσμένου πεπτιδίου;")) },
+            text = {
+                Text(
+                    t("Θα αφαιρεθεί μόνο από τις διαθέσιμες επιλογές. Οι υπάρχουσες καταγραφές, το απόθεμα και οι υπενθυμίσεις δεν θα διαγραφούν.")
+                )
+            },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        store.deleteCustomPeptide(name)
+                        customPeptides = store.customPeptides()
+                        pendingDeleteCustom = null
+                    }
+                ) {
+                    Text(
+                        t("Διαγραφή"),
+                        color = MaterialTheme.colorScheme.error
+                    )
+                }
+            },
+            dismissButton = {
+                TextButton(
+                    onClick = { pendingDeleteCustom = null },
+                    colors = premiumTextButtonColors()
+                ) {
+                    Text(t("Άκυρο"))
+                }
+            }
+        )
     }
 
     if (showCustomDialog) {
@@ -709,10 +845,19 @@ fun SettingsScreen(
                     )
                     OutlinedTextField(
                         value = customName,
-                        onValueChange = { customName = it },
+                        onValueChange = {
+                            customName = it
+                            if (customError.isNotBlank()) customError = ""
+                        },
                         modifier = Modifier.fillMaxWidth(),
                         label = { Text(t("Όνομα")) },
                         singleLine = true,
+                        isError = customError.isNotBlank(),
+                        supportingText = {
+                            if (customError.isNotBlank()) {
+                                Text(customError)
+                            }
+                        },
                         colors = premiumTextFieldColors()
                     )
                 }
@@ -722,7 +867,10 @@ fun SettingsScreen(
                     onClick = {
                         if (store.addCustomPeptide(customName)) {
                             customPeptides = store.customPeptides()
+                            customError = ""
                             showCustomDialog = false
+                        } else {
+                            customError = t("Το όνομα είναι άκυρο ή υπάρχει ήδη.")
                         }
                     },
                     enabled = customName.trim().length >= 2,
@@ -741,4 +889,15 @@ fun SettingsScreen(
             }
         )
     }
+}
+
+@Composable
+private fun SettingsSectionTitle(title: String) {
+    Text(
+        title,
+        color = MaterialTheme.colorScheme.primary,
+        style = MaterialTheme.typography.labelLarge,
+        fontWeight = FontWeight.ExtraBold,
+        modifier = Modifier.padding(horizontal = 4.dp, top = 2.dp)
+    )
 }
