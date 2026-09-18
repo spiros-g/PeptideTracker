@@ -1,5 +1,14 @@
 # Changelog
 
+## 4.8.12 — resilient in-app update check
+
+- Added a second update-check path using the public GitHub Releases web redirect when the GitHub API check fails.
+- The fallback derives the latest release tag from GitHub and constructs the signed APK download URL using the release naming convention.
+- Increased update-check network timeouts to reduce false failures on slower mobile connections.
+- Kept APK package, version and signing-certificate validation unchanged before installation.
+- Added tests for fallback release-tag parsing and APK URL generation.
+- Increased app version to 4.8.12 (versionCode 45).
+
 ## 4.8.11 — complete onboarding walkthrough
 
 - Rebuilt onboarding from 3 basic slides into a 6-step feature walkthrough.

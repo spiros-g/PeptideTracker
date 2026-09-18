@@ -26,6 +26,10 @@ sealed interface AppUpdateCheckResult {
 object GitHubUpdateChecker {
     private const val LATEST_RELEASE_API =
         "https://api.github.com/repos/spiros-g/PeptideTracker/releases/latest"
+    private const val LATEST_RELEASE_WEB =
+        "https://github.com/spiros-g/PeptideTracker/releases/latest"
+    private const val RELEASE_DOWNLOAD_BASE =
+        "https://github.com/spiros-g/PeptideTracker/releases/download"
     private const val PLAY_STORE_INSTALLER = "com.android.vending"
 
     suspend fun check(currentVersion: String): AppUpdateInfo? =
@@ -37,76 +41,143 @@ object GitHubUpdateChecker {
 
     suspend fun checkDetailed(currentVersion: String): AppUpdateCheckResult =
         withContext(Dispatchers.IO) {
-            runCatching {
-                val connection =
-                    (URL(LATEST_RELEASE_API).openConnection() as HttpURLConnection).apply {
-                        requestMethod = "GET"
-                        connectTimeout = 8_000
-                        readTimeout = 8_000
-                        setRequestProperty("Accept", "application/vnd.github+json")
-                        setRequestProperty("User-Agent", "PeptideTracker-Android")
-                        setRequestProperty("X-GitHub-Api-Version", "2022-11-28")
-                    }
-
-                try {
-                    if (connection.responseCode !in 200..299) {
-                        return@runCatching AppUpdateCheckResult.Failed
-                    }
-
-                    val raw = connection.inputStream.bufferedReader().use { it.readText() }
-                    val release = JSONObject(raw)
-                    if (
-                        release.optBoolean("draft", false) ||
-                        release.optBoolean("prerelease", false)
-                    ) {
-                        return@runCatching AppUpdateCheckResult.UpToDate
-                    }
-
-                    val tag = release.optString("tag_name").trim()
-                    if (tag.isBlank()) {
-                        return@runCatching AppUpdateCheckResult.Failed
-                    }
-                    if (!isNewerVersion(tag, currentVersion)) {
-                        return@runCatching AppUpdateCheckResult.UpToDate
-                    }
-
-                    val assets = release.optJSONArray("assets")
-                    var apkUrl: String? = null
-                    var apkSha256: String? = null
-                    if (assets != null) {
-                        for (index in 0 until assets.length()) {
-                            val asset = assets.optJSONObject(index) ?: continue
-                            val name = asset.optString("name")
-                            if (name.endsWith(".apk", ignoreCase = true)) {
-                                apkUrl = asset.optString("browser_download_url")
-                                    .takeIf { it.isNotBlank() }
-                                apkSha256 = asset.optString("digest")
-                                    .trim()
-                                    .removePrefix("sha256:")
-                                    .takeIf { it.matches(Regex("[0-9a-fA-F]{64}")) }
-                                    ?.lowercase()
-                                if (apkUrl != null) break
-                            }
-                        }
-                    }
-
-                    AppUpdateCheckResult.Available(
-                        AppUpdateInfo(
-                            version = tag.removePrefix("v").removePrefix("V"),
-                            releaseName = release.optString("name").ifBlank { tag },
-                            releaseNotes = release.optString("body").trim().take(1_500),
-                            releaseUrl = release.optString("html_url"),
-                            apkUrl = apkUrl,
-                            apkSha256 = apkSha256
-                        )
-                    )
-                } finally {
-                    connection.disconnect()
-                }
-            }.getOrElse {
-                AppUpdateCheckResult.Failed
+            val apiResult = checkGitHubApi(currentVersion)
+            if (apiResult != AppUpdateCheckResult.Failed) {
+                apiResult
+            } else {
+                checkGitHubWebFallback(currentVersion)
             }
         }
+
+    private fun checkGitHubApi(currentVersion: String): AppUpdateCheckResult =
+        runCatching {
+            val connection =
+                (URL(LATEST_RELEASE_API).openConnection() as HttpURLConnection).apply {
+                    requestMethod = "GET"
+                    connectTimeout = 12_000
+                    readTimeout = 12_000
+                    setRequestProperty("Accept", "application/vnd.github+json")
+                    setRequestProperty("User-Agent", "PeptideTracker-Android")
+                    setRequestProperty("X-GitHub-Api-Version", "2022-11-28")
+                }
+
+            try {
+                if (connection.responseCode !in 200..299) {
+                    return@runCatching AppUpdateCheckResult.Failed
+                }
+
+                val raw = connection.inputStream.bufferedReader().use { it.readText() }
+                val release = JSONObject(raw)
+                if (
+                    release.optBoolean("draft", false) ||
+                    release.optBoolean("prerelease", false)
+                ) {
+                    return@runCatching AppUpdateCheckResult.UpToDate
+                }
+
+                val tag = release.optString("tag_name").trim()
+                if (tag.isBlank()) {
+                    return@runCatching AppUpdateCheckResult.Failed
+                }
+                if (!isNewerVersion(tag, currentVersion)) {
+                    return@runCatching AppUpdateCheckResult.UpToDate
+                }
+
+                val assets = release.optJSONArray("assets")
+                var apkUrl: String? = null
+                var apkSha256: String? = null
+                if (assets != null) {
+                    for (index in 0 until assets.length()) {
+                        val asset = assets.optJSONObject(index) ?: continue
+                        val name = asset.optString("name")
+                        if (name.endsWith(".apk", ignoreCase = true)) {
+                            apkUrl = asset.optString("browser_download_url")
+                                .takeIf { it.isNotBlank() }
+                            apkSha256 = asset.optString("digest")
+                                .trim()
+                                .removePrefix("sha256:")
+                                .takeIf { it.matches(Regex("[0-9a-fA-F]{64}")) }
+                                ?.lowercase()
+                            if (apkUrl != null) break
+                        }
+                    }
+                }
+
+                AppUpdateCheckResult.Available(
+                    AppUpdateInfo(
+                        version = tag.removePrefix("v").removePrefix("V"),
+                        releaseName = release.optString("name").ifBlank { tag },
+                        releaseNotes = release.optString("body").trim().take(1_500),
+                        releaseUrl = release.optString("html_url"),
+                        apkUrl = apkUrl,
+                        apkSha256 = apkSha256
+                    )
+                )
+            } finally {
+                connection.disconnect()
+            }
+        }.getOrElse {
+            AppUpdateCheckResult.Failed
+        }
+
+    private fun checkGitHubWebFallback(currentVersion: String): AppUpdateCheckResult =
+        runCatching {
+            val connection =
+                (URL(LATEST_RELEASE_WEB).openConnection() as HttpURLConnection).apply {
+                    requestMethod = "GET"
+                    instanceFollowRedirects = true
+                    connectTimeout = 12_000
+                    readTimeout = 12_000
+                    setRequestProperty("User-Agent", "PeptideTracker-Android")
+                }
+
+            try {
+                if (connection.responseCode !in 200..399) {
+                    return@runCatching AppUpdateCheckResult.Failed
+                }
+
+                // Touch the stream so HttpURLConnection resolves redirects consistently.
+                runCatching {
+                    connection.inputStream.bufferedReader().use { reader ->
+                        val buffer = CharArray(64)
+                        reader.read(buffer)
+                    }
+                }
+
+                val releaseUrl = connection.url.toString()
+                val tag = extractReleaseTag(releaseUrl)
+                    ?: return@runCatching AppUpdateCheckResult.Failed
+
+                if (!isNewerVersion(tag, currentVersion)) {
+                    return@runCatching AppUpdateCheckResult.UpToDate
+                }
+
+                AppUpdateCheckResult.Available(
+                    AppUpdateInfo(
+                        version = tag.removePrefix("v").removePrefix("V"),
+                        releaseName = "Peptide Tracker $tag",
+                        releaseNotes = "",
+                        releaseUrl = releaseUrl,
+                        apkUrl = buildFallbackApkUrl(tag),
+                        apkSha256 = null
+                    )
+                )
+            } finally {
+                connection.disconnect()
+            }
+        }.getOrElse {
+            AppUpdateCheckResult.Failed
+        }
+
+    internal fun extractReleaseTag(url: String): String? =
+        Regex("/releases/tag/([^/?#]+)")
+            .find(url)
+            ?.groupValues
+            ?.getOrNull(1)
+            ?.takeIf { it.isNotBlank() }
+
+    internal fun buildFallbackApkUrl(tag: String): String =
+        "$RELEASE_DOWNLOAD_BASE/$tag/PeptideTracker-$tag.apk"
 
     fun shouldUseGitHubUpdates(context: Context): Boolean {
         val installer = runCatching {

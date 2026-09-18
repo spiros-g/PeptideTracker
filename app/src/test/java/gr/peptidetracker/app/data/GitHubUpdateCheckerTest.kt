@@ -1,6 +1,8 @@
 package gr.peptidetracker.app.data
 
+import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
+import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
 
@@ -30,4 +32,27 @@ class GitHubUpdateCheckerTest {
         assertTrue(GitHubUpdateChecker.isNewerVersion("4.7.1", "4.7"))
         assertFalse(GitHubUpdateChecker.isNewerVersion("4.7", "4.7.1"))
     }
+    @Test
+    fun extractsReleaseTagFromGitHubRedirectUrl() {
+        assertEquals(
+            "v4.8.11",
+            GitHubUpdateChecker.extractReleaseTag(
+                "https://github.com/spiros-g/PeptideTracker/releases/tag/v4.8.11"
+            )
+        )
+        assertNull(
+            GitHubUpdateChecker.extractReleaseTag(
+                "https://github.com/spiros-g/PeptideTracker/releases/latest"
+            )
+        )
+    }
+
+    @Test
+    fun buildsDeterministicFallbackApkUrl() {
+        assertEquals(
+            "https://github.com/spiros-g/PeptideTracker/releases/download/v4.8.11/PeptideTracker-v4.8.11.apk",
+            GitHubUpdateChecker.buildFallbackApkUrl("v4.8.11")
+        )
+    }
+
 }
