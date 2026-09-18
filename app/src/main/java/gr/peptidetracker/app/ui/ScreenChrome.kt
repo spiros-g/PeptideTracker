@@ -1,5 +1,7 @@
 package gr.peptidetracker.app.ui
 
+import gr.peptidetracker.app.i18n.t
+
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -43,7 +45,7 @@ fun PremiumTopBar(
             ) {
                 Icon(
                     Icons.AutoMirrored.Rounded.ArrowBack,
-                    contentDescription = "Πίσω",
+                    contentDescription = t("Πίσω"),
                     tint = TextPrimary
                 )
             }
