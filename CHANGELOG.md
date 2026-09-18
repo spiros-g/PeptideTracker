@@ -1,5 +1,16 @@
 # Changelog
 
+## 4.8.8 — public-source protection and product README
+
+- Replaced the technical README with a product-focused overview of what Peptide Tracker is and what it does.
+- Added a proprietary source-available LICENSE and repository-wide NOTICE covering source code, branding and original assets.
+- Added copyright notices to the primary application entry points and new protection code.
+- Enabled R8 code shrinking/obfuscation and Android resource shrinking for release builds.
+- Added release-signature integrity verification so official builds reject installations not signed with the official release certificate.
+- Updated the release workflow to derive the official signing-certificate SHA-256 fingerprint from the protected keystore and inject it into signed release builds.
+- Added unit coverage for signing-identity matching.
+- Increased app version to 4.8.8 (versionCode 41).
+
 ## 4.8.7 — dark-theme text contrast fix
 
 - Fixed inherited text color on root premium backgrounds so standalone screens no longer fall back to black text in dark mode.

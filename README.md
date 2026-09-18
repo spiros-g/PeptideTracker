@@ -1,55 +1,48 @@
 # Peptide Tracker
 
-Native, offline-first Android app built with Kotlin, Jetpack Compose, Material 3, Room and WorkManager.
+**Peptide Tracker** is a personal companion for organizing peptide-related information, calculations and records in one place.
 
-## Highlights
+It is designed for people who want a clear way to keep track of what they have recorded, what they have in inventory, and the values they enter for reconstitution and unit conversion.
 
-- Greek and English UI based on the device language.
-- Searchable peptide library with favorites, review dates and literature links.
-- Reconstitution and mathematical conversion tools for U-100 and U-40 syringes.
-- Usage log, calendar, inventory, body measurements, statistics and reminders.
-- Local-first storage with Room and non-destructive migrations.
-- JSON, encrypted AES-GCM backup/restore and CSV export.
-- Optional biometric/device-credential lock.
-- Signed GitHub releases with in-app update checks and installer handoff.
-- No dose recommendations, treatment protocols or personalized medical decisions.
+## What Peptide Tracker does
 
-## Build
+- **Reconstitution & unit conversion calculator** based on values entered by the user.
+- **Peptide library** with searchable entries, favorites and reference links.
+- **Usage log & calendar** for date, time, amount, unit, notes and site.
+- **Inventory tracking** for vials, remaining amount, lot/batch, source, purchase date and expiry date.
+- **Active-vial tracking** so remaining quantity can be followed over time.
+- **Body measurements & statistics** for reviewing personal records and trends.
+- **Reminders** for user-defined schedules.
+- **Saved calculations** for quickly returning to previous entries.
+- **Backup, restore and export** tools for the user's own records.
+- **Optional app lock** using supported device security.
+- **Greek and English interface**.
+- **In-app update checking** for official Peptide Tracker releases.
 
-Requirements:
+## Tracking, not prescribing
 
-- JDK 17
-- Android SDK 36
-- Gradle 8.11.1
+Peptide Tracker is a record-keeping and mathematical conversion tool.
 
-Validation:
+It does **not** choose doses, recommend treatment protocols, prescribe substances, or make medical decisions for the user. Values shown by the calculator are derived from values entered by the user.
 
-    gradle testDebugUnitTest
-    gradle lintDebug
-    gradle assembleDebug
+## Privacy
 
-Release validation:
+Peptide Tracker is designed around local personal records. The app does not require an account to use its core tracking features.
 
-    gradle testDebugUnitTest
-    gradle lintRelease
-    gradle assembleRelease bundleRelease
+Exports and backups are initiated by the user.
 
-The signed release workflow uses GitHub Actions secrets and publishes APK/AAB assets to GitHub Releases.
+## Official project
 
-## Signing
+Peptide Tracker is created and maintained by **Kagon Digital Media & Commerce**.
 
-Copy `keystore.properties.example` to `keystore.properties` only for local signed builds and point it to the private release keystore.
+Official builds are signed and published by the project owner. The app verifies official release identity as an additional protection against repackaged builds.
 
-Never commit the real keystore or passwords.
+## License
 
-## Data and privacy
+This repository is publicly visible for transparency and review, but **Peptide Tracker is proprietary software and is not an open-source project**.
 
-Tracker data stays on-device. Android cloud backup is disabled. Plain JSON/CSV exports are user initiated, and encrypted backups are available for sensitive exports.
+Public visibility does not grant permission to redistribute, rebrand, sell, publish modified builds, reuse the application's branding or visual assets, or create derivative products from the source code.
 
-## Advertising
+See [LICENSE](LICENSE) and [NOTICE.md](NOTICE.md) for the applicable terms.
 
-The app currently contains no AdMob/UMP SDK and no advertising IDs.
-
-## Scientific content
-
-Literature links are provided as research references. Scientific and regulatory summaries include review dates and should be re-checked periodically.
+Copyright © 2026 Kagon Digital Media & Commerce. All rights reserved.

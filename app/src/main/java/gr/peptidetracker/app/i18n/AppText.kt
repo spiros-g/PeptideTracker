@@ -1,3 +1,6 @@
+// Copyright © 2026 Kagon Digital Media & Commerce.
+// All rights reserved. See LICENSE for permitted use.
+
 package gr.peptidetracker.app.i18n
 
 import java.util.Locale
@@ -75,6 +78,8 @@ private val uiEnglishTranslations = mapOf(
     "Πίσω" to "Back",
     "Η εφαρμογή είναι κλειδωμένη." to "The app is locked.",
     "Ξεκλείδωμα" to "Unlock",
+    "Μη επίσημη έκδοση" to "Unofficial build",
+    "Η υπογραφή αυτής της εγκατάστασης δεν ταιριάζει με την επίσημη έκδοση του Peptide Tracker. Για λόγους ασφάλειας η εφαρμογή δεν θα συνεχίσει." to "This installation is not signed like an official Peptide Tracker release. For security, the app will not continue.",
     "Υπολογιστής Ανασύστασης & Δοσομετρίας" to "Reconstitution & Measurement Calculator",
     "Βάλε τι έχει το φιαλίδιο, πόσο διαλύτη πρόσθεσες και την ποσότητα που θέλεις να μετατρέψεις." to "Enter the vial amount, how much diluent you added, and the amount you want to convert.",
     "ΑΝΑΣΥΣΤΑΣΗ & ΔΟΣΟΜΕΤΡΙΑ" to "RECONSTITUTION & MEASUREMENT",

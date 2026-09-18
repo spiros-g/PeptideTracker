@@ -82,6 +82,21 @@ jobs:
             exit 1
           fi
 
+          OFFICIAL_SIGNING_CERT_SHA256="$(
+            keytool -exportcert \
+              -keystore release.keystore \
+              -storepass "$STORE_PASSWORD" \
+              -alias "$KEY_ALIAS" |
+              sha256sum |
+              awk '{print $1}'
+          )"
+          if [[ ! "$OFFICIAL_SIGNING_CERT_SHA256" =~ ^[0-9a-f]{64}$ ]]; then
+            echo "Official signing certificate SHA-256 could not be derived."
+            exit 1
+          fi
+          echo "OFFICIAL_SIGNING_CERT_SHA256=$OFFICIAL_SIGNING_CERT_SHA256" >> "$GITHUB_ENV"
+          echo "Official signing certificate fingerprint: OK"
+
           printf 'signing probe' > signing-probe.txt
           jar cf signing-probe-unsigned.jar signing-probe.txt
           echo "Signing probe JAR: OK"
@@ -116,11 +131,11 @@ jobs:
 
       - name: Release lint
         if: env.SHOULD_RELEASE == 'true'
-        run: gradle lintRelease --stacktrace --no-build-cache
+        run: gradle lintRelease -PofficialSigningCertSha256="$OFFICIAL_SIGNING_CERT_SHA256" --stacktrace --no-build-cache
 
       - name: Build signed release APK and AAB
         if: env.SHOULD_RELEASE == 'true'
-        run: gradle assembleRelease bundleRelease --stacktrace --no-build-cache
+        run: gradle assembleRelease bundleRelease -PofficialSigningCertSha256="$OFFICIAL_SIGNING_CERT_SHA256" --stacktrace --no-build-cache
 
       - name: Prepare release assets
         if: env.SHOULD_RELEASE == 'true'

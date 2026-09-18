@@ -21,6 +21,13 @@ val keystoreProperties = Properties().apply {
 }
 val hasReleaseKeystore = keystorePropertiesFile.isFile
 
+val officialSigningCertSha256 =
+    providers.gradleProperty("officialSigningCertSha256")
+        .orNull
+        ?.trim()
+        ?.lowercase()
+        .orEmpty()
+
 val generateArtwork by tasks.registering {
     val artworkSourceDir = file("src/main/assets/artwork")
     inputs.dir(artworkSourceDir)
@@ -84,9 +91,14 @@ android {
         applicationId = "gr.peptidetracker.app"
         minSdk = 26
         targetSdk = 36
-        versionCode = 40
-        versionName = "4.8.7"
+        versionCode = 41
+        versionName = "4.8.8"
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+        buildConfigField(
+            "String",
+            "OFFICIAL_SIGNING_CERT_SHA256",
+            "\"$officialSigningCertSha256\""
+        )
     }
 
     sourceSets["main"].res.srcDir(generatedArtworkResDir)
@@ -107,7 +119,8 @@ android {
             if (hasReleaseKeystore) {
                 signingConfig = signingConfigs.getByName("release")
             }
-            isMinifyEnabled = false
+            isMinifyEnabled = true
+            isShrinkResources = true
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"

@@ -1,0 +1,80 @@
+PEPTIDE TRACKER SOURCE-AVAILABLE PROPRIETARY LICENSE
+Version 1.0 — 2026
+
+Copyright © 2026 Kagon Digital Media & Commerce.
+All rights reserved.
+
+1. OWNERSHIP
+
+Peptide Tracker, including its source code, application logic, user interface,
+documentation, artwork, icons, graphics, branding, names, and other original
+materials in this repository (collectively, the "Software and Assets"), is
+proprietary material owned by Kagon Digital Media & Commerce, except for
+third-party material that is expressly identified as being under another
+license.
+
+2. PUBLIC REPOSITORY STATUS
+
+This repository is publicly visible for transparency, review, issue discussion,
+and evaluation. Public visibility does not make the Software and Assets
+open-source software and does not grant a general license to reuse them.
+
+Nothing in this license limits the rights that GitHub must provide to users
+under GitHub's Terms of Service solely for operation of GitHub's public
+repository features. Those platform rights do not grant any additional right
+to commercially exploit, redistribute, rebrand, publish, sublicense, sell, or
+create derivative products from the Software and Assets.
+
+3. LIMITED PERMISSION
+
+You may view the source code and make a private local copy solely for personal
+evaluation, security review, or interoperability analysis where permitted by
+applicable law.
+
+No other permission is granted unless Kagon Digital Media & Commerce gives
+prior written authorization.
+
+4. RESTRICTIONS
+
+Without prior written authorization, you may not:
+
+a. publish, redistribute, mirror, sublicense, rent, sell, or otherwise provide
+   the Software or a substantial portion of it to third parties;
+b. distribute compiled APK, AAB, or other application builds derived from this
+   repository;
+c. modify, adapt, translate, repackage, or create a derivative application for
+   distribution;
+d. remove or alter copyright, ownership, attribution, or licensing notices;
+e. use the name "Peptide Tracker", Kagon branding, logos, icons, artwork,
+   screenshots, interface assets, or confusingly similar branding for another
+   product or service;
+f. present the Software or Assets, in whole or substantial part, as your own
+   work;
+g. use the Software or Assets as the basis of a commercial competing product
+   without written authorization.
+
+5. THIRD-PARTY COMPONENTS
+
+Third-party libraries, frameworks, or other third-party materials retain their
+respective licenses and copyright notices. This license applies only to material
+owned by Kagon Digital Media & Commerce.
+
+6. TRADEMARKS
+
+No trademark, trade-name, logo, or branding license is granted by this license.
+
+7. NO WARRANTY
+
+THE SOFTWARE AND ASSETS ARE PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
+EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE, AND NON-INFRINGEMENT. TO THE MAXIMUM EXTENT
+PERMITTED BY LAW, THE COPYRIGHT OWNER SHALL NOT BE LIABLE FOR ANY CLAIM,
+DAMAGES, OR OTHER LIABILITY ARISING FROM USE OF THE SOFTWARE OR ASSETS.
+
+8. RESERVATION OF RIGHTS
+
+All rights not expressly granted above are reserved by Kagon Digital Media &
+Commerce.
+
+For licensing or written permission, contact the project owner through the
+official Kagon Digital Media & Commerce channels.

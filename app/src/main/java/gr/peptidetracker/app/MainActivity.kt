@@ -1,3 +1,6 @@
+// Copyright © 2026 Kagon Digital Media & Commerce.
+// All rights reserved. See LICENSE for permitted use.
+
 package gr.peptidetracker.app
 
 import gr.peptidetracker.app.i18n.t
@@ -14,12 +17,14 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.core.content.ContextCompat
 import androidx.fragment.app.FragmentActivity
+import gr.peptidetracker.app.data.AppIntegrity
 import gr.peptidetracker.app.data.LocalStore
 import gr.peptidetracker.app.data.UpdateNotificationWorker
 import gr.peptidetracker.app.ui.AppTheme
 import gr.peptidetracker.app.ui.PeptideTrackerApp
 import gr.peptidetracker.app.ui.PremiumBackground
 import gr.peptidetracker.app.ui.screens.AppLockScreen
+import gr.peptidetracker.app.ui.screens.UnofficialBuildScreen
 
 class MainActivity : FragmentActivity() {
     private lateinit var store: LocalStore
@@ -33,6 +38,18 @@ class MainActivity : FragmentActivity() {
         enableEdgeToEdge()
 
         store = LocalStore(applicationContext)
+
+        if (!AppIntegrity.isTrustedInstallation(applicationContext)) {
+            setContent {
+                AppTheme(themeMode = store.appTheme()) {
+                    PremiumBackground {
+                        UnofficialBuildScreen()
+                    }
+                }
+            }
+            return
+        }
+
         unlocked = !store.appLockEnabled()
         openUpdatesRequested = intent?.getBooleanExtra(EXTRA_OPEN_UPDATES, false) == true
         UpdateNotificationWorker.schedule(applicationContext)
