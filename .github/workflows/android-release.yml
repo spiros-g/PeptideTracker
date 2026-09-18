@@ -44,31 +44,28 @@ jobs:
           echo "VERSION_NAME=$VERSION_NAME" >> "$GITHUB_ENV"
           echo "RELEASE_TAG=$RELEASE_TAG" >> "$GITHUB_ENV"
 
-      - name: Validate signing secrets
+      - name: Validate signing material
         env:
           KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
           STORE_PASSWORD: ${{ secrets.ANDROID_STORE_PASSWORD }}
           KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
-          KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
         run: |
           test -n "$KEYSTORE_BASE64"
           test -n "$STORE_PASSWORD"
           test -n "$KEY_ALIAS"
-          test -n "$KEY_PASSWORD"
 
       - name: Prepare release keystore
         env:
           KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
           STORE_PASSWORD: ${{ secrets.ANDROID_STORE_PASSWORD }}
           KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
-          KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
         run: |
           printf '%s' "$KEYSTORE_BASE64" | base64 --decode > release.keystore
           cat > keystore.properties <<EOF
           storeFile=${{ github.workspace }}/release.keystore
           storePassword=$STORE_PASSWORD
           keyAlias=$KEY_ALIAS
-          keyPassword=$KEY_PASSWORD
+          keyPassword=$STORE_PASSWORD
           EOF
 
       - name: Unit tests
@@ -91,7 +88,6 @@ jobs:
           GH_TOKEN: ${{ github.token }}
         run: |
           if gh release view "$RELEASE_TAG" >/dev/null 2>&1; then
-            echo "Release $RELEASE_TAG already exists; replacing uploaded assets."
             gh release upload "$RELEASE_TAG"               "PeptideTracker-${RELEASE_TAG}.apk"               "PeptideTracker-${RELEASE_TAG}.aab"               SHA256SUMS.txt               --clobber
           else
             gh release create "$RELEASE_TAG"               "PeptideTracker-${RELEASE_TAG}.apk"               "PeptideTracker-${RELEASE_TAG}.aab"               SHA256SUMS.txt               --target "$GITHUB_SHA"               --title "Peptide Tracker $RELEASE_TAG"               --generate-notes
