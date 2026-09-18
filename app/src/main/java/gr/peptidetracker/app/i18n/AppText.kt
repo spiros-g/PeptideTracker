@@ -434,5 +434,6 @@ private val uiEnglishTranslations = mapOf(
     "Το υπόλοιπο δεν μπορεί να είναι μεγαλύτερο από την περιεκτικότητα του φιαλιδίου." to "Remaining amount cannot exceed the vial amount.",
     "Η περίμετρος μέσης πρέπει να είναι θετικός αριθμός." to "Waist circumference must be a positive number.",
     "Χρειάζεται τουλάχιστον ένα φιαλίδιο." to "At least one vial is required.",
-    "Περισσότερες ενέργειες" to "More actions"
+    "Περισσότερες ενέργειες" to "More actions",
+    "Το Peptide Tracker δεν αποστέλλει τις καταγραφές σου σε δικό του server. Εξωτερικοί σύνδεσμοι ανοίγουν εκτός εφαρμογής και δεν περιλαμβάνουν δεδομένα του tracker." to "Peptide Tracker does not send your records to its own server. External links open outside the app and do not include tracker data."
 )
