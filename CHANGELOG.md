@@ -1,5 +1,15 @@
 # Changelog
 
+## 4.8.11 — complete onboarding walkthrough
+
+- Rebuilt onboarding from 3 basic slides into a 6-step feature walkthrough.
+- Added clear explanations for the calculator, saved calculations, peptide library, favorites and literature links.
+- Added coverage for usage history/calendar, inventory-linked deductions, active vials, expiry metadata and calculator handoff.
+- Added measurements, statistics, reminders, backups, encrypted backups, restore/export, app lock, notification privacy, language/theme, custom peptides and official updates.
+- Replaced the repeated large vial artwork with a compact icon-led layout and concise feature bullets so more useful information fits on each screen.
+- Added step numbering and expanded Greek/English onboarding copy.
+- Increased app version to 4.8.11 (versionCode 44).
+
 ## 4.8.10 — compact home calculator card
 
 - Reduced the oversized calculator hero card on the Home screen from a 274 dp minimum height to a compact 198 dp layout.
