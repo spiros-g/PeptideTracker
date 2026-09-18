@@ -1787,13 +1787,13 @@ private fun InventoryCard(
                     }
                     if (row.isReconstituted) {
                         Text(
-                            t("Ανασύσταση: ") + formatCompact(row.diluentMl ?: 0.0) + " mL · U-" + row.syringeUnitsPerMl,
+                            t("Ανασύσταση: ") + formatCompact(row.diluentMl ?: 0.0) + " mL",
                             color = MaterialTheme.colorScheme.onSurfaceVariant,
                             style = MaterialTheme.typography.bodySmall
                         )
-                        row.mcgPerSyringeUnit?.let { mcgPerUnit ->
+                        row.concentrationMgPerMl?.let { concentrationMgPerMl ->
                             Text(
-                                formatCompact(mcgPerUnit) + t(" mcg ανά μονάδα U-") + row.syringeUnitsPerMl,
+                                formatCompact(concentrationMgPerMl * 10.0) + t(" mcg/μονάδα"),
                                 color = ElectricViolet,
                                 style = MaterialTheme.typography.bodySmall,
                                 fontWeight = FontWeight.Bold
@@ -2248,9 +2248,7 @@ private fun InventoryEditorDialog(
     var diluent by remember(current) {
         mutableStateOf(current?.diluentMl?.let(::formatCompact).orEmpty())
     }
-    var syringeUnitsPerMl by remember(current) {
-        mutableIntStateOf(current?.syringeUnitsPerMl ?: 100)
-    }
+    val syringeUnitsPerMl = 100
     var remaining by remember(current) {
         mutableStateOf(current?.remainingMg?.let(::formatCompact) ?: current?.vialMg?.let(::formatCompact).orEmpty())
     }
@@ -2401,23 +2399,9 @@ private fun InventoryEditorDialog(
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
                     colors = premiumTextFieldColors()
                 )
-                Row(
-                    Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(8.dp)
-                ) {
-                    listOf(100, 40).forEach { unitsPerMl ->
-                        FilterChip(
-                            selected = syringeUnitsPerMl == unitsPerMl,
-                            onClick = { syringeUnitsPerMl = unitsPerMl },
-                            label = { Text("U-" + unitsPerMl) },
-                            modifier = Modifier.weight(1f),
-                            colors = premiumFilterChipColors()
-                        )
-                    }
-                }
                 Text(
                     if (diluentValue != null && diluentValue > 0 && vialValue != null && vialValue > 0) {
-                        val mcgPerUnit = (vialValue / diluentValue) * 1000.0 / syringeUnitsPerMl
+                        val mcgPerUnit = (vialValue / diluentValue) * 10.0
                         t("Συγκέντρωση: ") + formatCompact(vialValue / diluentValue) +
                             " mg/mL · " + formatCompact(mcgPerUnit) + t(" mcg/μονάδα")
                     } else {

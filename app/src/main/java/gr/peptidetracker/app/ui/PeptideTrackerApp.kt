@@ -6,7 +6,6 @@ import android.net.Uri
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -348,28 +347,6 @@ private fun PremiumBottomBar(
             .fillMaxWidth()
             .navigationBarsPadding()
             .padding(horizontal = 14.dp, vertical = 8.dp)
-            .clip(RoundedCornerShape(26.dp))
-            .background(
-                Brush.horizontalGradient(
-                    listOf(
-                        MaterialTheme.colorScheme.surface.copy(alpha = 0.98f),
-                        MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.94f),
-                        MaterialTheme.colorScheme.surface.copy(alpha = 0.98f)
-                    )
-                )
-            )
-            .border(
-                1.dp,
-                Brush.horizontalGradient(
-                    listOf(
-                        MaterialTheme.colorScheme.onSurface.copy(alpha = 0.14f),
-                        MaterialTheme.colorScheme.primary.copy(alpha = 0.16f),
-                        MaterialTheme.colorScheme.onSurface.copy(alpha = 0.06f)
-                    )
-                ),
-                RoundedCornerShape(26.dp)
-            )
-            .padding(horizontal = 6.dp, vertical = 6.dp)
     ) {
         Row(
             Modifier.fillMaxWidth(),

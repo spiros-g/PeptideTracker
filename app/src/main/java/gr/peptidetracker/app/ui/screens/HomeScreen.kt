@@ -364,9 +364,10 @@ fun HomeScreen(
                             )
                             if (activeVial.isReconstituted) {
                                 Text(
-                                    (activeVial.diluentMl?.toString() ?: "") + " mL · U-" +
-                                        activeVial.syringeUnitsPerMl +
-                                        (activeVial.mcgPerSyringeUnit?.let { " · " + it.toString() + " mcg/U" } ?: ""),
+                                    (activeVial.diluentMl?.toString() ?: "") + " mL" +
+                                        (activeVial.concentrationMgPerMl?.let {
+                                            " · " + (it * 10.0).toString() + t(" mcg/μονάδα")
+                                        } ?: ""),
                                     color = ElectricViolet,
                                     style = MaterialTheme.typography.bodySmall,
                                     fontWeight = FontWeight.Bold
