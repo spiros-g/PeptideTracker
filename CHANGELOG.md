@@ -1,5 +1,13 @@
 # Changelog
 
+## 4.8.9 — remove default syringe preference
+
+- Removed the Default syringe setting and its U-100 / U-40 controls from Settings.
+- Removed the persisted default-syringe preference from app state and backup/restore data.
+- New calculator sessions now start from the standard U-100 / 30 U capacity baseline without a hidden user preference.
+- Existing saved calculations and presets keep their own stored syringe calibration for backward compatibility.
+- Increased app version to 4.8.9 (versionCode 42).
+
 ## 4.8.8 — public-source protection and product README
 
 - Replaced the technical README with a product-focused overview of what Peptide Tracker is and what it does.

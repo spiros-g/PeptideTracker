@@ -240,7 +240,6 @@ fun PeptideTrackerApp(
                                 store = store,
                                 imageIndex = imageIndex,
                                 preset = uiState.calculatorPreset,
-                                defaultSyringeUnitsPerMl = store.defaultSyringeUnitsPerMl(),
                                 onPresetConsumed = uiState::consumeCalculatorPreset,
                                 onOpenHistory = {
                                     uiState.updateTrackerSection(0)

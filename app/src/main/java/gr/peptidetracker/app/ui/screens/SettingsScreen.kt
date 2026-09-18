@@ -34,7 +34,6 @@ import androidx.compose.material.icons.rounded.Palette
 import androidx.compose.material.icons.rounded.RestartAlt
 import androidx.compose.material.icons.rounded.Science
 import androidx.compose.material.icons.rounded.Storefront
-import androidx.compose.material.icons.rounded.Straighten
 import androidx.compose.material.icons.rounded.SystemUpdateAlt
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
@@ -50,7 +49,6 @@ import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
@@ -96,7 +94,6 @@ fun SettingsScreen(
             BiometricManager.BIOMETRIC_SUCCESS
     }
 
-    var defaultSyringe by remember { mutableIntStateOf(store.defaultSyringeUnitsPerMl()) }
     var appLock by remember { mutableStateOf(store.appLockEnabled()) }
     var notificationDetails by remember { mutableStateOf(store.notificationDetailsVisible()) }
     var appLanguage by remember { mutableStateOf(store.appLanguage()) }
@@ -493,51 +490,6 @@ fun SettingsScreen(
 
         item {
             SettingsSectionTitle(t("Προτιμήσεις καταγραφής"))
-        }
-
-        item {
-            GlassCard(modifier = Modifier.fillMaxWidth()) {
-                Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                        Icon(
-                            Icons.Rounded.Straighten,
-                            contentDescription = null,
-                            tint = ElectricBlue,
-                            modifier = Modifier.size(22.dp)
-                        )
-                        Column {
-                            Text(
-                                t("Προεπιλεγμένη σύριγγα"),
-                                fontWeight = FontWeight.ExtraBold,
-                                style = MaterialTheme.typography.titleMedium
-                            )
-                            Text(
-                                t("Χρησιμοποιείται ως αρχική επιλογή στον υπολογιστή."),
-                                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                                style = MaterialTheme.typography.bodySmall
-                            )
-                        }
-                    }
-
-                    Row(
-                        Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.spacedBy(8.dp)
-                    ) {
-                        listOf(100, 40).forEach { unitsPerMl ->
-                            FilterChip(
-                                selected = defaultSyringe == unitsPerMl,
-                                onClick = {
-                                    defaultSyringe = unitsPerMl
-                                    store.setDefaultSyringeUnitsPerMl(unitsPerMl)
-                                },
-                                label = { Text("U-" + unitsPerMl) },
-                                modifier = Modifier.weight(1f),
-                                colors = premiumFilterChipColors()
-                            )
-                        }
-                    }
-                }
-            }
         }
 
         item {

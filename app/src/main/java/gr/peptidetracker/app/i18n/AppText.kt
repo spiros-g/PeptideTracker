@@ -253,8 +253,6 @@ private val uiEnglishTranslations = mapOf(
     "Ιδιωτικότητα ειδοποιήσεων" to "Notification privacy",
     "Οι ειδοποιήσεις μπορούν να εμφανίζουν όνομα πεπτιδίου και σημείωση." to "Notifications may show the peptide name and note.",
     "Στην οθόνη κλειδώματος εμφανίζεται μόνο γενική υπενθύμιση." to "Only a generic reminder is shown on the lock screen.",
-    "Προεπιλεγμένη σύριγγα" to "Default syringe",
-    "Χρησιμοποιείται ως αρχική επιλογή στον υπολογιστή." to "Used as the initial calculator selection.",
     "Προσαρμοσμένα πεπτίδια" to "Custom peptides",
     "Πρόσθεσε όνομα για ημερολόγιο, απόθεμα και υπενθυμίσεις. Δεν δημιουργείται επιστημονικό προφίλ ή οδηγία." to "Add a name for tracking, inventory and reminders. No scientific profile or guidance is generated.",
     "Διαγραφή " to "Delete ",

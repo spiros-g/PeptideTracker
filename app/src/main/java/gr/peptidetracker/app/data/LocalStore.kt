@@ -125,15 +125,6 @@ class LocalStore(context: Context) {
     private fun formatNumber(value: Double): String =
         BigDecimal.valueOf(value).stripTrailingZeros().toPlainString()
 
-    fun defaultSyringeUnitsPerMl(): Int =
-        prefs.getInt("default_syringe_units_per_ml", 100)
-            .takeIf { it == 40 || it == 100 } ?: 100
-
-    fun setDefaultSyringeUnitsPerMl(value: Int) {
-        require(value == 40 || value == 100)
-        prefs.edit().putInt("default_syringe_units_per_ml", value).apply()
-    }
-
     fun appLanguage(): String =
         prefs.getString(KEY_APP_LANGUAGE, LANGUAGE_SYSTEM)
             ?.takeIf { it == LANGUAGE_SYSTEM || it == "el" || it == "en" }
@@ -788,7 +779,6 @@ class LocalStore(context: Context) {
         val root = JSONObject()
             .put("schema", 9)
             .put("generatedAt", System.currentTimeMillis())
-            .put("defaultSyringeUnitsPerMl", defaultSyringeUnitsPerMl())
             .put("onboardingComplete", onboardingComplete())
             .put("favorites", JSONArray(favorites().toList()))
             .put("entries", encodeEntries(entries()))
@@ -860,11 +850,6 @@ class LocalStore(context: Context) {
         }
 
         prefs.edit()
-            .putInt(
-                "default_syringe_units_per_ml",
-                root.optInt("defaultSyringeUnitsPerMl", defaultSyringeUnitsPerMl())
-                    .takeIf { it == 40 || it == 100 } ?: 100
-            )
             .putBoolean("onboarding_complete", root.optBoolean("onboardingComplete", true))
             .commit()
 
