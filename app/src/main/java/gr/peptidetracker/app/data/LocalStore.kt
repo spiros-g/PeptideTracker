@@ -152,6 +152,13 @@ class LocalStore(context: Context) {
         prefs.edit().putLong(KEY_LAST_UPDATE_CHECK_AT, now).apply()
     }
 
+    fun lastNotifiedUpdateVersion(): String? =
+        prefs.getString(KEY_LAST_NOTIFIED_UPDATE_VERSION, null)
+
+    fun markUpdateNotified(version: String) {
+        prefs.edit().putString(KEY_LAST_NOTIFIED_UPDATE_VERSION, version).apply()
+    }
+
     fun favorites(): Set<String> = io { dao.favoriteIds().toSet() }
 
     fun toggleFavorite(id: String) {
@@ -1254,6 +1261,7 @@ class LocalStore(context: Context) {
         const val KEY_PRE_RESTORE_BACKUP = "pre_restore_backup_json"
         const val KEY_ROOM_MIGRATED = "room_migrated_v1"
         const val KEY_LAST_UPDATE_CHECK_AT = "last_update_check_at"
+        const val KEY_LAST_NOTIFIED_UPDATE_VERSION = "last_notified_update_version"
         const val UPDATE_CHECK_INTERVAL_MS = 24L * 60L * 60L * 1000L
     }
 }
