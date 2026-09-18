@@ -1,6 +1,8 @@
 name: Android Build
 
 on:
+  push:
+    branches: [feature/4.8.0-i18n-cleanup]
   pull_request:
     branches: [main]
   workflow_dispatch:
