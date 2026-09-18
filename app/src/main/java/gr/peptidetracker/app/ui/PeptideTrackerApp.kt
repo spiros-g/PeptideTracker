@@ -334,6 +334,7 @@ fun PeptideTrackerApp(
                             }
                         }
                     }
+                    }
 
                     if (currentRoute in mainRoutes) {
                         PremiumBottomBar(
