@@ -752,6 +752,17 @@ private fun PeptidePickerDialog(
         initialFirstVisibleItemIndex = selectedIndex
     )
 
+    LaunchedEffect(query, filteredPeptides.size) {
+        if (filteredPeptides.isNotEmpty()) {
+            val target = if (query.isBlank()) {
+                selectedIndex.coerceAtMost(filteredPeptides.lastIndex)
+            } else {
+                0
+            }
+            listState.scrollToItem(target)
+        }
+    }
+
     Dialog(
         onDismissRequest = onDismiss,
         properties = DialogProperties(usePlatformDefaultWidth = false)
