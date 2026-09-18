@@ -61,7 +61,14 @@ fun SettingsScreen(
     onBack: () -> Unit,
     onReplayOnboarding: () -> Unit,
     onOpenDataTools: () -> Unit,
-    onOpenPrivacy: () -> Unit
+    onOpenPrivacy: () -> Unit,
+    githubUpdatesEnabled: Boolean,
+    availableUpdateVersion: String?,
+    updateStatus: String?,
+    updateBusy: Boolean,
+    updateInstalling: Boolean,
+    onCheckForUpdates: () -> Unit,
+    onInstallUpdate: () -> Unit
 ) {
     val context = LocalContext.current
     val authenticators =
@@ -335,6 +342,87 @@ fun SettingsScreen(
                         modifier = Modifier.fillMaxWidth()
                     ) {
                         Text("Εμφάνιση εισαγωγής ξανά")
+                    }
+                }
+            }
+        }
+
+        item {
+            GlassCard(modifier = Modifier.fillMaxWidth()) {
+                Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                        Icon(
+                            Icons.Rounded.Info,
+                            contentDescription = null,
+                            tint = ElectricBlue,
+                            modifier = Modifier.size(22.dp)
+                        )
+                        Column(Modifier.weight(1f)) {
+                            Text(
+                                "Ενημερώσεις εφαρμογής",
+                                fontWeight = FontWeight.ExtraBold,
+                                style = MaterialTheme.typography.titleMedium
+                            )
+                            Text(
+                                if (githubUpdatesEnabled) {
+                                    "Εγκατεστημένη έκδοση v" + BuildConfig.VERSION_NAME +
+                                        ". Οι νέες εκδόσεις ελέγχονται αυτόματα από το GitHub."
+                                } else {
+                                    "Η εφαρμογή εγκαταστάθηκε από το Google Play. Οι ενημερώσεις διαχειρίζονται από το Play Store."
+                                },
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                style = MaterialTheme.typography.bodySmall
+                            )
+                        }
+                    }
+
+                    if (availableUpdateVersion != null) {
+                        Text(
+                            "Διαθέσιμη έκδοση v" + availableUpdateVersion,
+                            color = ElectricCyan,
+                            fontWeight = FontWeight.Bold
+                        )
+                    }
+
+                    if (!updateStatus.isNullOrBlank()) {
+                        Text(
+                            updateStatus,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            style = MaterialTheme.typography.bodySmall
+                        )
+                    }
+
+                    if (githubUpdatesEnabled) {
+                        if (availableUpdateVersion != null) {
+                            Button(
+                                onClick = onInstallUpdate,
+                                modifier = Modifier.fillMaxWidth(),
+                                enabled = !updateBusy,
+                                colors = premiumButtonColors()
+                            ) {
+                                Text(
+                                    if (updateInstalling) {
+                                        "Προετοιμασία ενημέρωσης…"
+                                    } else {
+                                        "Ενημέρωση σε v" + availableUpdateVersion
+                                    }
+                                )
+                            }
+                        }
+
+                        OutlinedButton(
+                            onClick = onCheckForUpdates,
+                            modifier = Modifier.fillMaxWidth(),
+                            enabled = !updateBusy
+                        ) {
+                            Text(
+                                if (updateBusy && !updateInstalling) {
+                                    "Έλεγχος…"
+                                } else {
+                                    "Έλεγχος για ενημέρωση"
+                                }
+                            )
+                        }
                     }
                 }
             }
