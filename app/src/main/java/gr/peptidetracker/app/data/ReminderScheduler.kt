@@ -187,8 +187,10 @@ class ReminderActionReceiver : BroadcastReceiver() {
 
 private object ReminderNotifications {
     private const val CHANNEL_ID = "peptide_tracker_reminders"
-    private const val CHANNEL_NAME = t("Υπενθυμίσεις")
-    private const val CHANNEL_DESCRIPTION = t("Προσωπικές υπενθυμίσεις που έχει ορίσει ο χρήστης")
+    private val channelName: String
+        get() = t("Υπενθυμίσεις")
+    private val channelDescription: String
+        get() = t("Προσωπικές υπενθυμίσεις που έχει ορίσει ο χρήστης")
 
     fun show(context: Context, reminderId: Long, peptide: String, note: String) {
         if (
@@ -264,10 +266,10 @@ private object ReminderNotifications {
 
         val channel = NotificationChannel(
             CHANNEL_ID,
-            CHANNEL_NAME,
+            channelName,
             NotificationManager.IMPORTANCE_DEFAULT
         ).apply {
-            description = CHANNEL_DESCRIPTION
+            description = channelDescription
             enableVibration(true)
         }
         manager.createNotificationChannel(channel)
