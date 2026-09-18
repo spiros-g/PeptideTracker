@@ -29,6 +29,9 @@ class UpdateNotificationWorker(
 ) : CoroutineWorker(appContext, params) {
 
     override suspend fun doWork(): Result {
+        // Initialize persisted language before localized notification text is resolved.
+        LocalStore(applicationContext)
+
         if (!GitHubUpdateChecker.shouldUseGitHubUpdates(applicationContext)) {
             return Result.success()
         }
