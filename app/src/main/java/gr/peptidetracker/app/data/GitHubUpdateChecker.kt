@@ -13,7 +13,8 @@ data class AppUpdateInfo(
     val releaseName: String,
     val releaseNotes: String,
     val releaseUrl: String,
-    val apkUrl: String?
+    val apkUrl: String?,
+    val apkSha256: String?
 )
 
 object GitHubUpdateChecker {
@@ -48,12 +49,18 @@ object GitHubUpdateChecker {
 
                 val assets = release.optJSONArray("assets")
                 var apkUrl: String? = null
+                var apkSha256: String? = null
                 if (assets != null) {
                     for (index in 0 until assets.length()) {
                         val asset = assets.optJSONObject(index) ?: continue
                         val name = asset.optString("name")
                         if (name.endsWith(".apk", ignoreCase = true)) {
                             apkUrl = asset.optString("browser_download_url").takeIf { it.isNotBlank() }
+                            apkSha256 = asset.optString("digest")
+                                .trim()
+                                .removePrefix("sha256:")
+                                .takeIf { it.matches(Regex("[0-9a-fA-F]{64}")) }
+                                ?.lowercase()
                             if (apkUrl != null) break
                         }
                     }
@@ -64,7 +71,8 @@ object GitHubUpdateChecker {
                     releaseName = release.optString("name").ifBlank { tag },
                     releaseNotes = release.optString("body").trim().take(1_500),
                     releaseUrl = release.optString("html_url"),
-                    apkUrl = apkUrl
+                    apkUrl = apkUrl,
+                    apkSha256 = apkSha256
                 )
             } finally {
                 connection.disconnect()

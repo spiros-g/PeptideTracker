@@ -1,5 +1,14 @@
 # Changelog
 
+## 4.7.2 — in-app updater
+
+- Added automatic background checks for new GitHub releases and Android notifications when an update is available.
+- Added an Updates section in Settings with manual update checking and one-tap in-app download.
+- Added secure APK validation before installation: package name, version, GitHub SHA-256 when available, and signing-certificate match.
+- Added the Android unknown-source permission flow and FileProvider handoff so the system installer opens directly after the in-app download.
+- Increased app version to 4.7.2 (versionCode 32).
+
+
 ## 4.7.1 — launcher icon fix
 
 - Rebuilt the Android launcher icon as a true adaptive icon: the background and molecule foreground are now separate layers.

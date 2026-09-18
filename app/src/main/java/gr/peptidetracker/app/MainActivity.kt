@@ -1,5 +1,6 @@
 package gr.peptidetracker.app
 
+import android.content.Intent
 import android.os.Bundle
 import android.os.SystemClock
 import androidx.activity.compose.setContent
@@ -12,6 +13,7 @@ import androidx.compose.runtime.setValue
 import androidx.core.content.ContextCompat
 import androidx.fragment.app.FragmentActivity
 import gr.peptidetracker.app.data.LocalStore
+import gr.peptidetracker.app.data.UpdateNotificationWorker
 import gr.peptidetracker.app.ui.AppTheme
 import gr.peptidetracker.app.ui.PeptideTrackerApp
 import gr.peptidetracker.app.ui.PremiumBackground
@@ -22,6 +24,7 @@ class MainActivity : FragmentActivity() {
     private var unlocked by mutableStateOf(true)
     private var promptVisible = false
     private var backgroundedAt = 0L
+    private var openUpdatesRequested by mutableStateOf(false)
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -29,10 +32,16 @@ class MainActivity : FragmentActivity() {
 
         store = LocalStore(applicationContext)
         unlocked = !store.appLockEnabled()
+        openUpdatesRequested = intent?.getBooleanExtra(EXTRA_OPEN_UPDATES, false) == true
+        UpdateNotificationWorker.schedule(applicationContext)
 
         setContent {
             if (unlocked) {
-                PeptideTrackerApp(store)
+                PeptideTrackerApp(
+                    store = store,
+                    openUpdatesOnLaunch = openUpdatesRequested,
+                    onUpdatesOpened = { openUpdatesRequested = false }
+                )
             } else {
                 AppTheme {
                     PremiumBackground {
@@ -43,6 +52,14 @@ class MainActivity : FragmentActivity() {
         }
 
         if (!unlocked) requestUnlock()
+    }
+
+    override fun onNewIntent(intent: Intent) {
+        super.onNewIntent(intent)
+        setIntent(intent)
+        if (intent.getBooleanExtra(EXTRA_OPEN_UPDATES, false)) {
+            openUpdatesRequested = true
+        }
     }
 
     override fun onStart() {
@@ -117,7 +134,8 @@ class MainActivity : FragmentActivity() {
         prompt.authenticate(promptInfo)
     }
 
-    private companion object {
-        const val LOCK_AFTER_MS = 30_000L
+    companion object {
+        const val EXTRA_OPEN_UPDATES = "open_updates"
+        private const val LOCK_AFTER_MS = 30_000L
     }
 }

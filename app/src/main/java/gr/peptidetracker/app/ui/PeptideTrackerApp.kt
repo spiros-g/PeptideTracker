@@ -1,6 +1,5 @@
 package gr.peptidetracker.app.ui
 
-import android.content.Intent
 import android.net.Uri
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.tween
@@ -86,7 +85,11 @@ private object Routes {
 }
 
 @Composable
-fun PeptideTrackerApp(store: LocalStore) {
+fun PeptideTrackerApp(
+    store: LocalStore,
+    openUpdatesOnLaunch: Boolean = false,
+    onUpdatesOpened: () -> Unit = {}
+) {
     val context = LocalContext.current
     var showOnboarding by rememberSaveable { mutableStateOf(!store.onboardingComplete()) }
     var availableUpdate by remember { mutableStateOf<AppUpdateInfo?>(null) }
@@ -102,6 +105,15 @@ fun PeptideTrackerApp(store: LocalStore) {
         ) {
             store.markUpdateCheck()
             availableUpdate = GitHubUpdateChecker.check(BuildConfig.VERSION_NAME)
+        }
+    }
+
+    LaunchedEffect(openUpdatesOnLaunch, showOnboarding) {
+        if (openUpdatesOnLaunch && !showOnboarding) {
+            navController.navigate(Routes.Settings) {
+                launchSingleTop = true
+            }
+            onUpdatesOpened()
         }
     }
 
@@ -315,18 +327,13 @@ fun PeptideTrackerApp(store: LocalStore) {
                     confirmButton = {
                         TextButton(
                             onClick = {
-                                val target = update.apkUrl ?: update.releaseUrl
-                                if (target.isNotBlank()) {
-                                    runCatching {
-                                        context.startActivity(
-                                            Intent(Intent.ACTION_VIEW, Uri.parse(target))
-                                        )
-                                    }
+                                navController.navigate(Routes.Settings) {
+                                    launchSingleTop = true
                                 }
                                 availableUpdate = null
                             }
                         ) {
-                            Text(if (update.apkUrl != null) "Λήψη ενημέρωσης" else "Άνοιγμα release")
+                            Text("Ενημέρωση τώρα")
                         }
                     },
                     dismissButton = {

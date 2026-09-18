@@ -1,5 +1,7 @@
 package gr.peptidetracker.app.ui.screens
 
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.biometric.BiometricManager
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -20,6 +22,7 @@ import androidx.compose.material.icons.rounded.Notifications
 import androidx.compose.material.icons.rounded.RestartAlt
 import androidx.compose.material.icons.rounded.Science
 import androidx.compose.material.icons.rounded.Straighten
+import androidx.compose.material.icons.rounded.SystemUpdateAlt
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.FilterChip
@@ -32,17 +35,22 @@ import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import gr.peptidetracker.app.BuildConfig
+import gr.peptidetracker.app.data.AppUpdateInfo
+import gr.peptidetracker.app.data.GitHubUpdateChecker
 import gr.peptidetracker.app.data.LocalStore
+import gr.peptidetracker.app.data.UpdateInstaller
 import gr.peptidetracker.app.ui.ElectricBlue
 import gr.peptidetracker.app.ui.ElectricCyan
 import gr.peptidetracker.app.ui.ElectricViolet
@@ -54,6 +62,8 @@ import gr.peptidetracker.app.ui.premiumButtonColors
 import gr.peptidetracker.app.ui.premiumFilterChipColors
 import gr.peptidetracker.app.ui.premiumTextButtonColors
 import gr.peptidetracker.app.ui.premiumTextFieldColors
+import java.io.File
+import kotlinx.coroutines.launch
 
 @Composable
 fun SettingsScreen(
@@ -79,6 +89,98 @@ fun SettingsScreen(
     var showCustomDialog by remember { mutableStateOf(false) }
     var customName by remember { mutableStateOf("") }
 
+    val coroutineScope = rememberCoroutineScope()
+    val githubUpdatesEnabled = remember {
+        GitHubUpdateChecker.shouldUseGitHubUpdates(context)
+    }
+    var checkingUpdate by remember { mutableStateOf(false) }
+    var downloadingUpdate by remember { mutableStateOf(false) }
+    var updateInfo by remember { mutableStateOf<AppUpdateInfo?>(null) }
+    var updateMessage by remember {
+        mutableStateOf(
+            if (githubUpdatesEnabled) {
+                "Έλεγχος για διαθέσιμη έκδοση..."
+            } else {
+                "Οι ενημερώσεις αυτής της εγκατάστασης διαχειρίζονται από το Play Store."
+            }
+        )
+    }
+    var pendingApk by remember { mutableStateOf<File?>(null) }
+
+    val unknownSourcesLauncher = rememberLauncherForActivityResult(
+        ActivityResultContracts.StartActivityForResult()
+    ) {
+        val apk = pendingApk
+        if (apk != null && UpdateInstaller.canInstallPackages(context)) {
+            runCatching { UpdateInstaller.launchInstaller(context, apk) }
+                .onSuccess {
+                    updateMessage = "Ο Android installer άνοιξε. Επιβεβαίωσε την ενημέρωση."
+                    pendingApk = null
+                }
+                .onFailure {
+                    updateMessage = "Δεν ήταν δυνατό να ανοίξει ο installer."
+                }
+        } else if (apk != null) {
+            updateMessage = "Χρειάζεται άδεια «Εγκατάσταση άγνωστων εφαρμογών» για το Peptide Tracker."
+        }
+    }
+
+    fun checkForUpdate() {
+        if (!githubUpdatesEnabled || checkingUpdate || downloadingUpdate) return
+        coroutineScope.launch {
+            checkingUpdate = true
+            updateMessage = "Έλεγχος για ενημέρωση..."
+            store.markUpdateCheck()
+            val update = GitHubUpdateChecker.check(BuildConfig.VERSION_NAME)
+            updateInfo = update
+            updateMessage = if (update == null) {
+                "Έχεις την τελευταία έκδοση (v" + BuildConfig.VERSION_NAME + ")."
+            } else {
+                "Διαθέσιμη έκδοση v" + update.version + "."
+            }
+            checkingUpdate = false
+        }
+    }
+
+    fun installUpdate(update: AppUpdateInfo) {
+        if (downloadingUpdate || checkingUpdate) return
+        coroutineScope.launch {
+            downloadingUpdate = true
+            updateMessage = "Λήψη και επαλήθευση v" + update.version + "..."
+            runCatching {
+                UpdateInstaller.downloadAndValidate(context, update)
+            }.onSuccess { apk ->
+                pendingApk = apk
+                if (UpdateInstaller.canInstallPackages(context)) {
+                    runCatching { UpdateInstaller.launchInstaller(context, apk) }
+                        .onSuccess {
+                            updateMessage = "Ο Android installer άνοιξε. Επιβεβαίωσε την ενημέρωση."
+                            pendingApk = null
+                        }
+                        .onFailure {
+                            updateMessage = "Δεν ήταν δυνατό να ανοίξει ο Android installer."
+                        }
+                } else {
+                    updateMessage = "Ενεργοποίησε «Να επιτρέπεται από αυτήν την πηγή» και γύρνα πίσω."
+                    unknownSourcesLauncher.launch(
+                        UpdateInstaller.unknownSourcesIntent(context)
+                    )
+                }
+            }.onFailure { error ->
+                updateMessage = error.message
+                    ?.takeIf { it.isNotBlank() }
+                    ?: "Η ενημέρωση απέτυχε."
+            }
+            downloadingUpdate = false
+        }
+    }
+
+    LaunchedEffect(Unit) {
+        if (githubUpdatesEnabled) {
+            checkForUpdate()
+        }
+    }
+
     LazyColumn(
         modifier = Modifier.fillMaxSize(),
         contentPadding = PaddingValues(horizontal = 18.dp, vertical = 18.dp),
@@ -90,6 +192,75 @@ fun SettingsScreen(
                 subtitle = "Ασφάλεια, ιδιωτικότητα, προεπιλογές και δεδομένα εφαρμογής.",
                 onBack = onBack
             )
+        }
+
+        item {
+            GlassCard(modifier = Modifier.fillMaxWidth()) {
+                Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                        Icon(
+                            Icons.Rounded.SystemUpdateAlt,
+                            contentDescription = null,
+                            tint = ElectricCyan,
+                            modifier = Modifier.size(22.dp)
+                        )
+                        Column(Modifier.weight(1f)) {
+                            Text(
+                                "Ενημερώσεις εφαρμογής",
+                                fontWeight = FontWeight.ExtraBold,
+                                style = MaterialTheme.typography.titleMedium
+                            )
+                            Text(
+                                "Εγκατεστημένη έκδοση v" + BuildConfig.VERSION_NAME,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                style = MaterialTheme.typography.bodySmall
+                            )
+                        }
+                    }
+
+                    Text(
+                        updateMessage,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        style = MaterialTheme.typography.bodySmall
+                    )
+
+                    if (githubUpdatesEnabled) {
+                        val available = updateInfo
+                        if (available != null) {
+                            Button(
+                                onClick = { installUpdate(available) },
+                                modifier = Modifier.fillMaxWidth(),
+                                enabled = !checkingUpdate &&
+                                    !downloadingUpdate &&
+                                    available.apkUrl != null,
+                                colors = premiumButtonColors()
+                            ) {
+                                Text(
+                                    if (downloadingUpdate) {
+                                        "Λήψη ενημέρωσης..."
+                                    } else {
+                                        "Ενημέρωση σε v" + available.version
+                                    }
+                                )
+                            }
+                        } else {
+                            OutlinedButton(
+                                onClick = ::checkForUpdate,
+                                modifier = Modifier.fillMaxWidth(),
+                                enabled = !checkingUpdate && !downloadingUpdate
+                            ) {
+                                Text(
+                                    if (checkingUpdate) {
+                                        "Έλεγχος..."
+                                    } else {
+                                        "Έλεγχος για ενημέρωση"
+                                    }
+                                )
+                            }
+                        }
+                    }
+                }
+            }
         }
 
         item {
