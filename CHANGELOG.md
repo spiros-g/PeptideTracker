@@ -1,5 +1,13 @@
 # Changelog
 
+## 4.8.13 — tighter home calculator card
+
+- Reduced the Home calculator card again from a 198 dp minimum height to 156 dp.
+- Removed the redundant calculator eyebrow label from the card.
+- Reduced internal padding, spacing, title scale and vial artwork size for a much tighter layout.
+- Kept the full-card tap target, description and calculator shortcut intact.
+- Increased app version to 4.8.13 (versionCode 46).
+
 ## 4.8.12 — resilient in-app update check
 
 - Added a second update-check path using the public GitHub Releases web redirect when the GitHub API check fails.

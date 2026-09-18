@@ -104,7 +104,7 @@ fun HomeScreen(
             GlassCard(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .heightIn(min = 198.dp),
+                    .heightIn(min = 156.dp),
                 contentPadding = PaddingValues(0.dp),
                 onClick = { onNavigate(2) }
             ) {
@@ -120,26 +120,17 @@ fun HomeScreen(
                                 )
                             )
                         )
-                        .padding(horizontal = 18.dp, vertical = 16.dp),
+                        .padding(horizontal = 16.dp, vertical = 12.dp),
                     verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(10.dp)
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
                     Column(
                         modifier = Modifier.weight(1f),
                         verticalArrangement = Arrangement.spacedBy(6.dp)
                     ) {
                         Text(
-                            t("ΑΝΑΣΥΣΤΑΣΗ & ΔΟΣΟΜΕΤΡΙΑ"),
-                            color = ElectricCyan,
-                            style = MaterialTheme.typography.labelLarge,
-                            fontWeight = FontWeight.ExtraBold,
-                            maxLines = 2,
-                            overflow = TextOverflow.Ellipsis
-                        )
-
-                        Text(
                             t("Υπολογιστής ανασύστασης"),
-                            style = MaterialTheme.typography.headlineSmall,
+                            style = MaterialTheme.typography.titleLarge,
                             fontWeight = FontWeight.ExtraBold,
                             maxLines = 2,
                             overflow = TextOverflow.Ellipsis
@@ -157,7 +148,7 @@ fun HomeScreen(
                             Text(
                                 t("Άνοιγμα υπολογιστή"),
                                 color = ElectricBlue,
-                                style = MaterialTheme.typography.bodyMedium,
+                                style = MaterialTheme.typography.bodySmall,
                                 fontWeight = FontWeight.Bold,
                                 maxLines = 1
                             )
@@ -174,7 +165,7 @@ fun HomeScreen(
                     StoreVialImage(
                         productKey = "retatrutide",
                         imageIndex = imageIndex,
-                        modifier = Modifier.size(width = 82.dp, height = 148.dp),
+                        modifier = Modifier.size(width = 62.dp, height = 112.dp),
                         contentDescription = t("Φιαλίδιο πεπτιδίου")
                     )
                 }
