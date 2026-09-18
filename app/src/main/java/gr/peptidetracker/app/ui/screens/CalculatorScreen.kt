@@ -315,16 +315,6 @@ fun CalculatorScreen(
                 icon = Icons.Rounded.Straighten,
                 accent = ElectricBlue
             ) {
-                ChoiceRow(
-                    choices = listOf("U-100", "U-40"),
-                    selected = "U-" + syringeUnitsPerMl,
-                    onSelected = {
-                        syringeUnitsPerMl = if (it == "U-40") 40 else 100
-                        syringeCapacity = if (syringeUnitsPerMl == 40) 12 else 30
-                        clearResult()
-                    }
-                )
-                Spacer(Modifier.height(8.dp))
                 Text(
                     t("Χωρητικότητα / μέγιστη ένδειξη"),
                     color = MaterialTheme.colorScheme.onSurfaceVariant,

@@ -1,5 +1,12 @@
 # Changelog
 
+## 4.8.4 — calculator syringe selector cleanup
+
+- Removed the redundant U-100 / U-40 selector from Calculator step 01.
+- Kept the three syringe capacity choices (0.3 mL, 0.5 mL and 1.0 mL) as the only controls in that section.
+- Preserved the existing U-100 / U-40 calculation behavior from Settings defaults, presets and saved calculations.
+- Increased app version to 4.8.4 (versionCode 37).
+
 ## 4.8.3 — tracker selection and reconstitution polish
 
 - Replaced the Tracker usage-entry peptide dropdown with the same fixed-height searchable picker used by the Calculator.
