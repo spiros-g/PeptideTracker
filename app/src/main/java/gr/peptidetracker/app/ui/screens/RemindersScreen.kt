@@ -38,8 +38,6 @@ import androidx.compose.material.icons.rounded.NotificationsOff
 import androidx.compose.material.icons.rounded.Schedule
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
-import androidx.compose.material3.DropdownMenu
-import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -76,6 +74,8 @@ import gr.peptidetracker.app.ui.TextPrimary
 import gr.peptidetracker.app.ui.premiumButtonColors
 import gr.peptidetracker.app.ui.premiumTextButtonColors
 import gr.peptidetracker.app.ui.premiumTextFieldColors
+import gr.peptidetracker.app.ui.components.PeptidePickerDialog
+import gr.peptidetracker.app.ui.components.SelectionPickerDialog
 import java.text.DateFormat
 import java.util.Calendar
 import java.util.Date
@@ -546,31 +546,16 @@ private fun ReminderEditorDialog(
                     style = MaterialTheme.typography.bodySmall
                 )
 
-                Box {
-                    OutlinedButton(
-                        onClick = { peptideMenu = true },
-                        modifier = Modifier.fillMaxWidth()
-                    ) {
-                        Text(
-                            peptide.ifBlank { t("Επίλεξε πεπτίδιο") },
-                            maxLines = 1,
-                            overflow = TextOverflow.Ellipsis
-                        )
-                    }
-                    DropdownMenu(
-                        expanded = peptideMenu,
-                        onDismissRequest = { peptideMenu = false }
-                    ) {
-                        peptideNames.forEach { name ->
-                            DropdownMenuItem(
-                                text = { Text(name) },
-                                onClick = {
-                                    peptide = name
-                                    peptideMenu = false
-                                }
-                            )
-                        }
-                    }
+                OutlinedButton(
+                    onClick = { peptideMenu = true },
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Text(
+                        peptide.ifBlank { t("Επίλεξε πεπτίδιο") },
+                        modifier = Modifier.weight(1f),
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis
+                    )
                 }
 
                 Row(
@@ -581,48 +566,51 @@ private fun ReminderEditorDialog(
                         onClick = {
                             showReminderDatePicker(context, scheduledAt) { scheduledAt = it }
                         },
-                        modifier = Modifier.weight(1f)
+                        modifier = Modifier.weight(1.18f),
+                        contentPadding = PaddingValues(horizontal = 10.dp)
                     ) {
                         Text(
-                            DateFormat.getDateInstance(DateFormat.SHORT).format(Date(scheduledAt)),
-                            maxLines = 1
+                            SimpleDateFormat(
+                                "dd/MM/yyyy",
+                                Locale.getDefault()
+                            ).format(Date(scheduledAt)),
+                            modifier = Modifier.fillMaxWidth(),
+                            maxLines = 1,
+                            softWrap = false,
+                            overflow = TextOverflow.Clip
                         )
                     }
                     OutlinedButton(
                         onClick = {
                             showReminderTimePicker(context, scheduledAt) { scheduledAt = it }
                         },
-                        modifier = Modifier.weight(1f)
+                        modifier = Modifier.weight(0.82f),
+                        contentPadding = PaddingValues(horizontal = 10.dp)
                     ) {
                         Text(
-                            DateFormat.getTimeInstance(DateFormat.SHORT).format(Date(scheduledAt)),
-                            maxLines = 1
+                            SimpleDateFormat(
+                                "HH:mm",
+                                Locale.getDefault()
+                            ).format(Date(scheduledAt)),
+                            modifier = Modifier.fillMaxWidth(),
+                            maxLines = 1,
+                            softWrap = false,
+                            overflow = TextOverflow.Clip
                         )
                     }
                 }
 
                 Text(t("Επανάληψη"), fontWeight = FontWeight.Bold)
-                Box {
-                    OutlinedButton(
-                        onClick = { repeatMenu = true },
-                        modifier = Modifier.fillMaxWidth()
-                    ) {
-                        Text(reminderRepeatLabel(repeatDays))
-                    }
-                    DropdownMenu(
-                        expanded = repeatMenu,
-                        onDismissRequest = { repeatMenu = false }
-                    ) {
-                        repeatOptions.forEach { days ->
-                            DropdownMenuItem(
-                                text = { Text(reminderRepeatLabel(days)) },
-                                onClick = {
-                                    repeatDays = days
-                                    repeatMenu = false
-                                }
-                            )
-                        }
-                    }
+                OutlinedButton(
+                    onClick = { repeatMenu = true },
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Text(
+                        reminderRepeatLabel(repeatDays),
+                        modifier = Modifier.weight(1f),
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis
+                    )
                 }
 
                 OutlinedTextField(
@@ -684,6 +672,36 @@ private fun reminderRepeatLabel(days: Int): String = when (days) {
     0 -> t("Μία φορά")
     1 -> t("Κάθε ημέρα")
     else -> t("Κάθε $days ημέρες")
+
+    if (peptideMenu) {
+        PeptidePickerDialog(
+            selectedPeptide = peptide,
+            peptides = peptideNames,
+            onDismiss = { peptideMenu = false },
+            onSelect = { selected ->
+                peptide = selected
+                peptideMenu = false
+            }
+        )
+    }
+
+    if (repeatMenu) {
+        val repeatLabels = repeatOptions.map(::reminderRepeatLabel)
+        SelectionPickerDialog(
+            title = t("Επανάληψη"),
+            selectedValue = reminderRepeatLabel(repeatDays),
+            options = repeatLabels,
+            onDismiss = { repeatMenu = false },
+            onSelect = { selected ->
+                val index = repeatLabels.indexOf(selected)
+                if (index >= 0) {
+                    repeatDays = repeatOptions[index]
+                }
+                repeatMenu = false
+            }
+        )
+    }
+
 }
 
 private fun showReminderDatePicker(
