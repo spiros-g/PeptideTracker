@@ -1,7 +1,8 @@
 package gr.peptidetracker.app.ui
 
-import android.content.Intent
 import android.net.Uri
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
@@ -23,6 +24,7 @@ import androidx.compose.material.icons.rounded.QueryStats
 import androidx.compose.material.icons.rounded.Science
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Icon
+import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
@@ -32,6 +34,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -52,7 +55,9 @@ import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
 import gr.peptidetracker.app.BuildConfig
 import gr.peptidetracker.app.data.AppUpdateInfo
+import gr.peptidetracker.app.data.AppUpdateInstaller
 import gr.peptidetracker.app.data.GitHubUpdateChecker
+import gr.peptidetracker.app.data.UpdateDownloadResult
 import gr.peptidetracker.app.data.LocalStore
 import gr.peptidetracker.app.data.peptideCatalog
 import gr.peptidetracker.app.ui.screens.CalculatorPreset
@@ -65,6 +70,8 @@ import gr.peptidetracker.app.ui.screens.PrivacyScreen
 import gr.peptidetracker.app.ui.screens.RemindersScreen
 import gr.peptidetracker.app.ui.screens.SettingsScreen
 import gr.peptidetracker.app.ui.screens.TrackerScreen
+import kotlinx.coroutines.launch
+import java.io.File
 
 private data class MainDestination(
     val route: String,
@@ -86,22 +93,116 @@ private object Routes {
 }
 
 @Composable
-fun PeptideTrackerApp(store: LocalStore) {
+fun PeptideTrackerApp(
+    store: LocalStore,
+    updateRequestToken: Int = 0
+) {
     val context = LocalContext.current
+    val scope = rememberCoroutineScope()
     var showOnboarding by rememberSaveable { mutableStateOf(!store.onboardingComplete()) }
     var availableUpdate by remember { mutableStateOf<AppUpdateInfo?>(null) }
+    var checkingForUpdate by remember { mutableStateOf(false) }
+    var installingUpdate by remember { mutableStateOf(false) }
+    var updateStatus by remember { mutableStateOf<String?>(null) }
+    var pendingUpdateApkPath by remember { mutableStateOf<String?>(null) }
+    val githubUpdatesEnabled = remember(context) {
+        GitHubUpdateChecker.shouldUseGitHubUpdates(context)
+    }
     val uiState: AppUiViewModel = viewModel()
     val navController = rememberNavController()
     val imageIndex = emptyMap<String, String>()
 
-    LaunchedEffect(showOnboarding) {
+    val installPermissionLauncher = rememberLauncherForActivityResult(
+        ActivityResultContracts.StartActivityForResult()
+    ) {
+        val path = pendingUpdateApkPath
+        if (!path.isNullOrBlank()) {
+            if (AppUpdateInstaller.canInstallPackages(context)) {
+                val started = AppUpdateInstaller.launchInstaller(context, File(path))
+                updateStatus = if (started) {
+                    "Ο εγκαταστάτης Android άνοιξε. Πάτησε Ενημέρωση για ολοκλήρωση."
+                } else {
+                    "Δεν ήταν δυνατό να ανοίξει ο εγκαταστάτης Android."
+                }
+            } else {
+                updateStatus = "Δεν δόθηκε άδεια εγκατάστασης από αυτή την εφαρμογή."
+            }
+        }
+    }
+
+    fun checkForUpdatesManually() {
+        if (!githubUpdatesEnabled || checkingForUpdate || installingUpdate) return
+        scope.launch {
+            checkingForUpdate = true
+            updateStatus = "Έλεγχος για νέα έκδοση…"
+            store.markUpdateCheck()
+            val update = GitHubUpdateChecker.check(BuildConfig.VERSION_NAME)
+            availableUpdate = update
+            updateStatus = if (update != null) {
+                "Η έκδοση v${update.version} είναι διαθέσιμη."
+            } else {
+                "Έχεις ήδη την τελευταία έκδοση."
+            }
+            checkingForUpdate = false
+        }
+    }
+
+    fun installAvailableUpdate() {
+        val update = availableUpdate ?: return
+        if (installingUpdate || checkingForUpdate) return
+
+        scope.launch {
+            installingUpdate = true
+            updateStatus = "Λήψη και επαλήθευση του signed APK μέσα από την εφαρμογή…"
+
+            when (val result = AppUpdateInstaller.downloadAndVerify(context, update)) {
+                is UpdateDownloadResult.Success -> {
+                    pendingUpdateApkPath = result.file.absolutePath
+                    installingUpdate = false
+
+                    if (AppUpdateInstaller.canInstallPackages(context)) {
+                        val started = AppUpdateInstaller.launchInstaller(context, result.file)
+                        updateStatus = if (started) {
+                            "Ο εγκαταστάτης Android άνοιξε. Πάτησε Ενημέρωση για ολοκλήρωση."
+                        } else {
+                            "Δεν ήταν δυνατό να ανοίξει ο εγκαταστάτης Android."
+                        }
+                    } else {
+                        updateStatus =
+                            "Επίτρεψε μία φορά εγκατάσταση εφαρμογών από το Peptide Tracker και θα συνεχίσει η ενημέρωση."
+                        installPermissionLauncher.launch(
+                            AppUpdateInstaller.unknownSourcesSettingsIntent(context)
+                        )
+                    }
+                }
+
+                is UpdateDownloadResult.Error -> {
+                    installingUpdate = false
+                    updateStatus = result.message
+                }
+            }
+        }
+    }
+
+    LaunchedEffect(showOnboarding, updateRequestToken) {
+        val forcedByNotification = updateRequestToken > 0
         if (
             !showOnboarding &&
-            GitHubUpdateChecker.shouldUseGitHubUpdates(context) &&
-            store.shouldCheckForUpdates()
+            githubUpdatesEnabled &&
+            (forcedByNotification || store.shouldCheckForUpdates())
         ) {
+            checkingForUpdate = true
             store.markUpdateCheck()
-            availableUpdate = GitHubUpdateChecker.check(BuildConfig.VERSION_NAME)
+            val update = GitHubUpdateChecker.check(BuildConfig.VERSION_NAME)
+            availableUpdate = update
+            if (forcedByNotification) {
+                updateStatus = if (update != null) {
+                    "Η έκδοση v${update.version} είναι διαθέσιμη."
+                } else {
+                    "Έχεις ήδη την τελευταία έκδοση."
+                }
+            }
+            checkingForUpdate = false
         }
     }
 
@@ -259,7 +360,14 @@ fun PeptideTrackerApp(store: LocalStore) {
                                 },
                                 onOpenPrivacy = {
                                     navController.navigate(Routes.Privacy)
-                                }
+                                },
+                                githubUpdatesEnabled = githubUpdatesEnabled,
+                                availableUpdateVersion = availableUpdate?.version,
+                                updateStatus = updateStatus,
+                                updateBusy = checkingForUpdate || installingUpdate,
+                                updateInstalling = installingUpdate,
+                                onCheckForUpdates = ::checkForUpdatesManually,
+                                onInstallUpdate = ::installAvailableUpdate
                             )
                         }
 
@@ -299,38 +407,54 @@ fun PeptideTrackerApp(store: LocalStore) {
 
             availableUpdate?.let { update ->
                 AlertDialog(
-                    onDismissRequest = { availableUpdate = null },
+                    onDismissRequest = {
+                        if (!installingUpdate) availableUpdate = null
+                    },
                     title = { Text("Νέα έκδοση ${update.version}") },
                     text = {
-                        Text(
-                            buildString {
-                                append("Υπάρχει νεότερη έκδοση του Peptide Tracker στο GitHub.")
-                                if (update.releaseNotes.isNotBlank()) {
-                                    append("\n\n")
-                                    append(update.releaseNotes.take(700))
+                        Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                            Text(
+                                buildString {
+                                    append("Υπάρχει νεότερη έκδοση του Peptide Tracker.")
+                                    if (update.releaseNotes.isNotBlank()) {
+                                        append("\n\n")
+                                        append(update.releaseNotes.take(700))
+                                    }
                                 }
+                            )
+                            if (!updateStatus.isNullOrBlank()) {
+                                Text(
+                                    updateStatus.orEmpty(),
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                    style = MaterialTheme.typography.bodySmall
+                                )
                             }
-                        )
+                            if (installingUpdate) {
+                                LinearProgressIndicator(modifier = Modifier.fillMaxWidth())
+                            }
+                        }
                     },
                     confirmButton = {
                         TextButton(
-                            onClick = {
-                                val target = update.apkUrl ?: update.releaseUrl
-                                if (target.isNotBlank()) {
-                                    runCatching {
-                                        context.startActivity(
-                                            Intent(Intent.ACTION_VIEW, Uri.parse(target))
-                                        )
-                                    }
-                                }
-                                availableUpdate = null
-                            }
+                            onClick = ::installAvailableUpdate,
+                            enabled = !installingUpdate &&
+                                !checkingForUpdate &&
+                                update.apkUrl != null
                         ) {
-                            Text(if (update.apkUrl != null) "Λήψη ενημέρωσης" else "Άνοιγμα release")
+                            Text(
+                                when {
+                                    installingUpdate -> "Προετοιμασία…"
+                                    update.apkUrl == null -> "APK μη διαθέσιμο"
+                                    else -> "Ενημέρωση τώρα"
+                                }
+                            )
                         }
                     },
                     dismissButton = {
-                        TextButton(onClick = { availableUpdate = null }) {
+                        TextButton(
+                            onClick = { availableUpdate = null },
+                            enabled = !installingUpdate
+                        ) {
                             Text("Αργότερα")
                         }
                     }
