@@ -1,5 +1,7 @@
 package gr.peptidetracker.app.ui.screens
 
+import gr.peptidetracker.app.i18n.t
+
 import android.content.Intent
 import android.net.Uri
 import androidx.compose.foundation.background
@@ -81,11 +83,11 @@ fun LibraryScreen(
     onOpenPeptide: (PeptideInfo) -> Unit
 ) {
     var query by remember { mutableStateOf("") }
-    var category by remember { mutableStateOf("Όλα") }
+    var category by remember { mutableStateOf(t("Όλα")) }
     var favorites by remember { mutableStateOf(store.favorites()) }
 
     val categories = remember {
-        listOf("Όλα") + peptideCatalog.map { it.category }.distinct()
+        listOf(t("Όλα")) + peptideCatalog.map { it.category }.distinct()
     }
 
     val visible = peptideCatalog.filter { peptide ->
@@ -95,7 +97,7 @@ fun LibraryScreen(
                 peptide.alias.contains(query, ignoreCase = true) ||
                 peptide.category.contains(query, ignoreCase = true)
 
-        val matchesCategory = category == "Όλα" || peptide.category == category
+        val matchesCategory = category == t("Όλα") || peptide.category == category
         matchesQuery && matchesCategory
     }
 
@@ -109,8 +111,8 @@ fun LibraryScreen(
             verticalArrangement = Arrangement.spacedBy(14.dp)
         ) {
             PremiumTopBar(
-                title = "Βιβλιοθήκη",
-                subtitle = "Δες τι είναι κάθε πεπτίδιο, σε τι έχει μελετηθεί και πόσο ισχυρά είναι τα διαθέσιμα δεδομένα."
+                title = t("Βιβλιοθήκη"),
+                subtitle = t("Δες τι είναι κάθε πεπτίδιο, σε τι έχει μελετηθεί και πόσο ισχυρά είναι τα διαθέσιμα δεδομένα.")
             )
 
             OutlinedTextField(
@@ -120,14 +122,14 @@ fun LibraryScreen(
                 singleLine = true,
                 shape = RoundedCornerShape(22.dp),
                 colors = premiumTextFieldColors(),
-                placeholder = { Text("Αναζήτηση πεπτιδίου") },
+                placeholder = { Text(t("Αναζήτηση πεπτιδίου")) },
                 leadingIcon = {
                     Icon(Icons.Rounded.Search, contentDescription = null)
                 },
                 trailingIcon = {
                     if (query.isNotBlank()) {
                         IconButton(onClick = { query = "" }) {
-                            Icon(Icons.Rounded.Close, contentDescription = "Καθαρισμός")
+                            Icon(Icons.Rounded.Close, contentDescription = t("Καθαρισμός"))
                         }
                     }
                 }
@@ -169,9 +171,9 @@ fun LibraryScreen(
                             tint = ElectricBlue,
                             modifier = Modifier.size(40.dp)
                         )
-                        Text("Δεν βρέθηκε αποτέλεσμα", fontWeight = FontWeight.ExtraBold)
+                        Text(t("Δεν βρέθηκε αποτέλεσμα"), fontWeight = FontWeight.ExtraBold)
                         Text(
-                            "Δοκίμασε διαφορετικό όνομα ή κατηγορία.",
+                            t("Δοκίμασε διαφορετικό όνομα ή κατηγορία."),
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
                     }
@@ -244,7 +246,7 @@ private fun PeptideGridCard(
                 ) {
                     Icon(
                         imageVector = if (favorite) Icons.Filled.Favorite else Icons.Outlined.FavoriteBorder,
-                        contentDescription = "Αγαπημένο",
+                        contentDescription = t("Αγαπημένο"),
                         tint = if (favorite) NeonRose else MaterialTheme.colorScheme.onSurfaceVariant
                     )
                 }
@@ -344,7 +346,7 @@ fun PeptideDetailScreen(
                     ) {
                         Icon(
                             imageVector = if (favorite) Icons.Filled.Favorite else Icons.Outlined.FavoriteBorder,
-                            contentDescription = "Αγαπημένο",
+                            contentDescription = t("Αγαπημένο"),
                             tint = if (favorite) NeonRose else Color.White
                         )
                     }
@@ -372,7 +374,7 @@ fun PeptideDetailScreen(
             GlassCard {
                 Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
                     Text(
-                        "Κατάσταση",
+                        t("Κατάσταση"),
                         color = ElectricBlue,
                         style = MaterialTheme.typography.labelLarge,
                         fontWeight = FontWeight.ExtraBold
@@ -382,7 +384,7 @@ fun PeptideDetailScreen(
                         style = MaterialTheme.typography.titleMedium
                     )
                     Text(
-                        "Τελευταίος έλεγχος περιεχομένου: " + peptide.lastReviewed,
+                        t("Τελευταίος έλεγχος περιεχομένου: ") + peptide.lastReviewed,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                         style = MaterialTheme.typography.bodySmall
                     )
@@ -402,7 +404,7 @@ fun PeptideDetailScreen(
                 ) {
                     Icon(Icons.Rounded.Calculate, contentDescription = null)
                     Spacer(Modifier.width(6.dp))
-                    Text("Υπολογιστής", maxLines = 1)
+                    Text(t("Υπολογιστής"), maxLines = 1)
                 }
                 OutlinedButton(
                     onClick = { onAddInventory(peptide) },
@@ -410,14 +412,14 @@ fun PeptideDetailScreen(
                 ) {
                     Icon(Icons.Rounded.Inventory2, contentDescription = null)
                     Spacer(Modifier.width(6.dp))
-                    Text("Απόθεμα", maxLines = 1)
+                    Text(t("Απόθεμα"), maxLines = 1)
                 }
             }
         }
 
         item {
             DetailInfoCard(
-                title = "Τι είναι",
+                title = t("Τι είναι"),
                 text = peptide.overview,
                 icon = Icons.Rounded.Science,
                 accent = ElectricBlue
@@ -426,7 +428,7 @@ fun PeptideDetailScreen(
 
         item {
             DetailInfoCard(
-                title = "Σε τι έχει μελετηθεί",
+                title = t("Σε τι έχει μελετηθεί"),
                 text = peptide.research,
                 icon = Icons.AutoMirrored.Rounded.ManageSearch,
                 accent = ElectricCyan
@@ -435,7 +437,7 @@ fun PeptideDetailScreen(
 
         item {
             DetailInfoCard(
-                title = "Πώς δρα",
+                title = t("Πώς δρα"),
                 text = peptide.mechanism,
                 icon = Icons.Rounded.Hub,
                 accent = ElectricViolet
@@ -444,7 +446,7 @@ fun PeptideDetailScreen(
 
         item {
             DetailInfoCard(
-                title = "Τι πρέπει να γνωρίζεις",
+                title = t("Τι πρέπει να γνωρίζεις"),
                 text = peptide.warning,
                 icon = Icons.Rounded.WarningAmber,
                 accent = Color(0xFFFFBE6B)
@@ -454,7 +456,7 @@ fun PeptideDetailScreen(
         if (peptide.selectedStudies.isNotEmpty()) {
             item {
                 Text(
-                    "Επιλεγμένες μελέτες",
+                    t("Επιλεγμένες μελέτες"),
                     style = MaterialTheme.typography.titleLarge
                 )
             }
@@ -498,7 +500,7 @@ fun PeptideDetailScreen(
                         }
                         Icon(
                             Icons.AutoMirrored.Rounded.OpenInNew,
-                            contentDescription = "Άνοιγμα",
+                            contentDescription = t("Άνοιγμα"),
                             tint = MaterialTheme.colorScheme.onSurfaceVariant
                         )
                     }
@@ -508,7 +510,7 @@ fun PeptideDetailScreen(
 
         item {
             Text(
-                "Πηγές & αναζητήσεις βιβλιογραφίας",
+                t("Πηγές & αναζητήσεις βιβλιογραφίας"),
                 style = MaterialTheme.typography.titleLarge
             )
         }
@@ -552,7 +554,7 @@ fun PeptideDetailScreen(
                     }
                     Icon(
                         Icons.AutoMirrored.Rounded.OpenInNew,
-                        contentDescription = "Άνοιγμα",
+                        contentDescription = t("Άνοιγμα"),
                         tint = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                 }
@@ -572,7 +574,7 @@ fun PeptideDetailScreen(
                 )
                 Spacer(Modifier.width(8.dp))
                 Text(
-                    "Οι πληροφορίες εξηγούν τα διαθέσιμα δεδομένα με απλό τρόπο. Δεν αποτελούν ιατρική συμβουλή ή εξατομικευμένη οδηγία χρήσης.",
+                    t("Οι πληροφορίες εξηγούν τα διαθέσιμα δεδομένα με απλό τρόπο. Δεν αποτελούν ιατρική συμβουλή ή εξατομικευμένη οδηγία χρήσης."),
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                     style = MaterialTheme.typography.bodySmall
                 )
