@@ -1,5 +1,11 @@
 # Changelog
 
+## 4.8.6 — calculator hero cleanup
+
+- Removed the redundant U-100 / U-40 text from the calculator hero summary.
+- The hero now shows only mg · mcg · mL.
+- Increased app version to 4.8.6 (versionCode 39).
+
 ## 4.8.5 — update prompt and settings priority
 
 - Checks GitHub for a newer release whenever the app is opened after onboarding.

@@ -221,7 +221,7 @@ fun CalculatorScreen(
                         )
 
                         Text(
-                            "mg · mcg · mL · U-100 / U-40",
+                            "mg · mcg · mL",
                             style = MaterialTheme.typography.headlineMedium,
                             fontWeight = FontWeight.ExtraBold,
                             maxLines = 2
