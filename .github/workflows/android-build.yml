@@ -3,10 +3,12 @@ name: Android Build
 on:
   push:
     branches: [main]
+  pull_request:
+    branches: [main]
   workflow_dispatch:
 
 concurrency:
-  group: android-build-main
+  group: android-build-${{ github.ref }}
   cancel-in-progress: true
 
 jobs:
@@ -34,6 +36,9 @@ jobs:
 
       - name: Build debug APK
         run: gradle assembleDebug --stacktrace --no-build-cache
+
+      - name: Build release variant
+        run: gradle assembleRelease --stacktrace --no-build-cache
 
       - name: Upload debug APK
         uses: actions/upload-artifact@v4
