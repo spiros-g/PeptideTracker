@@ -1,5 +1,12 @@
 # Changelog
 
+## 4.8.2 — calculator picker polish
+
+- Refined the peptide selector into a compact fixed-height searchable picker.
+- Keeps the peptide list inside a dedicated 360dp scroll area instead of an oversized dropdown.
+- Improved selection highlighting, search behavior, empty state and spacing for mobile screens.
+- Increased app version to 4.8.2 (versionCode 35).
+
 ## 4.8.1 — searchable peptide picker
 
 - Replaced the calculator's oversized peptide dropdown with a fixed, polished picker.
