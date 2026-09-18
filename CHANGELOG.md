@@ -1,5 +1,12 @@
 # Changelog
 
+## 4.8.3 — tracker peptide picker polish
+
+- Replaced the Tracker usage-entry peptide dropdown with the same fixed-height searchable picker used by the Calculator.
+- Reused the shared peptide picker in inventory editing for consistent selection UX across the app.
+- Kept the usage-entry date and time controls on one line with stable dd/MM/yyyy and HH:mm formatting.
+- Increased app version to 4.8.3 (versionCode 36).
+
 ## 4.8.2 — calculator picker polish
 
 - Refined the peptide selector into a compact fixed-height searchable picker.
