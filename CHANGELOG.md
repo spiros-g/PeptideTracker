@@ -1,5 +1,13 @@
 # Changelog
 
+## 4.8.7 — dark-theme text contrast fix
+
+- Fixed inherited text color on root premium backgrounds so standalone screens no longer fall back to black text in dark mode.
+- Fixed GlassCard to provide the correct on-surface content color to nested text and controls.
+- This covers onboarding and the app-lock screen and prevents the same contrast bug in future premium-background/card content.
+- Audited the current UI source for hardcoded black text; the remaining Color.Black usages are non-text scrim/image overlays.
+- Increased app version to 4.8.7 (versionCode 40).
+
 ## 4.8.6 — calculator hero cleanup
 
 - Removed the redundant U-100 / U-40 text from the calculator hero summary.

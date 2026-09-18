@@ -24,9 +24,11 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.FilterChipDefaults
+import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
@@ -147,7 +149,11 @@ fun PremiumBackground(
             )
         }
 
-        content()
+        CompositionLocalProvider(
+            LocalContentColor provides colors.onBackground
+        ) {
+            content()
+        }
     }
 }
 
@@ -230,10 +236,14 @@ fun GlassCard(
                 .align(Alignment.TopCenter)
         )
 
-        Box(
-            modifier = Modifier.padding(contentPadding),
-            content = content
-        )
+        CompositionLocalProvider(
+            LocalContentColor provides colors.onSurface
+        ) {
+            Box(
+                modifier = Modifier.padding(contentPadding),
+                content = content
+            )
+        }
     }
 }
 
