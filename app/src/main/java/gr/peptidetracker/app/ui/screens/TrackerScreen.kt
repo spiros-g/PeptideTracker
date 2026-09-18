@@ -1,5 +1,6 @@
 package gr.peptidetracker.app.ui.screens
 
+import gr.peptidetracker.app.i18n.isGreekLanguage
 import gr.peptidetracker.app.i18n.t
 
 import android.app.DatePickerDialog
@@ -1100,7 +1101,11 @@ private fun UsageCalendar(
         }
     }.eachCount()
     val monthLabel = SimpleDateFormat("LLLL yyyy", Locale.getDefault()).format(calendar.time)
-    val weekDays = listOf("Δ", "Τ", "Τ", "Π", "Π", "Σ", "Κ")
+    val weekDays = if (isGreekLanguage()) {
+        listOf("Δ", "Τ", "Τ", "Π", "Π", "Σ", "Κ")
+    } else {
+        listOf("M", "T", "W", "T", "F", "S", "S")
+    }
 
     GlassCard(modifier = Modifier.fillMaxWidth()) {
         Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
