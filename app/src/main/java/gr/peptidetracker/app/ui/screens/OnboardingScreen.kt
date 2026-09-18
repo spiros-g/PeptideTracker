@@ -1,5 +1,7 @@
 package gr.peptidetracker.app.ui.screens
 
+import gr.peptidetracker.app.i18n.t
+
 import androidx.compose.foundation.background
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
@@ -58,20 +60,20 @@ fun OnboardingScreen(
     val pages = remember {
         listOf(
             OnboardingPage(
-                "Ανασύσταση χωρίς μπέρδεμα",
-                "Βάλε τι γράφει το φιαλίδιο, πόσο διαλύτη πρόσθεσες και την ποσότητα που θέλεις να μετατρέψεις. Το app κάνει μόνο τη μαθηματική μετατροπή.",
+                t("Ανασύσταση χωρίς μπέρδεμα"),
+                t("Βάλε τι γράφει το φιαλίδιο, πόσο διαλύτη πρόσθεσες και την ποσότητα που θέλεις να μετατρέψεις. Το app κάνει μόνο τη μαθηματική μετατροπή."),
                 Icons.Rounded.Calculate,
                 ElectricBlue
             ),
             OnboardingPage(
-                "Καθαρό ημερολόγιο χρήσεων",
-                "Κράτα ημερομηνία, ώρα, ποσότητα, μονάδα και σημειώσεις ώστε να ξέρεις τι έχεις ήδη καταγράψει.",
+                t("Καθαρό ημερολόγιο χρήσεων"),
+                t("Κράτα ημερομηνία, ώρα, ποσότητα, μονάδα και σημειώσεις ώστε να ξέρεις τι έχεις ήδη καταγράψει."),
                 Icons.AutoMirrored.Rounded.EventNote,
                 ElectricCyan
             ),
             OnboardingPage(
-                "Απόθεμα και ενεργό φιαλίδιο",
-                "Παρακολούθησε πόσα φιαλίδια έχεις, ποιο είναι ενεργό και πόση ποσότητα απομένει σε αυτό.",
+                t("Απόθεμα και ενεργό φιαλίδιο"),
+                t("Παρακολούθησε πόσα φιαλίδια έχεις, ποιο είναι ενεργό και πόση ποσότητα απομένει σε αυτό."),
                 Icons.Rounded.Inventory2,
                 ElectricViolet
             )
@@ -89,12 +91,12 @@ fun OnboardingScreen(
     ) {
         Column(verticalArrangement = Arrangement.spacedBy(18.dp)) {
             Text(
-                "Peptide Tracker GR",
+                "Peptide Tracker",
                 style = MaterialTheme.typography.headlineMedium,
                 fontWeight = FontWeight.Black
             )
             Text(
-                "Όλα τα βασικά εργαλεία σε μία καθαρή εφαρμογή που λειτουργεί τοπικά στη συσκευή.",
+                t("Όλα τα βασικά εργαλεία σε μία καθαρή εφαρμογή που λειτουργεί τοπικά στη συσκευή."),
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
         }
@@ -162,7 +164,7 @@ fun OnboardingScreen(
                 colors = premiumButtonColors()
             ) {
                 Text(
-                    if (page == pages.lastIndex) "Ξεκίνα" else "Συνέχεια",
+                    if (page == pages.lastIndex) t("Ξεκίνα") else t("Συνέχεια"),
                     fontWeight = FontWeight.ExtraBold
                 )
             }
@@ -173,7 +175,7 @@ fun OnboardingScreen(
                     modifier = Modifier.fillMaxWidth(),
                     colors = premiumTextButtonColors()
                 ) {
-                    Text("Παράλειψη")
+                    Text(t("Παράλειψη"))
                 }
             } else {
                 Spacer(Modifier.height(48.dp))
