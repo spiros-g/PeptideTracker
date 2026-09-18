@@ -77,8 +77,10 @@ import gr.peptidetracker.app.ui.premiumTextFieldColors
 import gr.peptidetracker.app.ui.components.PeptidePickerDialog
 import gr.peptidetracker.app.ui.components.SelectionPickerDialog
 import java.text.DateFormat
+import java.text.SimpleDateFormat
 import java.util.Calendar
 import java.util.Date
+import java.util.Locale
 
 @Composable
 fun RemindersScreen(
