@@ -35,7 +35,6 @@ import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
-import androidx.compose.material3.FilterChip
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -70,7 +69,6 @@ import gr.peptidetracker.app.ui.PremiumTopBar
 import gr.peptidetracker.app.ui.StoreVialImage
 import gr.peptidetracker.app.ui.TextPrimary
 import gr.peptidetracker.app.ui.premiumButtonColors
-import gr.peptidetracker.app.ui.premiumFilterChipColors
 import gr.peptidetracker.app.ui.premiumTextButtonColors
 import gr.peptidetracker.app.ui.premiumTextFieldColors
 import java.text.DateFormat
@@ -399,12 +397,7 @@ private fun ReminderCard(
                     fontWeight = FontWeight.Bold
                 )
                 Text(
-                    when (row.repeatDays) {
-                        1 -> "Επανάληψη κάθε ημέρα"
-                        7 -> "Επανάληψη κάθε 7 ημέρες"
-                        0 -> "Μία φορά"
-                        else -> "Επανάληψη κάθε " + row.repeatDays + " ημέρες"
-                    },
+                    reminderRepeatLabel(row.repeatDays),
                     color = ElectricViolet,
                     style = MaterialTheme.typography.bodySmall
                 )
@@ -453,7 +446,14 @@ private fun ReminderEditorDialog(
         )
     }
     var repeatDays by remember(current) { mutableStateOf(current?.repeatDays ?: 0) }
+    var repeatMenu by remember { mutableStateOf(false) }
     var enabled by remember(current) { mutableStateOf(current?.enabled ?: true) }
+    val repeatOptions = remember(current) {
+        (listOf(0, 1, 2, 3, 4, 5, 7, 10, 14, 21, 28, 30) +
+            listOfNotNull(current?.repeatDays?.takeIf { it > 0 }))
+            .distinct()
+            .sorted()
+    }
 
     AlertDialog(
         onDismissRequest = onDismiss,
@@ -527,22 +527,26 @@ private fun ReminderEditorDialog(
                 }
 
                 Text("Επανάληψη", fontWeight = FontWeight.Bold)
-                Row(
-                    Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(6.dp)
-                ) {
-                    listOf(
-                        0 to "Μία φορά",
-                        1 to "Κάθε μέρα",
-                        7 to "Κάθε 7ημ."
-                    ).forEach { (days, label) ->
-                        FilterChip(
-                            selected = repeatDays == days,
-                            onClick = { repeatDays = days },
-                            label = { Text(label, maxLines = 1) },
-                            modifier = Modifier.weight(1f),
-                            colors = premiumFilterChipColors()
-                        )
+                Box {
+                    OutlinedButton(
+                        onClick = { repeatMenu = true },
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Text(reminderRepeatLabel(repeatDays))
+                    }
+                    DropdownMenu(
+                        expanded = repeatMenu,
+                        onDismissRequest = { repeatMenu = false }
+                    ) {
+                        repeatOptions.forEach { days ->
+                            DropdownMenuItem(
+                                text = { Text(reminderRepeatLabel(days)) },
+                                onClick = {
+                                    repeatDays = days
+                                    repeatMenu = false
+                                }
+                            )
+                        }
                     }
                 }
 
@@ -599,6 +603,12 @@ private fun ReminderEditorDialog(
             }
         }
     )
+}
+
+private fun reminderRepeatLabel(days: Int): String = when (days) {
+    0 -> "Μία φορά"
+    1 -> "Κάθε ημέρα"
+    else -> "Κάθε $days ημέρες"
 }
 
 private fun showReminderDatePicker(
