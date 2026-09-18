@@ -1169,7 +1169,7 @@ private fun UsageCalendar(
                                         when {
                                             selected -> ElectricBlue.copy(alpha = 0.30f)
                                             count > 0 -> ElectricCyan.copy(alpha = 0.10f)
-                                            else -> Color.White.copy(alpha = 0.025f)
+                                            else -> MaterialTheme.colorScheme.surface.copy(alpha = 0.52f)
                                         }
                                     )
                                     .clickable { onSelectDay(dayStart) },
@@ -1826,7 +1826,7 @@ private fun InventoryCard(
                         .height(7.dp)
                         .clip(RoundedCornerShape(99.dp)),
                     color = ElectricCyan,
-                    trackColor = Color.White.copy(alpha = 0.09f)
+                    trackColor = MaterialTheme.colorScheme.surfaceVariant
                 )
             }
 
