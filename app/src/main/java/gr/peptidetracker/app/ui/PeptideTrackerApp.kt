@@ -1,5 +1,7 @@
 package gr.peptidetracker.app.ui
 
+import gr.peptidetracker.app.i18n.t
+
 import android.net.Uri
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.tween
@@ -118,10 +120,10 @@ fun PeptideTrackerApp(
     }
 
     val destinations = listOf(
-        MainDestination(Routes.Home, "Αρχική", Icons.Rounded.Home),
-        MainDestination(Routes.Library, "Πεπτίδια", Icons.Rounded.Science),
-        MainDestination(Routes.Calculator, "Υπολογιστής", Icons.Rounded.Calculate),
-        MainDestination(Routes.Tracker, "Ημερολόγιο", Icons.Rounded.QueryStats)
+        MainDestination(Routes.Home, t("Αρχική"), Icons.Rounded.Home),
+        MainDestination(Routes.Library, t("Πεπτίδια"), Icons.Rounded.Science),
+        MainDestination(Routes.Calculator, t("Υπολογιστής"), Icons.Rounded.Calculate),
+        MainDestination(Routes.Tracker, t("Ημερολόγιο"), Icons.Rounded.QueryStats)
     )
     val mainRoutes = destinations.map { it.route }.toSet()
     val backStackEntry by navController.currentBackStackEntryAsState()
@@ -312,11 +314,11 @@ fun PeptideTrackerApp(
             availableUpdate?.let { update ->
                 AlertDialog(
                     onDismissRequest = { availableUpdate = null },
-                    title = { Text("Νέα έκδοση ${update.version}") },
+                    title = { Text(t("Νέα έκδοση ${update.version}")) },
                     text = {
                         Text(
                             buildString {
-                                append("Υπάρχει νεότερη έκδοση του Peptide Tracker στο GitHub.")
+                                append(t("Υπάρχει νεότερη έκδοση του Peptide Tracker στο GitHub."))
                                 if (update.releaseNotes.isNotBlank()) {
                                     append("\n\n")
                                     append(update.releaseNotes.take(700))
@@ -333,12 +335,12 @@ fun PeptideTrackerApp(
                                 availableUpdate = null
                             }
                         ) {
-                            Text("Ενημέρωση τώρα")
+                            Text(t("Ενημέρωση τώρα"))
                         }
                     },
                     dismissButton = {
                         TextButton(onClick = { availableUpdate = null }) {
-                            Text("Αργότερα")
+                            Text(t("Αργότερα"))
                         }
                     }
                 )
