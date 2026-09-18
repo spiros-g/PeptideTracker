@@ -262,8 +262,7 @@ private object ReminderNotifications {
     }
 
     private fun ensureChannel(manager: NotificationManager) {
-        if (manager.getNotificationChannel(CHANNEL_ID) != null) return
-
+        // Re-creating an existing channel updates its user-visible localized name/description.
         val channel = NotificationChannel(
             CHANNEL_ID,
             channelName,
