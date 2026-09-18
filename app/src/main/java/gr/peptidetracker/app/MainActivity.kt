@@ -1,5 +1,6 @@
 package gr.peptidetracker.app
 
+import android.content.Intent
 import android.os.Bundle
 import android.os.SystemClock
 import androidx.activity.compose.setContent
@@ -7,10 +8,12 @@ import androidx.activity.enableEdgeToEdge
 import androidx.biometric.BiometricManager
 import androidx.biometric.BiometricPrompt
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.core.content.ContextCompat
 import androidx.fragment.app.FragmentActivity
+import gr.peptidetracker.app.data.AppUpdateScheduler
 import gr.peptidetracker.app.data.LocalStore
 import gr.peptidetracker.app.ui.AppTheme
 import gr.peptidetracker.app.ui.PeptideTrackerApp
@@ -20,6 +23,7 @@ import gr.peptidetracker.app.ui.screens.AppLockScreen
 class MainActivity : FragmentActivity() {
     private lateinit var store: LocalStore
     private var unlocked by mutableStateOf(true)
+    private var updateRequestToken by mutableIntStateOf(0)
     private var promptVisible = false
     private var backgroundedAt = 0L
 
@@ -29,10 +33,13 @@ class MainActivity : FragmentActivity() {
 
         store = LocalStore(applicationContext)
         unlocked = !store.appLockEnabled()
+        if (intent.getBooleanExtra(EXTRA_OPEN_UPDATE, false)) updateRequestToken++
+
+        AppUpdateScheduler.ensureScheduled(applicationContext)
 
         setContent {
             if (unlocked) {
-                PeptideTrackerApp(store)
+                PeptideTrackerApp(store = store, updateRequestToken = updateRequestToken)
             } else {
                 AppTheme {
                     PremiumBackground {
@@ -43,6 +50,12 @@ class MainActivity : FragmentActivity() {
         }
 
         if (!unlocked) requestUnlock()
+    }
+
+    override fun onNewIntent(intent: Intent) {
+        super.onNewIntent(intent)
+        setIntent(intent)
+        if (intent.getBooleanExtra(EXTRA_OPEN_UPDATE, false)) updateRequestToken++
     }
 
     override fun onStart() {
@@ -81,7 +94,6 @@ class MainActivity : FragmentActivity() {
 
         val status = BiometricManager.from(this).canAuthenticate(authenticators)
         if (status != BiometricManager.BIOMETRIC_SUCCESS) {
-            // Never trap the user outside the app if the device credential/biometric setup changed.
             store.setAppLockEnabled(false)
             unlocked = true
             return
@@ -100,10 +112,6 @@ class MainActivity : FragmentActivity() {
                 override fun onAuthenticationError(errorCode: Int, errString: CharSequence) {
                     promptVisible = false
                 }
-
-                override fun onAuthenticationFailed() {
-                    // Keep the app locked and let the system prompt accept another attempt.
-                }
             }
         )
 
@@ -117,7 +125,8 @@ class MainActivity : FragmentActivity() {
         prompt.authenticate(promptInfo)
     }
 
-    private companion object {
-        const val LOCK_AFTER_MS = 30_000L
+    companion object {
+        const val EXTRA_OPEN_UPDATE = "gr.peptidetracker.app.extra.OPEN_UPDATE"
+        private const val LOCK_AFTER_MS = 30_000L
     }
 }
