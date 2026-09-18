@@ -465,6 +465,7 @@ class LocalStore(context: Context) {
 
     fun addProgress(weight: Double, waist: Double?, note: String) {
         require(weight > 0)
+        require(waist == null || waist > 0)
         val now = System.currentTimeMillis()
         val next = progress().toMutableList()
         next += ProgressEntry(now, weight, waist, safe(note), now)
@@ -473,6 +474,7 @@ class LocalStore(context: Context) {
 
     fun updateProgress(id: Long, weight: Double, waist: Double?, note: String, createdAt: Long) {
         require(weight > 0)
+        require(waist == null || waist > 0)
         saveProgress(
             progress().map {
                 if (it.id == id) it.copy(
@@ -512,6 +514,7 @@ class LocalStore(context: Context) {
         require(peptide.isNotBlank() && vial > 0 && quantity > 0)
         require(diluentMl == null || diluentMl > 0)
         require(syringeUnitsPerMl == 40 || syringeUnitsPerMl == 100)
+        require(purchaseDate == null || expiryDate == null || expiryDate >= purchaseDate)
         val next = inventory().toMutableList()
         next += InventoryEntry(
             id = uniqueId(),
@@ -579,6 +582,8 @@ class LocalStore(context: Context) {
         require(peptide.isNotBlank() && vialMg > 0 && quantity >= 0)
         require(diluentMl == null || diluentMl > 0)
         require(syringeUnitsPerMl == 40 || syringeUnitsPerMl == 100)
+        require(purchaseDate == null || expiryDate == null || expiryDate >= purchaseDate)
+        require(remainingMg == null || remainingMg in 0.0..vialMg)
         saveInventory(
             inventory().map {
                 if (it.id == id) {
