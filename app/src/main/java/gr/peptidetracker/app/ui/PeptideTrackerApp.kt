@@ -23,12 +23,14 @@ import androidx.compose.material.icons.rounded.Calculate
 import androidx.compose.material.icons.rounded.Home
 import androidx.compose.material.icons.rounded.QueryStats
 import androidx.compose.material.icons.rounded.Science
-import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SnackbarDuration
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
+import androidx.compose.material3.SnackbarResult
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -97,6 +99,7 @@ fun PeptideTrackerApp(
     val context = LocalContext.current
     var showOnboarding by rememberSaveable { mutableStateOf(!store.onboardingComplete()) }
     var availableUpdate by remember { mutableStateOf<AppUpdateInfo?>(null) }
+    val updateSnackbarHostState = remember { SnackbarHostState() }
     val uiState: AppUiViewModel = viewModel()
     val navController = rememberNavController()
     val imageIndex = emptyMap<String, String>()
@@ -104,8 +107,7 @@ fun PeptideTrackerApp(
     LaunchedEffect(showOnboarding) {
         if (
             !showOnboarding &&
-            GitHubUpdateChecker.shouldUseGitHubUpdates(context) &&
-            store.shouldCheckForUpdates()
+            GitHubUpdateChecker.shouldUseGitHubUpdates(context)
         ) {
             store.markUpdateCheck()
             availableUpdate = GitHubUpdateChecker.check(BuildConfig.VERSION_NAME)
@@ -119,6 +121,22 @@ fun PeptideTrackerApp(
             }
             onUpdatesOpened()
         }
+    }
+
+    LaunchedEffect(availableUpdate) {
+        val update = availableUpdate ?: return@LaunchedEffect
+        val result = updateSnackbarHostState.showSnackbar(
+            message = t("Νέα έκδοση ${update.version}"),
+            actionLabel = t("Ενημέρωση τώρα"),
+            withDismissAction = true,
+            duration = SnackbarDuration.Long
+        )
+        if (result == SnackbarResult.ActionPerformed) {
+            navController.navigate(Routes.Settings) {
+                launchSingleTop = true
+            }
+        }
+        availableUpdate = null
     }
 
     val destinations = listOf(
@@ -165,6 +183,9 @@ fun PeptideTrackerApp(
                 Scaffold(
                     containerColor = Color.Transparent,
                     contentColor = TextPrimary,
+                    snackbarHost = {
+                        SnackbarHost(hostState = updateSnackbarHostState)
+                    },
                     bottomBar = {
                         if (currentRoute in mainRoutes) {
                             PremiumBottomBar(
@@ -313,40 +334,6 @@ fun PeptideTrackerApp(
                 }
             }
 
-            availableUpdate?.let { update ->
-                AlertDialog(
-                    onDismissRequest = { availableUpdate = null },
-                    title = { Text(t("Νέα έκδοση ${update.version}")) },
-                    text = {
-                        Text(
-                            buildString {
-                                append(t("Υπάρχει νεότερη έκδοση του Peptide Tracker στο GitHub."))
-                                if (update.releaseNotes.isNotBlank()) {
-                                    append("\n\n")
-                                    append(update.releaseNotes.take(700))
-                                }
-                            }
-                        )
-                    },
-                    confirmButton = {
-                        TextButton(
-                            onClick = {
-                                navController.navigate(Routes.Settings) {
-                                    launchSingleTop = true
-                                }
-                                availableUpdate = null
-                            }
-                        ) {
-                            Text(t("Ενημέρωση τώρα"))
-                        }
-                    },
-                    dismissButton = {
-                        TextButton(onClick = { availableUpdate = null }) {
-                            Text(t("Αργότερα"))
-                        }
-                    }
-                )
-            }
         }
     }
 }

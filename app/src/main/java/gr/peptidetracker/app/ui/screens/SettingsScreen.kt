@@ -234,6 +234,75 @@ fun SettingsScreen(
         }
 
         item {
+            GlassCard(modifier = Modifier.fillMaxWidth()) {
+                Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                        Icon(
+                            Icons.Rounded.SystemUpdateAlt,
+                            contentDescription = null,
+                            tint = ElectricCyan,
+                            modifier = Modifier.size(22.dp)
+                        )
+                        Column(Modifier.weight(1f)) {
+                            Text(
+                                t("Ενημερώσεις εφαρμογής"),
+                                fontWeight = FontWeight.ExtraBold,
+                                style = MaterialTheme.typography.titleMedium
+                            )
+                            Text(
+                                t("Εγκατεστημένη έκδοση v") + BuildConfig.VERSION_NAME,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                style = MaterialTheme.typography.bodySmall
+                            )
+                        }
+                    }
+
+                    Text(
+                        updateMessage,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        style = MaterialTheme.typography.bodySmall
+                    )
+
+                    if (githubUpdatesEnabled) {
+                        val available = updateInfo
+                        if (available != null) {
+                            Button(
+                                onClick = { installUpdate(available) },
+                                modifier = Modifier.fillMaxWidth(),
+                                enabled = !checkingUpdate &&
+                                    !downloadingUpdate &&
+                                    available.apkUrl != null,
+                                colors = premiumButtonColors()
+                            ) {
+                                Text(
+                                    if (downloadingUpdate) {
+                                        t("Λήψη ενημέρωσης...")
+                                    } else {
+                                        t("Ενημέρωση σε v") + available.version
+                                    }
+                                )
+                            }
+                        } else {
+                            OutlinedButton(
+                                onClick = ::checkForUpdate,
+                                modifier = Modifier.fillMaxWidth(),
+                                enabled = !checkingUpdate && !downloadingUpdate
+                            ) {
+                                Text(
+                                    if (checkingUpdate) {
+                                        t("Έλεγχος...")
+                                    } else {
+                                        t("Έλεγχος για ενημέρωση")
+                                    }
+                                )
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        item {
             SettingsSectionTitle(t("Εμφάνιση & γλώσσα"))
         }
 
@@ -337,79 +406,6 @@ fun SettingsScreen(
                                 label = { Text(label) },
                                 colors = premiumFilterChipColors()
                             )
-                        }
-                    }
-                }
-            }
-        }
-
-        item {
-            SettingsSectionTitle(t("Εφαρμογή"))
-        }
-
-        item {
-            GlassCard(modifier = Modifier.fillMaxWidth()) {
-                Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
-                    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                        Icon(
-                            Icons.Rounded.SystemUpdateAlt,
-                            contentDescription = null,
-                            tint = ElectricCyan,
-                            modifier = Modifier.size(22.dp)
-                        )
-                        Column(Modifier.weight(1f)) {
-                            Text(
-                                t("Ενημερώσεις εφαρμογής"),
-                                fontWeight = FontWeight.ExtraBold,
-                                style = MaterialTheme.typography.titleMedium
-                            )
-                            Text(
-                                t("Εγκατεστημένη έκδοση v") + BuildConfig.VERSION_NAME,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                                style = MaterialTheme.typography.bodySmall
-                            )
-                        }
-                    }
-
-                    Text(
-                        updateMessage,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        style = MaterialTheme.typography.bodySmall
-                    )
-
-                    if (githubUpdatesEnabled) {
-                        val available = updateInfo
-                        if (available != null) {
-                            Button(
-                                onClick = { installUpdate(available) },
-                                modifier = Modifier.fillMaxWidth(),
-                                enabled = !checkingUpdate &&
-                                    !downloadingUpdate &&
-                                    available.apkUrl != null,
-                                colors = premiumButtonColors()
-                            ) {
-                                Text(
-                                    if (downloadingUpdate) {
-                                        t("Λήψη ενημέρωσης...")
-                                    } else {
-                                        t("Ενημέρωση σε v") + available.version
-                                    }
-                                )
-                            }
-                        } else {
-                            OutlinedButton(
-                                onClick = ::checkForUpdate,
-                                modifier = Modifier.fillMaxWidth(),
-                                enabled = !checkingUpdate && !downloadingUpdate
-                            ) {
-                                Text(
-                                    if (checkingUpdate) {
-                                        t("Έλεγχος...")
-                                    } else {
-                                        t("Έλεγχος για ενημέρωση")
-                                    }
-                                )
-                            }
                         }
                     }
                 }

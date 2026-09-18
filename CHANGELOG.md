@@ -1,5 +1,13 @@
 # Changelog
 
+## 4.8.5 — update prompt and settings priority
+
+- Checks GitHub for a newer release whenever the app is opened after onboarding.
+- Replaced the blocking update dialog with an actionable in-app snackbar/toast; tapping “Update now” opens Settings.
+- Moved the app-update controls to the very top of Settings, immediately below the Settings header.
+- Kept the existing secure download, signature/version validation and Android installer flow unchanged.
+- Increased app version to 4.8.5 (versionCode 38).
+
 ## 4.8.4 — calculator syringe selector cleanup
 
 - Removed the redundant U-100 / U-40 selector from Calculator step 01.
