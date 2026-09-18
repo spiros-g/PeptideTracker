@@ -1,5 +1,12 @@
 # Changelog
 
+## 4.8.16 — transparent Android navigation area
+
+- Removed Android's forced contrast scrim behind the system navigation buttons on supported devices.
+- The bottom system navigation area can now show the app background continuously instead of a separate dark strip.
+- Kept edge-to-edge rendering and the in-app rounded bottom navigation unchanged.
+- Increased app version to 4.8.16 (versionCode 49).
+
 ## 4.8.15 — fix Home hero card fill
 
 - Fixed the top calculator card leaving an unpainted dark strip at the bottom.
