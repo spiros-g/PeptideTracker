@@ -39,7 +39,6 @@ private fun dynamicEnglish(value: String): String? {
 
 private val uiEnglishTranslations = mapOf(
     "Ξεκλείδωμα Peptide Tracker" to "Unlock Peptide Tracker",
-    "Ξεκλείδωμα Peptide Tracker GR" to "Unlock Peptide Tracker",
     "Χρησιμοποίησε βιομετρικά ή το κλείδωμα της συσκευής" to "Use biometrics or your device lock",
     "Υπενθυμίσεις" to "Reminders",
     "Προσωπικές υπενθυμίσεις που έχει ορίσει ο χρήστης" to "Personal reminders created by the user",
@@ -191,7 +190,6 @@ private val uiEnglishTranslations = mapOf(
     "Οι καταγραφές χρήσης, το απόθεμα, οι μετρήσεις, οι υπενθυμίσεις και οι αποθηκευμένοι υπολογισμοί τηρούνται στη συσκευή. Η εφαρμογή δεν απαιτεί λογαριασμό και δεν διαθέτει δικό της cloud sync." to "Usage entries, inventory, measurements, reminders and saved calculations stay on your device. The app requires no account and has no proprietary cloud sync.",
     "Το Android system cloud backup για τα δεδομένα της εφαρμογής είναι απενεργοποιημένο. Backup δημιουργείται μόνο όταν το επιλέξεις εσύ. Υπάρχει απλή JSON εξαγωγή και κρυπτογραφημένη εξαγωγή με κωδικό· για προσωπικές καταγραφές προτείνεται η κρυπτογραφημένη επιλογή." to "Android system cloud backup for app data is disabled. A backup is created only when you choose to create one. Plain JSON export and password-encrypted export are available; encrypted backup is recommended for personal records.",
     "Χρήση εφαρμογής" to "App use",
-    "Το Peptide Tracker GR είναι εργαλείο καταγραφής, οργάνωσης και μαθηματικών μετατροπών. Δεν αποτελεί ιατροτεχνολογικό προϊόν, δεν κάνει διάγνωση και δεν παρέχει εξατομικευμένη ιατρική συμβουλή, θεραπευτικό πρωτόκολλο ή σύσταση δοσολογίας." to "Peptide Tracker is a tracking, organization and mathematical conversion tool. It is not a medical device, does not diagnose, and does not provide personalized medical advice, treatment protocols or dosage recommendations.",
     "Το Peptide Tracker είναι εργαλείο καταγραφής, οργάνωσης και μαθηματικών μετατροπών. Δεν αποτελεί ιατροτεχνολογικό προϊόν, δεν κάνει διάγνωση και δεν παρέχει εξατομικευμένη ιατρική συμβουλή, θεραπευτικό πρωτόκολλο ή σύσταση δοσολογίας." to "Peptide Tracker is a tracking, organization and mathematical conversion tool. It is not a medical device, does not diagnose, and does not provide personalized medical advice, treatment protocols or dosage recommendations.",
     "Γλώσσα εφαρμογής" to "App language",
     "Επίλεξε Ελληνικά, Αγγλικά ή ακολούθησε τη γλώσσα της συσκευής." to "Choose Greek, English, or follow the device language.",
