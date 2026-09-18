@@ -6,11 +6,13 @@ import android.net.Uri
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.navigationBarsPadding
@@ -179,27 +181,30 @@ fun PeptideTrackerApp(
                     }
                 )
             } else {
-                Scaffold(
-                    containerColor = Color.Transparent,
-                    contentColor = TextPrimary,
-                    snackbarHost = {
-                        SnackbarHost(hostState = updateSnackbarHostState)
-                    },
-                    bottomBar = {
-                        if (currentRoute in mainRoutes) {
-                            PremiumBottomBar(
-                                destinations = destinations,
-                                selectedRoute = currentRoute,
-                                onSelected = { navigateMain(it) }
+                Box(Modifier.fillMaxSize()) {
+                    Scaffold(
+                        modifier = Modifier.fillMaxSize(),
+                        containerColor = Color.Transparent,
+                        contentColor = TextPrimary,
+                        snackbarHost = {
+                            SnackbarHost(
+                                hostState = updateSnackbarHostState,
+                                modifier = Modifier.padding(
+                                    bottom = if (currentRoute in mainRoutes) 82.dp else 0.dp
+                                )
                             )
                         }
-                    }
-                ) { padding ->
-                    NavHost(
-                        navController = navController,
-                        startDestination = Routes.Home,
-                        modifier = Modifier.padding(padding)
-                    ) {
+                    ) { padding ->
+                        NavHost(
+                            navController = navController,
+                            startDestination = Routes.Home,
+                            modifier = Modifier
+                                .fillMaxSize()
+                                .padding(padding)
+                                .padding(
+                                    bottom = if (currentRoute in mainRoutes) 74.dp else 0.dp
+                                )
+                        ) {
                         composable(Routes.Home) {
                             HomeScreen(
                                 store = store,
@@ -329,6 +334,15 @@ fun PeptideTrackerApp(
                             }
                         }
                     }
+
+                    if (currentRoute in mainRoutes) {
+                        PremiumBottomBar(
+                            destinations = destinations,
+                            selectedRoute = currentRoute,
+                            onSelected = { navigateMain(it) },
+                            modifier = Modifier.align(Alignment.BottomCenter)
+                        )
+                    }
                 }
             }
 
@@ -340,13 +354,36 @@ fun PeptideTrackerApp(
 private fun PremiumBottomBar(
     destinations: List<MainDestination>,
     selectedRoute: String,
-    onSelected: (String) -> Unit
+    onSelected: (String) -> Unit,
+    modifier: Modifier = Modifier
 ) {
     Box(
-        Modifier
+        modifier
             .fillMaxWidth()
             .navigationBarsPadding()
             .padding(horizontal = 14.dp, vertical = 8.dp)
+            .clip(RoundedCornerShape(26.dp))
+            .background(
+                Brush.horizontalGradient(
+                    listOf(
+                        MaterialTheme.colorScheme.surface.copy(alpha = 0.98f),
+                        MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.94f),
+                        MaterialTheme.colorScheme.surface.copy(alpha = 0.98f)
+                    )
+                )
+            )
+            .border(
+                1.dp,
+                Brush.horizontalGradient(
+                    listOf(
+                        MaterialTheme.colorScheme.onSurface.copy(alpha = 0.14f),
+                        MaterialTheme.colorScheme.primary.copy(alpha = 0.16f),
+                        MaterialTheme.colorScheme.onSurface.copy(alpha = 0.06f)
+                    )
+                ),
+                RoundedCornerShape(26.dp)
+            )
+            .padding(horizontal = 6.dp, vertical = 6.dp)
     ) {
         Row(
             Modifier.fillMaxWidth(),

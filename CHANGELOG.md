@@ -1,5 +1,19 @@
 # Changelog
 
+## 4.8.18 — floating glass bottom navigation
+
+- Restored the rounded glass background, border radius and border of the in-app bottom navigation.
+- Removed the dedicated full-width Scaffold bottom-bar strip behind it by rendering the navigation as a floating overlay on the app background.
+- Kept content and snackbars padded so they do not sit underneath the floating navigation.
+- Increased app version to 4.8.18 (versionCode 51).
+
+## 4.8.17 — simplified syringe units
+
+- Removed user-facing U-100 / U-40 references and the U-100 / U-40 selector.
+- Standardized current calculator and inventory UI on syringe capacity and generic syringe-unit wording.
+- Updated Home, inventory, saved calculations and translations to use generic units.
+- Increased app version to 4.8.17 (versionCode 50).
+
 ## 4.8.16 — transparent Android navigation area
 
 - Removed Android's forced contrast scrim behind the system navigation buttons on supported devices.
