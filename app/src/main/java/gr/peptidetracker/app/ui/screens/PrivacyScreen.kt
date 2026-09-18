@@ -82,7 +82,7 @@ fun PrivacyScreen(onBack: () -> Unit) {
 
         item {
             Text(
-                t("Για δημοσίευση στο Google Play απαιτείται επιπλέον δημόσια προσβάσιμη πολιτική απορρήτου με στοιχεία υπευθύνου και επικοινωνίας."),
+                t("Το Peptide Tracker δεν αποστέλλει τις καταγραφές σου σε δικό του server. Εξωτερικοί σύνδεσμοι ανοίγουν εκτός εφαρμογής και δεν περιλαμβάνουν δεδομένα του tracker."),
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                 style = MaterialTheme.typography.bodySmall
             )
