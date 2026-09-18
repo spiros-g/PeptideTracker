@@ -438,5 +438,8 @@ private val uiEnglishTranslations = mapOf(
     "Το Peptide Tracker δεν αποστέλλει τις καταγραφές σου σε δικό του server. Εξωτερικοί σύνδεσμοι ανοίγουν εκτός εφαρμογής και δεν περιλαμβάνουν δεδομένα του tracker." to "Peptide Tracker does not send your records to its own server. External links open outside the app and do not include tracker data.",
     "Αναζήτησε και επίλεξε από τη λίστα." to "Search and select from the list.",
     "Γράψε όνομα πεπτιδίου" to "Type a peptide name",
-    "Δεν βρέθηκαν πεπτίδια." to "No peptides found."
+    "Δεν βρέθηκαν πεπτίδια." to "No peptides found.",
+    "Αναζήτηση" to "Search",
+    "Δεν βρέθηκαν επιλογές." to "No options found.",
+    "πεπτίδια" to "peptides"
 )
