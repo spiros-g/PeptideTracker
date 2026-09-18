@@ -2,11 +2,11 @@ name: Android Build
 
 on:
   push:
-    branches: [release/4.7.0-hardening]
+    branches: [feature/in-app-updates]
   workflow_dispatch:
 
 concurrency:
-  group: android-build-release-4-7
+  group: android-build-feature-in-app-updates
   cancel-in-progress: true
 
 jobs:
