@@ -1,5 +1,11 @@
 # Changelog
 
+## 4.8.14 — home safe-area visual fix
+
+- Prevented Home content from scrolling underneath the Android status bar, which could visually clip the top header after a small scroll.
+- Added a larger bottom content inset so lower Home cards have cleaner breathing room above the persistent bottom navigation.
+- Increased app version to 4.8.14 (versionCode 47).
+
 ## 4.8.13 — tighter home calculator card
 
 - Reduced the Home calculator card again from a 198 dp minimum height to 156 dp.
