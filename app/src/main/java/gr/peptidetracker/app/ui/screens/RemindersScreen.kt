@@ -668,12 +668,6 @@ private fun ReminderEditorDialog(
             }
         }
     )
-}
-
-private fun reminderRepeatLabel(days: Int): String = when (days) {
-    0 -> t("Μία φορά")
-    1 -> t("Κάθε ημέρα")
-    else -> t("Κάθε $days ημέρες")
 
     if (peptideMenu) {
         PeptidePickerDialog(
@@ -703,7 +697,12 @@ private fun reminderRepeatLabel(days: Int): String = when (days) {
             }
         )
     }
+}
 
+private fun reminderRepeatLabel(days: Int): String = when (days) {
+    0 -> t("Μία φορά")
+    1 -> t("Κάθε ημέρα")
+    else -> t("Κάθε $days ημέρες")
 }
 
 private fun showReminderDatePicker(
