@@ -18,7 +18,12 @@ class ReminderCadenceTest {
         val start = 1_000L
         assertEquals(
             start + 3L * day,
-            ReminderCadence.nextScheduledAt(start, 1, start + 2L * day)
+            ReminderCadence.nextScheduledAt(
+                start,
+                1,
+                start + 2L * day,
+                ZoneId.of("UTC")
+            )
         )
     }
 
@@ -28,7 +33,12 @@ class ReminderCadenceTest {
         val start = 1_000L
         assertEquals(
             start + 6L * day,
-            ReminderCadence.nextScheduledAt(start, 3, start + 4L * day)
+            ReminderCadence.nextScheduledAt(
+                start,
+                3,
+                start + 4L * day,
+                ZoneId.of("UTC")
+            )
         )
     }
 
@@ -57,7 +67,12 @@ class ReminderCadenceTest {
         val start = 1_000L
         assertEquals(
             start + 14L * day,
-            ReminderCadence.nextScheduledAt(start, 7, start + 10L * day)
+            ReminderCadence.nextScheduledAt(
+                start,
+                7,
+                start + 10L * day,
+                ZoneId.of("UTC")
+            )
         )
     }
 }
