@@ -98,6 +98,12 @@ class UpdateNotificationWorker(
         private const val KEY_LAST_NOTIFIED_VERSION = "last_notified_version"
 
         fun schedule(context: Context) {
+            val workManager = WorkManager.getInstance(context)
+            if (!GitHubUpdateChecker.shouldUseGitHubUpdates(context)) {
+                workManager.cancelUniqueWork(UNIQUE_WORK_NAME)
+                return
+            }
+
             val request =
                 PeriodicWorkRequestBuilder<UpdateNotificationWorker>(
                     24,
@@ -110,7 +116,7 @@ class UpdateNotificationWorker(
                     )
                     .build()
 
-            WorkManager.getInstance(context).enqueueUniquePeriodicWork(
+            workManager.enqueueUniquePeriodicWork(
                 UNIQUE_WORK_NAME,
                 ExistingPeriodicWorkPolicy.KEEP,
                 request
