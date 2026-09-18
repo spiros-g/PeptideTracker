@@ -1,17 +1,26 @@
 package gr.peptidetracker.app.domain
 
-object ReminderCadence {
-    private const val DAY_MS = 24L * 60L * 60L * 1000L
+import java.time.Instant
+import java.time.ZoneId
 
+object ReminderCadence {
     fun nextScheduledAt(
         scheduledAt: Long,
         repeatDays: Int,
-        now: Long
+        now: Long,
+        zoneId: ZoneId = ZoneId.systemDefault()
     ): Long? {
         if (repeatDays <= 0) return null
-        val step = repeatDays.toLong() * DAY_MS
-        var next = scheduledAt + step
-        while (next <= now) next += step
-        return next
+
+        var next = Instant.ofEpochMilli(scheduledAt)
+            .atZone(zoneId)
+            .plusDays(repeatDays.toLong())
+
+        val nowInstant = Instant.ofEpochMilli(now)
+        while (!next.toInstant().isAfter(nowInstant)) {
+            next = next.plusDays(repeatDays.toLong())
+        }
+
+        return next.toInstant().toEpochMilli()
     }
 }

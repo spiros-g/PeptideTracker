@@ -143,6 +143,15 @@ class LocalStore(context: Context) {
     fun setNotificationDetailsVisible(value: Boolean) =
         prefs.edit().putBoolean("notification_details_visible", value).apply()
 
+    fun shouldCheckForUpdates(now: Long = System.currentTimeMillis()): Boolean {
+        val lastCheck = prefs.getLong(KEY_LAST_UPDATE_CHECK_AT, 0L)
+        return lastCheck <= 0L || now - lastCheck >= UPDATE_CHECK_INTERVAL_MS
+    }
+
+    fun markUpdateCheck(now: Long = System.currentTimeMillis()) {
+        prefs.edit().putLong(KEY_LAST_UPDATE_CHECK_AT, now).apply()
+    }
+
     fun favorites(): Set<String> = io { dao.favoriteIds().toSet() }
 
     fun toggleFavorite(id: String) {
@@ -202,33 +211,51 @@ class LocalStore(context: Context) {
     ): Boolean {
         require(peptide.isNotBlank())
         require(amountValue > 0)
+
         val normalizedUnit = unit.trim().ifBlank { "mcg" }
         val amountMg = if (subtractFromInventory && inventoryId != null) {
             amountToMg(amountValue, normalizedUnit) ?: return false
         } else {
             null
         }
-
-        if (amountMg != null && !consumeInventory(inventoryId!!, amountMg)) {
-            return false
-        }
-
         val id = uniqueId()
-        val next = entries().toMutableList()
-        next += TrackerEntry(
-            id = id,
-            peptide = safe(peptide.trim()),
-            amount = formatNumber(amountValue) + " " + normalizedUnit,
-            note = safe(note.trim()),
-            createdAt = createdAt,
-            amountValue = amountValue,
-            unit = normalizedUnit,
-            site = safe(site.trim()),
-            inventoryId = if (amountMg != null) inventoryId else null,
-            inventoryAppliedMg = amountMg
-        )
-        saveEntries(next)
-        return true
+
+        return io {
+            var saved = false
+            database.runInTransaction {
+                if (amountMg != null && inventoryId != null) {
+                    val inventoryRows = dao.inventoryEntries()
+                    val target = inventoryRows.firstOrNull { it.id == inventoryId }
+                        ?: return@runInTransaction
+                    val updated = InventoryLedger.consume(target, amountMg)
+                        ?: return@runInTransaction
+
+                    val nextInventory = inventoryRows.map {
+                        if (it.id == inventoryId) updated else it
+                    }
+                    dao.clearInventoryEntries()
+                    if (nextInventory.isNotEmpty()) dao.insertInventoryEntries(nextInventory)
+                }
+
+                val nextEntries = dao.trackerEntries().toMutableList()
+                nextEntries += TrackerEntry(
+                    id = id,
+                    peptide = safe(peptide.trim()),
+                    amount = formatNumber(amountValue) + " " + normalizedUnit,
+                    note = safe(note.trim()),
+                    createdAt = createdAt,
+                    amountValue = amountValue,
+                    unit = normalizedUnit,
+                    site = safe(site.trim()),
+                    inventoryId = if (amountMg != null) inventoryId else null,
+                    inventoryAppliedMg = amountMg
+                )
+                dao.clearTrackerEntries()
+                dao.insertTrackerEntries(nextEntries)
+                saved = true
+            }
+            saved
+        }
     }
 
     fun updateEntry(
@@ -243,77 +270,169 @@ class LocalStore(context: Context) {
         require(peptide.isNotBlank())
         require(amountValue > 0)
 
-        val current = entries().firstOrNull { it.id == id } ?: return false
         val normalizedUnit = unit.trim().ifBlank { "mcg" }
-        var nextInventoryId = current.inventoryId
-        var nextAppliedMg = current.inventoryAppliedMg
 
-        if (current.inventoryId != null && current.inventoryAppliedMg != null) {
-            val stillSamePeptide = current.peptide.equals(peptide.trim(), ignoreCase = true)
-            val requestedMg = amountToMg(amountValue, normalizedUnit)
+        return io {
+            var saved = false
+            database.runInTransaction {
+                val rows = dao.trackerEntries()
+                val current = rows.firstOrNull { it.id == id } ?: return@runInTransaction
+                val inventoryRows = dao.inventoryEntries().toMutableList()
+                var inventoryChanged = false
 
-            if (!stillSamePeptide || requestedMg == null) {
-                restoreInventory(current.inventoryId, current.inventoryAppliedMg)
-                nextInventoryId = null
-                nextAppliedMg = null
-            } else {
-                val delta = requestedMg - current.inventoryAppliedMg
-                when {
-                    delta > 0.0000001 -> {
-                        if (!consumeInventory(current.inventoryId, delta)) return false
+                var nextInventoryId = current.inventoryId
+                var nextAppliedMg = current.inventoryAppliedMg
+
+                if (current.inventoryId != null && current.inventoryAppliedMg != null) {
+                    val inventoryIndex = inventoryRows.indexOfFirst { it.id == current.inventoryId }
+                    if (inventoryIndex < 0) {
+                        nextInventoryId = null
+                        nextAppliedMg = null
+                    } else {
+                        val stillSamePeptide =
+                            current.peptide.equals(peptide.trim(), ignoreCase = true)
+                        val requestedMg = amountToMg(amountValue, normalizedUnit)
+
+                        if (!stillSamePeptide || requestedMg == null) {
+                            InventoryLedger.restore(
+                                row = inventoryRows[inventoryIndex],
+                                amountMg = current.inventoryAppliedMg,
+                                now = System.currentTimeMillis()
+                            )?.let { restored ->
+                                inventoryRows[inventoryIndex] = restored
+                                inventoryChanged = true
+                            }
+                            nextInventoryId = null
+                            nextAppliedMg = null
+                        } else {
+                            val delta = requestedMg - current.inventoryAppliedMg
+                            when {
+                                delta > 0.0000001 -> {
+                                    val updated = InventoryLedger.consume(
+                                        inventoryRows[inventoryIndex],
+                                        delta
+                                    ) ?: return@runInTransaction
+                                    inventoryRows[inventoryIndex] = updated
+                                    inventoryChanged = true
+                                }
+
+                                delta < -0.0000001 -> {
+                                    val updated = InventoryLedger.restore(
+                                        row = inventoryRows[inventoryIndex],
+                                        amountMg = -delta,
+                                        now = System.currentTimeMillis()
+                                    ) ?: return@runInTransaction
+                                    inventoryRows[inventoryIndex] = updated
+                                    inventoryChanged = true
+                                }
+                            }
+                            nextAppliedMg = requestedMg
+                        }
                     }
-                    delta < -0.0000001 -> restoreInventory(current.inventoryId, -delta)
+                } else if (current.inventoryId != null) {
+                    // Legacy entries may point to inventory without proving stock was deducted.
+                    nextInventoryId = null
+                    nextAppliedMg = null
                 }
-                nextAppliedMg = requestedMg
-            }
-        } else if (current.inventoryId != null) {
-            // Legacy v4 entries did not persist whether stock subtraction actually succeeded.
-            // Detach them on edit rather than guessing and corrupting inventory.
-            nextInventoryId = null
-            nextAppliedMg = null
-        }
 
-        val next = entries().map { entry ->
-            if (entry.id != id) {
-                entry
-            } else {
-                entry.copy(
-                    peptide = safe(peptide.trim()),
-                    amount = formatNumber(amountValue) + " " + normalizedUnit,
-                    note = safe(note.trim()),
-                    createdAt = createdAt,
-                    amountValue = amountValue,
-                    unit = normalizedUnit,
-                    site = safe(site.trim()),
-                    inventoryId = nextInventoryId,
-                    inventoryAppliedMg = nextAppliedMg
-                )
+                if (inventoryChanged) {
+                    dao.clearInventoryEntries()
+                    if (inventoryRows.isNotEmpty()) dao.insertInventoryEntries(inventoryRows)
+                }
+
+                val nextEntries = rows.map { entry ->
+                    if (entry.id != id) {
+                        entry
+                    } else {
+                        entry.copy(
+                            peptide = safe(peptide.trim()),
+                            amount = formatNumber(amountValue) + " " + normalizedUnit,
+                            note = safe(note.trim()),
+                            createdAt = createdAt,
+                            amountValue = amountValue,
+                            unit = normalizedUnit,
+                            site = safe(site.trim()),
+                            inventoryId = nextInventoryId,
+                            inventoryAppliedMg = nextAppliedMg
+                        )
+                    }
+                }
+                dao.clearTrackerEntries()
+                if (nextEntries.isNotEmpty()) dao.insertTrackerEntries(nextEntries)
+                saved = true
             }
+            saved
         }
-        saveEntries(next)
-        return true
     }
 
-    fun deleteEntry(id: Long): TrackerEntry? {
-        val current = entries().firstOrNull { it.id == id } ?: return null
-        if (current.inventoryId != null && current.inventoryAppliedMg != null) {
-            restoreInventory(current.inventoryId, current.inventoryAppliedMg)
+    fun deleteEntry(id: Long): TrackerEntry? = io {
+        var deleted: TrackerEntry? = null
+
+        database.runInTransaction {
+            val rows = dao.trackerEntries()
+            val current = rows.firstOrNull { it.id == id } ?: return@runInTransaction
+            val inventoryRows = dao.inventoryEntries().toMutableList()
+
+            if (current.inventoryId != null && current.inventoryAppliedMg != null) {
+                val inventoryIndex = inventoryRows.indexOfFirst { it.id == current.inventoryId }
+                if (inventoryIndex >= 0) {
+                    val restored = InventoryLedger.restore(
+                        row = inventoryRows[inventoryIndex],
+                        amountMg = current.inventoryAppliedMg,
+                        now = System.currentTimeMillis()
+                    ) ?: return@runInTransaction
+
+                    inventoryRows[inventoryIndex] = restored
+                    dao.clearInventoryEntries()
+                    if (inventoryRows.isNotEmpty()) dao.insertInventoryEntries(inventoryRows)
+                }
+            }
+
+            val nextEntries = rows.filterNot { it.id == id }
+            dao.clearTrackerEntries()
+            if (nextEntries.isNotEmpty()) dao.insertTrackerEntries(nextEntries)
+            deleted = current
         }
-        saveEntries(entries().filterNot { it.id == id })
-        return current
+
+        deleted
     }
 
-    fun restoreDeletedEntry(entry: TrackerEntry): Boolean {
-        if (entries().any { it.id == entry.id }) return false
-        var restored = entry
-        if (entry.inventoryId != null && entry.inventoryAppliedMg != null) {
-            val applied = consumeInventory(entry.inventoryId, entry.inventoryAppliedMg)
-            if (!applied) {
-                restored = entry.copy(inventoryId = null, inventoryAppliedMg = null)
+    fun restoreDeletedEntry(entry: TrackerEntry): Boolean = io {
+        var restoredSuccessfully = false
+
+        database.runInTransaction {
+            val rows = dao.trackerEntries()
+            if (rows.any { it.id == entry.id }) return@runInTransaction
+
+            val inventoryRows = dao.inventoryEntries().toMutableList()
+            var restored = entry
+
+            if (entry.inventoryId != null && entry.inventoryAppliedMg != null) {
+                val inventoryIndex = inventoryRows.indexOfFirst { it.id == entry.inventoryId }
+                if (inventoryIndex >= 0) {
+                    val updated = InventoryLedger.consume(
+                        inventoryRows[inventoryIndex],
+                        entry.inventoryAppliedMg
+                    )
+                    if (updated != null) {
+                        inventoryRows[inventoryIndex] = updated
+                        dao.clearInventoryEntries()
+                        if (inventoryRows.isNotEmpty()) dao.insertInventoryEntries(inventoryRows)
+                    } else {
+                        restored = entry.copy(inventoryId = null, inventoryAppliedMg = null)
+                    }
+                } else {
+                    restored = entry.copy(inventoryId = null, inventoryAppliedMg = null)
+                }
             }
+
+            val nextEntries = rows + restored
+            dao.clearTrackerEntries()
+            dao.insertTrackerEntries(nextEntries)
+            restoredSuccessfully = true
         }
-        saveEntries(entries() + restored)
-        return true
+
+        restoredSuccessfully
     }
 
     fun progress(): List<ProgressEntry> = io { dao.progressEntries() }
@@ -1134,5 +1253,7 @@ class LocalStore(context: Context) {
         const val KEY_CALCULATIONS_V1 = "calculations_v1_json"
         const val KEY_PRE_RESTORE_BACKUP = "pre_restore_backup_json"
         const val KEY_ROOM_MIGRATED = "room_migrated_v1"
+        const val KEY_LAST_UPDATE_CHECK_AT = "last_update_check_at"
+        const val UPDATE_CHECK_INTERVAL_MS = 24L * 60L * 60L * 1000L
     }
 }

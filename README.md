@@ -8,16 +8,17 @@ Native, offline-first Android application in Greek, built with Kotlin, Jetpack C
 - Reconstitution and mathematical amount-to-volume / reverse calculators for U-100 and U-40 syringes.
 - Usage log with monthly calendar view, repeat-last workflow, delete undo and statistics.
 - Inventory with sealed / active / empty state, remaining amount, reconstitution data, lot, vendor/source, purchase date, expiry and notes.
+- Home-screen visibility for expired inventory and inventory expiring within 30 days.
 - Reversible inventory accounting for linked usage logs.
 - Body-weight / waist progress tracking.
-- User-defined reminders with one-time, daily and 7-day recurrence plus 15-minute snooze.
+- User-defined reminders with one-time or flexible 1–30 day recurrence options plus 15-minute snooze.
 - Optional private notification mode.
 - Optional biometric / device-credential app lock.
 - Custom peptide names for tracking without generating scientific claims.
 - Room database with non-destructive migration from legacy SharedPreferences data.
 - JSON backup / restore with preview plus password-encrypted AES-GCM backup.
 - CSV history export.
-- GitHub Actions validation: unit tests, Android lint and debug APK build.
+- Local validation scripts for unit tests, Android lint, debug APK builds and signed release AAB builds. The GitHub Actions workflow is manual-only while hosted Actions quota is unavailable.
 
 The calculator performs mathematical conversions only. The app does not recommend doses, treatment protocols or personalized medical decisions.
 
@@ -33,11 +34,13 @@ Windows:
 
     compile.bat
 
-GitHub Actions executes:
+compile.bat executes:
 
     gradle testDebugUnitTest
     gradle lintDebug
     gradle assembleDebug
+
+The repository also keeps a manual-only GitHub Actions workflow for future use when hosted Actions quota is available.
 
 Debug APK:
 
@@ -48,6 +51,8 @@ Debug APK:
 Copy keystore.properties.example to keystore.properties and point it to your private release keystore. Never commit the real keystore or passwords.
 
 The Gradle release build loads signing credentials only when the local keystore.properties file exists.
+
+For a production candidate, run build-release.bat. It runs unit tests, release lint and then creates the signed AAB at app/build/outputs/bundle/release/app-release.aab.
 
 ## Advertising
 
