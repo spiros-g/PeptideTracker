@@ -1,5 +1,6 @@
 package gr.peptidetracker.app.ui
 
+import android.app.Activity
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
@@ -8,12 +9,15 @@ import androidx.compose.material3.Typography
 import androidx.compose.material3.darkColorScheme
 import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.SideEffect
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.core.view.WindowCompat
 
 val ElectricBlue = Color(0xFF5B87F7)
 val ElectricViolet = Color(0xFF8C6FE8)
@@ -214,6 +218,15 @@ fun AppTheme(
         "dark" -> true
         "light" -> false
         else -> isSystemInDarkTheme()
+    }
+
+    val view = LocalView.current
+    SideEffect {
+        val activity = view.context as? Activity ?: return@SideEffect
+        WindowCompat.getInsetsController(activity.window, view).apply {
+            isAppearanceLightStatusBars = !darkTheme
+            isAppearanceLightNavigationBars = !darkTheme
+        }
     }
 
     MaterialTheme(
