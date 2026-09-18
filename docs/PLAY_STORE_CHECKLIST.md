@@ -10,7 +10,9 @@
 - In-app privacy/safety information.
 - Release signing configuration wired through local keystore.properties.
 - Local signing material and Android machine-specific files excluded through .gitignore.
-- Unit tests, lint, debug APK build and release-variant compilation in GitHub Actions for main and pull requests.
+- Local compile.bat validation for unit tests, lint and debug APK builds.
+- Local build-release.bat release gate for unit tests, release lint and signed AAB creation.
+- GitHub Actions workflow retained as manual-only while hosted Actions quota is unavailable.
 - Current beta contains no AdMob/UMP SDK.
 
 ## Required before public production release
