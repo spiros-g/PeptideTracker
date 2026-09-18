@@ -11,6 +11,8 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -465,7 +467,7 @@ fun TrackerScreen(
                     reloadAll()
                     showLogDialog = false
                     repeatLogTemplate = null
-                    dataMessage = ""
+                    dataMessage = t("Η καταγραφή αποθηκεύτηκε.")
                     haptics.performHapticFeedback(HapticFeedbackType.LongPress)
                 } else {
                     dataMessage = t("Δεν υπάρχει αρκετό υπόλοιπο στο συνδεδεμένο ενεργό vial για αυτή την καταγραφή.")
@@ -512,6 +514,7 @@ fun TrackerScreen(
                     )
                 }
                 inventory = store.inventory()
+                dataMessage = t("Το απόθεμα αποθηκεύτηκε.")
                 showInventoryDialog = false
             }
         )
@@ -529,6 +532,7 @@ fun TrackerScreen(
                     store.updateProgress(current.id, weight, waist, note, createdAt)
                 }
                 progress = store.progress()
+                dataMessage = t("Η μέτρηση αποθηκεύτηκε.")
                 showProgressDialog = false
             }
         )
@@ -2002,7 +2006,9 @@ private fun LogEditorDialog(
         title = { Text(if (current == null) t("Νέα καταγραφή χρήσης") else t("Επεξεργασία καταγραφής")) },
         text = {
             LazyColumn(
-                modifier = Modifier.fillMaxWidth(),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .heightIn(max = 520.dp),
                 verticalArrangement = Arrangement.spacedBy(10.dp)
             ) {
                 item {
@@ -2196,6 +2202,19 @@ private fun InventoryEditorDialog(
     val diluentValue = diluent.replace(',', '.').toDoubleOrNull()
     val remainingValue = remaining.replace(',', '.').toDoubleOrNull()
 
+    val inventoryValidationMessage = when {
+        current == null && quantityValue != null && quantityValue <= 0 ->
+            t("Χρειάζεται τουλάχιστον ένα φιαλίδιο.")
+        purchaseDate != null && expiryDate != null && expiryDate < purchaseDate ->
+            t("Η ημερομηνία λήξης δεν μπορεί να είναι πριν από την ημερομηνία αγοράς.")
+        current != null &&
+            remainingValue != null &&
+            vialValue != null &&
+            remainingValue > vialValue ->
+            t("Το υπόλοιπο δεν μπορεί να είναι μεγαλύτερο από την περιεκτικότητα του φιαλιδίου.")
+        else -> null
+    }
+
     AlertDialog(
         onDismissRequest = onDismiss,
         containerColor = GlassSurfaceStrong,
@@ -2203,7 +2222,12 @@ private fun InventoryEditorDialog(
         textContentColor = TextPrimary,
         title = { Text(if (current == null) t("Προσθήκη στο απόθεμα") else t("Επεξεργασία αποθέματος")) },
         text = {
-            Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+            Column(
+                modifier = Modifier
+                    .heightIn(max = 520.dp)
+                    .verticalScroll(rememberScrollState()),
+                verticalArrangement = Arrangement.spacedBy(10.dp)
+            ) {
                 Box {
                     OutlinedButton(
                         onClick = { peptideMenu = true },
@@ -2362,6 +2386,13 @@ private fun InventoryEditorDialog(
                         colors = premiumTextFieldColors()
                     )
                 }
+                if (inventoryValidationMessage != null) {
+                    Text(
+                        inventoryValidationMessage,
+                        color = MaterialTheme.colorScheme.error,
+                        style = MaterialTheme.typography.bodySmall
+                    )
+                }
             }
         },
         confirmButton = {
@@ -2383,9 +2414,11 @@ private fun InventoryEditorDialog(
                 },
                 enabled = peptide.isNotBlank() &&
                     vialValue != null && vialValue > 0 &&
-                    quantityValue != null && quantityValue >= 0 &&
+                    quantityValue != null &&
+                    (if (current == null) quantityValue > 0 else quantityValue >= 0) &&
                     (diluent.isBlank() || (diluentValue != null && diluentValue > 0)) &&
-                    (current == null || remainingValue == null || remainingValue >= 0),
+                    (current == null || remainingValue == null || remainingValue >= 0) &&
+                    inventoryValidationMessage == null,
                 colors = premiumButtonColors()
             ) {
                 Text(t("Αποθήκευση"))
@@ -2414,6 +2447,8 @@ private fun ProgressEditorDialog(
     val weightValue = weight.replace(',', '.').toDoubleOrNull()
     val waistValue = waist.replace(',', '.').toDoubleOrNull()
 
+    val waistError = waist.isNotBlank() && (waistValue == null || waistValue <= 0)
+
     AlertDialog(
         onDismissRequest = onDismiss,
         containerColor = GlassSurfaceStrong,
@@ -2437,6 +2472,12 @@ private fun ProgressEditorDialog(
                     modifier = Modifier.fillMaxWidth(),
                     label = { Text(t("Περίμετρος μέσης (cm, προαιρετικά)")) },
                     singleLine = true,
+                    isError = waistError,
+                    supportingText = {
+                        if (waistError) {
+                            Text(t("Η περίμετρος μέσης πρέπει να είναι θετικός αριθμός."))
+                        }
+                    },
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
                     colors = premiumTextFieldColors()
                 )
@@ -2462,7 +2503,7 @@ private fun ProgressEditorDialog(
                 onClick = {
                     onSave(weightValue ?: return@Button, waistValue, note.trim(), timestamp)
                 },
-                enabled = weightValue != null && weightValue > 0,
+                enabled = weightValue != null && weightValue > 0 && !waistError,
                 colors = premiumButtonColors()
             ) {
                 Text(t("Αποθήκευση"))
