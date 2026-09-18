@@ -9,7 +9,8 @@
 - Optional app lock and private notifications.
 - In-app privacy/safety information.
 - Release signing configuration wired through local keystore.properties.
-- Unit tests, lint and debug APK build in GitHub Actions.
+- Local signing material and Android machine-specific files excluded through .gitignore.
+- Unit tests, lint, debug APK build and release-variant compilation in GitHub Actions for main and pull requests.
 - Current beta contains no AdMob/UMP SDK.
 
 ## Required before public production release
