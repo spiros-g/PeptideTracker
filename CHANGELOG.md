@@ -1,5 +1,12 @@
 # Changelog
 
+## 4.8.15 — fix Home hero card fill
+
+- Fixed the top calculator card leaving an unpainted dark strip at the bottom.
+- Moved the 156 dp minimum height from the outer GlassCard to the hero Row so the gradient/content fills the entire rounded card.
+- Kept the compact card size and tap behavior unchanged.
+- Increased app version to 4.8.15 (versionCode 48).
+
 ## 4.8.14 — home safe-area visual fix
 
 - Prevented Home content from scrolling underneath the Android status bar, which could visually clip the top header after a small scroll.

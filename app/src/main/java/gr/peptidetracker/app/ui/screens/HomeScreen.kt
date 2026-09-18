@@ -110,15 +110,14 @@ fun HomeScreen(
 
         item {
             GlassCard(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .heightIn(min = 156.dp),
+                modifier = Modifier.fillMaxWidth(),
                 contentPadding = PaddingValues(0.dp),
                 onClick = { onNavigate(2) }
             ) {
                 Row(
                     modifier = Modifier
-                        .fillMaxSize()
+                        .fillMaxWidth()
+                        .heightIn(min = 156.dp)
                         .background(
                             Brush.linearGradient(
                                 listOf(
