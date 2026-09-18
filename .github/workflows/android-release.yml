@@ -72,21 +72,32 @@ jobs:
           KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
         run: |
           printf '%s' "$KEYSTORE_BASE64" | base64 --decode > release.keystore
-          keytool -list -keystore release.keystore -storepass "$STORE_PASSWORD" -alias "$KEY_ALIAS" >/dev/null
+          echo "Keystore decoded: $(wc -c < release.keystore) bytes"
+          echo "Keystore SHA256: $(sha256sum release.keystore | awk '{print $1}')"
+
+          if keytool -list -keystore release.keystore -storepass "$STORE_PASSWORD" -alias "$KEY_ALIAS" >/dev/null 2>&1; then
+            echo "Keystore open: OK"
+          else
+            echo "Keystore open: FAILED"
+            exit 1
+          fi
 
           printf 'signing probe' > signing-probe.txt
           jar cf signing-probe-unsigned.jar signing-probe.txt
+          echo "Signing probe JAR: OK"
 
           SELECTED_KEY_PASSWORD=""
           cp signing-probe-unsigned.jar signing-probe-key.jar
           if jarsigner -keystore release.keystore -storepass "$STORE_PASSWORD" -keypass "$KEY_PASSWORD" signing-probe-key.jar "$KEY_ALIAS" >/dev/null 2>&1; then
             SELECTED_KEY_PASSWORD="$KEY_PASSWORD"
+            echo "Private key unlock: ANDROID_KEY_PASSWORD"
           else
             cp signing-probe-unsigned.jar signing-probe-store.jar
             if jarsigner -keystore release.keystore -storepass "$STORE_PASSWORD" -keypass "$STORE_PASSWORD" signing-probe-store.jar "$KEY_ALIAS" >/dev/null 2>&1; then
               SELECTED_KEY_PASSWORD="$STORE_PASSWORD"
+              echo "Private key unlock: store password"
             else
-              echo "The configured keystore opens, but neither configured key password can unlock the private key."
+              echo "Private key unlock: FAILED for both configured passwords"
               exit 1
             fi
           fi
@@ -97,6 +108,7 @@ jobs:
           keyAlias=$KEY_ALIAS
           keyPassword=$SELECTED_KEY_PASSWORD
           EOF
+          echo "Signing properties: OK"
 
       - name: Unit tests
         if: env.SHOULD_RELEASE == 'true'
