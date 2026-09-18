@@ -145,6 +145,16 @@ class LocalStore(context: Context) {
         setLanguageOverride(value.takeUnless { it == LANGUAGE_SYSTEM })
     }
 
+    fun appTheme(): String =
+        prefs.getString(KEY_APP_THEME, THEME_SYSTEM)
+            ?.takeIf { it == THEME_SYSTEM || it == THEME_DARK || it == THEME_LIGHT }
+            ?: THEME_SYSTEM
+
+    fun setAppTheme(value: String) {
+        require(value == THEME_SYSTEM || value == THEME_DARK || value == THEME_LIGHT)
+        prefs.edit().putString(KEY_APP_THEME, value).apply()
+    }
+
     fun onboardingComplete() = prefs.getBoolean("onboarding_complete", false)
     fun setOnboardingComplete(value: Boolean) =
         prefs.edit().putBoolean("onboarding_complete", value).apply()
@@ -1271,7 +1281,11 @@ class LocalStore(context: Context) {
         const val KEY_ROOM_MIGRATED = "room_migrated_v1"
         const val KEY_LAST_UPDATE_CHECK_AT = "last_update_check_at"
         const val KEY_APP_LANGUAGE = "app_language"
+        const val KEY_APP_THEME = "app_theme"
         const val LANGUAGE_SYSTEM = "system"
+        const val THEME_SYSTEM = "system"
+        const val THEME_DARK = "dark"
+        const val THEME_LIGHT = "light"
         const val UPDATE_CHECK_INTERVAL_MS = 24L * 60L * 60L * 1000L
     }
 }
