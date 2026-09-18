@@ -4,12 +4,14 @@ on:
   push:
     branches:
       - main
-    tags:
-      - "v*"
   workflow_dispatch:
 
 permissions:
   contents: write
+
+concurrency:
+  group: android-release-${{ github.ref }}
+  cancel-in-progress: false
 
 jobs:
   release:
@@ -31,20 +33,25 @@ jobs:
 
       - name: Resolve release version
         shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
         run: |
           VERSION_NAME="$(sed -n 's/.*versionName = "\([^"]*\)".*/\1/p' app/build.gradle.kts | head -n 1)"
           test -n "$VERSION_NAME"
           RELEASE_TAG="v$VERSION_NAME"
 
-          if [[ "$GITHUB_REF_TYPE" == "tag" && "$GITHUB_REF_NAME" != "$RELEASE_TAG" ]]; then
-            echo "Tag $GITHUB_REF_NAME does not match app version $RELEASE_TAG"
-            exit 1
-          fi
-
           echo "VERSION_NAME=$VERSION_NAME" >> "$GITHUB_ENV"
           echo "RELEASE_TAG=$RELEASE_TAG" >> "$GITHUB_ENV"
 
+          if gh release view "$RELEASE_TAG" >/dev/null 2>&1; then
+            echo "Release $RELEASE_TAG already exists; nothing to publish."
+            echo "SHOULD_RELEASE=false" >> "$GITHUB_ENV"
+          else
+            echo "SHOULD_RELEASE=true" >> "$GITHUB_ENV"
+          fi
+
       - name: Validate signing material
+        if: env.SHOULD_RELEASE == 'true'
         env:
           KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
           STORE_PASSWORD: ${{ secrets.ANDROID_STORE_PASSWORD }}
@@ -54,15 +61,20 @@ jobs:
           test -n "$STORE_PASSWORD"
           test -n "$KEY_ALIAS"
 
-      - name: Prepare release keystore
+      - name: Prepare and verify release keystore
+        if: env.SHOULD_RELEASE == 'true'
         env:
           KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
           STORE_PASSWORD: ${{ secrets.ANDROID_STORE_PASSWORD }}
           KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
         run: |
           printf '%s' "$KEYSTORE_BASE64" | base64 --decode > release.keystore
-          echo "3fa085332a7c94ee843c17afab98183636e504e68052a2745aec8c6dc518f922  release.keystore" | sha256sum -c -
-          keytool -list -keystore release.keystore -storepass "$STORE_PASSWORD" -alias "$KEY_ALIAS" >/dev/null
+          keytool -list             -keystore release.keystore             -storepass "$STORE_PASSWORD"             -alias "$KEY_ALIAS" >/dev/null
+
+          printf 'signing probe' > signing-probe.txt
+          jar cf signing-probe.jar signing-probe.txt
+          jarsigner             -keystore release.keystore             -storepass "$STORE_PASSWORD"             -keypass "$STORE_PASSWORD"             signing-probe.jar             "$KEY_ALIAS" >/dev/null
+
           cat > keystore.properties <<EOF
           storeFile=${{ github.workspace }}/release.keystore
           storePassword=$STORE_PASSWORD
@@ -71,26 +83,39 @@ jobs:
           EOF
 
       - name: Unit tests
+        if: env.SHOULD_RELEASE == 'true'
         run: gradle testDebugUnitTest --stacktrace --no-build-cache
 
       - name: Release lint
+        if: env.SHOULD_RELEASE == 'true'
         run: gradle lintRelease --stacktrace --no-build-cache
 
       - name: Build signed release APK and AAB
+        if: env.SHOULD_RELEASE == 'true'
         run: gradle assembleRelease bundleRelease --stacktrace --no-build-cache
 
       - name: Prepare release assets
+        if: env.SHOULD_RELEASE == 'true'
         run: |
           cp app/build/outputs/apk/release/app-release.apk "PeptideTracker-${RELEASE_TAG}.apk"
           cp app/build/outputs/bundle/release/app-release.aab "PeptideTracker-${RELEASE_TAG}.aab"
           sha256sum "PeptideTracker-${RELEASE_TAG}.apk" "PeptideTracker-${RELEASE_TAG}.aab" > SHA256SUMS.txt
 
+      - name: Upload signed APK artifact
+        if: env.SHOULD_RELEASE == 'true'
+        uses: actions/upload-artifact@v4
+        with:
+          name: PeptideTracker-${{ env.RELEASE_TAG }}-signed
+          path: |
+            PeptideTracker-${{ env.RELEASE_TAG }}.apk
+            PeptideTracker-${{ env.RELEASE_TAG }}.aab
+            SHA256SUMS.txt
+          if-no-files-found: error
+          retention-days: 30
+
       - name: Publish GitHub Release
+        if: env.SHOULD_RELEASE == 'true'
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          if gh release view "$RELEASE_TAG" >/dev/null 2>&1; then
-            gh release upload "$RELEASE_TAG"               "PeptideTracker-${RELEASE_TAG}.apk"               "PeptideTracker-${RELEASE_TAG}.aab"               SHA256SUMS.txt               --clobber
-          else
-            gh release create "$RELEASE_TAG"               "PeptideTracker-${RELEASE_TAG}.apk"               "PeptideTracker-${RELEASE_TAG}.aab"               SHA256SUMS.txt               --target "$GITHUB_SHA"               --title "Peptide Tracker $RELEASE_TAG"               --generate-notes
-          fi
+          gh release create "$RELEASE_TAG"             "PeptideTracker-${RELEASE_TAG}.apk"             "PeptideTracker-${RELEASE_TAG}.aab"             SHA256SUMS.txt             --target "$GITHUB_SHA"             --title "Peptide Tracker $RELEASE_TAG"             --generate-notes
