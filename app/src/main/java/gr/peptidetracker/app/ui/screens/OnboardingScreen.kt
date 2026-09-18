@@ -14,8 +14,10 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.EventNote
@@ -85,6 +87,8 @@ fun OnboardingScreen(
     Column(
         modifier = Modifier
             .fillMaxSize()
+            .statusBarsPadding()
+            .navigationBarsPadding()
             .verticalScroll(rememberScrollState())
             .padding(horizontal = 22.dp, vertical = 28.dp),
         verticalArrangement = Arrangement.spacedBy(24.dp)
@@ -147,7 +151,7 @@ fun OnboardingScreen(
                             .padding(horizontal = 4.dp)
                             .size(if (index == page) 10.dp else 7.dp)
                             .background(
-                                if (index == page) ElectricCyan else Color.White.copy(alpha = 0.20f),
+                                if (index == page) ElectricCyan else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.20f),
                                 RoundedCornerShape(99.dp)
                             )
                     )
