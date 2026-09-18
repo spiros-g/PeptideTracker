@@ -3,7 +3,8 @@ package gr.peptidetracker.app.data
 import gr.peptidetracker.app.i18n.currentLanguageTag
 import gr.peptidetracker.app.i18n.t
 
-import android.net.Uri
+import java.net.URLEncoder
+import java.nio.charset.StandardCharsets
 
 data class Study(
     val title: String,
@@ -26,11 +27,15 @@ data class PeptideInfo(
     val lastReviewed: String
 )
 
+private fun encodeQuery(query: String): String =
+    URLEncoder.encode(query, StandardCharsets.UTF_8.toString())
+        .replace("+", "%20")
+
 private fun pubmed(query: String) =
-    "https://pubmed.ncbi.nlm.nih.gov/?term=" + Uri.encode(query)
+    "https://pubmed.ncbi.nlm.nih.gov/?term=" + encodeQuery(query)
 
 private fun trials(query: String) =
-    "https://clinicaltrials.gov/search?term=" + Uri.encode(query)
+    "https://clinicaltrials.gov/search?term=" + encodeQuery(query)
 
 private val selectedStudiesById = mapOf(
     "retatrutide" to listOf(
