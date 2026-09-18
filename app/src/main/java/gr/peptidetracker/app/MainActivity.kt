@@ -1,5 +1,7 @@
 package gr.peptidetracker.app
 
+import gr.peptidetracker.app.i18n.t
+
 import android.content.Intent
 import android.os.Bundle
 import android.os.SystemClock
@@ -125,8 +127,8 @@ class MainActivity : FragmentActivity() {
         )
 
         val promptInfo = BiometricPrompt.PromptInfo.Builder()
-            .setTitle("Ξεκλείδωμα Peptide Tracker GR")
-            .setSubtitle("Χρησιμοποίησε βιομετρικά ή το κλείδωμα της συσκευής")
+            .setTitle(t("Ξεκλείδωμα Peptide Tracker"))
+            .setSubtitle(t("Χρησιμοποίησε βιομετρικά ή το κλείδωμα της συσκευής"))
             .setAllowedAuthenticators(authenticators)
             .build()
 
