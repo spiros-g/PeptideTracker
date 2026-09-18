@@ -1,6 +1,8 @@
 package gr.peptidetracker.app.data
 
+import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
+import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
 
@@ -29,5 +31,19 @@ class GitHubUpdateCheckerTest {
     fun comparesDifferentVersionLengths() {
         assertTrue(GitHubUpdateChecker.isNewerVersion("4.7.1", "4.7"))
         assertFalse(GitHubUpdateChecker.isNewerVersion("4.7", "4.7.1"))
+    }
+
+    @Test
+    fun normalizesGitHubSha256Digest() {
+        val digest = "A".repeat(64)
+        assertEquals(
+            "a".repeat(64),
+            GitHubUpdateChecker.normalizeSha256("sha256:" + digest)
+        )
+    }
+
+    @Test
+    fun rejectsMalformedDigest() {
+        assertNull(GitHubUpdateChecker.normalizeSha256("sha256:not-a-digest"))
     }
 }
