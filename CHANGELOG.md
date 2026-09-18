@@ -1,5 +1,12 @@
 # Changelog
 
+## 4.7.1 — launcher icon fix
+
+- Fixed Android adaptive launcher icon cropping on OEM launchers by moving the full artwork into a safe inset foreground layer.
+- Added a dedicated legacy launcher composition so older/non-adaptive launchers keep the artwork centered with margin.
+- Added Android 13+ monochrome launcher support for themed icons.
+- Increased app version to 4.7.1 (versionCode 31).
+
 ## 4.7.0 — release hardening
 
 - Fixed Room v1 → v2 migration registration so existing installations can upgrade without a missing-migration crash.
