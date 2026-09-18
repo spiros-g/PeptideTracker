@@ -152,42 +152,44 @@ fun RemindersScreen(
 
         item {
             GlassCard(modifier = Modifier.fillMaxWidth()) {
-                Row(
-                    Modifier.fillMaxWidth(),
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Box(
-                        Modifier
-                            .size(50.dp)
-                            .clip(RoundedCornerShape(17.dp))
-                            .background(ElectricBlue.copy(alpha = 0.14f)),
-                        contentAlignment = Alignment.Center
+                Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                    Row(
+                        Modifier.fillMaxWidth(),
+                        verticalAlignment = Alignment.CenterVertically
                     ) {
-                        Icon(
-                            Icons.Rounded.NotificationsActive,
-                            contentDescription = null,
-                            tint = ElectricCyan
-                        )
-                    }
-                    Spacer(Modifier.width(12.dp))
-                    Column(Modifier.weight(1f)) {
-                        Text(
-                            enabledCount.toString() + t(" ενεργές"),
-                            style = MaterialTheme.typography.titleLarge,
-                            fontWeight = FontWeight.ExtraBold
-                        )
-                        Text(
-                            if (nextReminder == null) {
-                                t("Δεν υπάρχει επόμενη ενεργή υπενθύμιση.")
-                            } else {
-                                t("Επόμενη: ") + DateFormat.getDateTimeInstance(
-                                    DateFormat.SHORT,
-                                    DateFormat.SHORT
-                                ).format(Date(nextReminder.scheduledAt))
-                            },
-                            color = MaterialTheme.colorScheme.onSurfaceVariant,
-                            style = MaterialTheme.typography.bodySmall
-                        )
+                        Box(
+                            Modifier
+                                .size(50.dp)
+                                .clip(RoundedCornerShape(17.dp))
+                                .background(ElectricBlue.copy(alpha = 0.14f)),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Icon(
+                                Icons.Rounded.NotificationsActive,
+                                contentDescription = null,
+                                tint = ElectricCyan
+                            )
+                        }
+                        Spacer(Modifier.width(12.dp))
+                        Column(Modifier.weight(1f)) {
+                            Text(
+                                enabledCount.toString() + t(" ενεργές"),
+                                style = MaterialTheme.typography.titleLarge,
+                                fontWeight = FontWeight.ExtraBold
+                            )
+                            Text(
+                                if (nextReminder == null) {
+                                    t("Δεν υπάρχει επόμενη ενεργή υπενθύμιση.")
+                                } else {
+                                    t("Επόμενη: ") + DateFormat.getDateTimeInstance(
+                                        DateFormat.SHORT,
+                                        DateFormat.SHORT
+                                    ).format(Date(nextReminder.scheduledAt))
+                                },
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                style = MaterialTheme.typography.bodySmall
+                            )
+                        }
                     }
                     Button(
                         onClick = {
@@ -199,9 +201,14 @@ fun RemindersScreen(
                                 permissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
                             }
                         },
+                        modifier = Modifier.fillMaxWidth(),
                         colors = premiumButtonColors()
                     ) {
-                        Icon(Icons.Rounded.Add, contentDescription = null, modifier = Modifier.size(18.dp))
+                        Icon(
+                            Icons.Rounded.Add,
+                            contentDescription = null,
+                            modifier = Modifier.size(18.dp)
+                        )
                         Spacer(Modifier.width(5.dp))
                         Text(t("Νέα"))
                     }
