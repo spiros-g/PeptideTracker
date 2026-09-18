@@ -86,6 +86,7 @@ import gr.peptidetracker.app.ui.premiumTextFieldColors
 import gr.peptidetracker.app.ui.components.PeptidePickerDialog
 import java.text.DateFormat
 import java.util.Date
+import java.util.Locale
 
 data class CalculatorPreset(
     val peptideName: String,
@@ -331,16 +332,11 @@ fun CalculatorScreen(
                 )
                 Spacer(Modifier.height(4.dp))
                 val capacityOptions = syringeCapacityOptions(syringeUnitsPerMl)
-                ChoiceRow(
-                    choices = capacityOptions.map { it.label },
-                    selected = capacityOptions
-                        .firstOrNull { it.maxUnits == syringeCapacity }
-                        ?.label
-                        ?: capacityOptions.first().label,
-                    onSelected = { selectedLabel ->
-                        syringeCapacity = capacityOptions
-                            .first { it.label == selectedLabel }
-                            .maxUnits
+                SyringeCapacityRow(
+                    options = capacityOptions,
+                    selectedUnits = syringeCapacity,
+                    onSelected = { option ->
+                        syringeCapacity = option.maxUnits
                         clearResult()
                     }
                 )
@@ -830,17 +826,21 @@ private fun CalculatorStep(
 
 private data class SyringeCapacityOption(
     val volumeMl: Double,
-    val maxUnits: Int,
-    val label: String
+    val maxUnits: Int
 )
 
 private fun syringeCapacityOptions(unitsPerMl: Int): List<SyringeCapacityOption> =
-    listOf(0.3, 0.5, 1.0).map { volumeMl ->
-        val maxUnits = (volumeMl * unitsPerMl).toInt()
-        SyringeCapacityOption(
-            volumeMl = volumeMl,
-            maxUnits = maxUnits,
-            label = formatSyringeVolume(maxUnits, unitsPerMl) + " mL · " + maxUnits + " U"
+    if (unitsPerMl == 40) {
+        listOf(
+            SyringeCapacityOption(0.3, 12),
+            SyringeCapacityOption(0.5, 20),
+            SyringeCapacityOption(1.0, 40)
+        )
+    } else {
+        listOf(
+            SyringeCapacityOption(0.3, 30),
+            SyringeCapacityOption(0.5, 50),
+            SyringeCapacityOption(1.0, 100)
         )
     }
 
@@ -850,6 +850,44 @@ private fun formatSyringeVolume(maxUnits: Int, unitsPerMl: Int): String =
         "%.1f",
         maxUnits.toDouble() / unitsPerMl.toDouble()
     )
+
+@Composable
+private fun SyringeCapacityRow(
+    options: List<SyringeCapacityOption>,
+    selectedUnits: Int,
+    onSelected: (SyringeCapacityOption) -> Unit
+) {
+    Row(
+        Modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.spacedBy(7.dp)
+    ) {
+        options.forEach { option ->
+            FilterChip(
+                selected = selectedUnits == option.maxUnits,
+                onClick = { onSelected(option) },
+                label = {
+                    Column(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalAlignment = Alignment.CenterHorizontally
+                    ) {
+                        Text(
+                            String.format(Locale.US, "%.1f mL", option.volumeMl),
+                            maxLines = 1,
+                            fontWeight = FontWeight.Bold
+                        )
+                        Text(
+                            option.maxUnits.toString() + " U",
+                            maxLines = 1,
+                            style = MaterialTheme.typography.labelSmall
+                        )
+                    }
+                },
+                modifier = Modifier.weight(1f),
+                colors = premiumFilterChipColors()
+            )
+        }
+    }
+}
 
 @Composable
 private fun ChoiceRow(
