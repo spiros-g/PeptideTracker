@@ -11,6 +11,8 @@ import android.os.Build
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -20,6 +22,7 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -91,6 +94,7 @@ fun RemindersScreen(
     var message by remember { mutableStateOf("") }
     var openEditorAfterPermission by remember { mutableStateOf(false) }
     var pendingEnableId by remember { mutableStateOf<Long?>(null) }
+    var pendingDelete by remember { mutableStateOf<ReminderEntry?>(null) }
 
     fun notificationsAllowed(): Boolean =
         Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU ||
@@ -141,7 +145,8 @@ fun RemindersScreen(
         item {
             PremiumTopBar(
                 title = t("Πλάνο & Υπενθυμίσεις"),
-                subtitle = t("Όρισε δικές σου ημερομηνίες και ώρες. Οι ειδοποιήσεις μπορεί να καθυστερήσουν ελαφρώς από το Android για εξοικονόμηση ενέργειας.")
+                subtitle = t("Όρισε δικές σου ημερομηνίες και ώρες. Οι ειδοποιήσεις μπορεί να καθυστερήσουν ελαφρώς από το Android για εξοικονόμηση ενέργειας."),
+                onBack = onBack
             )
         }
 
@@ -294,9 +299,7 @@ fun RemindersScreen(
                         showEditor = true
                     },
                     onDelete = {
-                        ReminderScheduler.cancel(context, row.id)
-                        store.deleteReminder(row.id)
-                        reload()
+                        pendingDelete = row
                     }
                 )
             }
@@ -312,6 +315,38 @@ fun RemindersScreen(
         }
 
         item { Spacer(Modifier.height(8.dp)) }
+    }
+
+    pendingDelete?.let { reminder ->
+        AlertDialog(
+            onDismissRequest = { pendingDelete = null },
+            containerColor = GlassSurfaceStrong,
+            titleContentColor = TextPrimary,
+            textContentColor = TextPrimary,
+            title = { Text(t("Διαγραφή υπενθύμισης;")) },
+            text = { Text(t("Η υπενθύμιση θα διαγραφεί οριστικά.")) },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        ReminderScheduler.cancel(context, reminder.id)
+                        store.deleteReminder(reminder.id)
+                        pendingDelete = null
+                        message = t("Η υπενθύμιση διαγράφηκε.")
+                        reload()
+                    }
+                ) {
+                    Text(t("Διαγραφή"), color = MaterialTheme.colorScheme.error)
+                }
+            },
+            dismissButton = {
+                TextButton(
+                    onClick = { pendingDelete = null },
+                    colors = premiumTextButtonColors()
+                ) {
+                    Text(t("Άκυρο"))
+                }
+            }
+        )
     }
 
     if (showEditor) {
@@ -372,56 +407,82 @@ private fun ReminderCard(
     onDelete: () -> Unit
 ) {
     GlassCard(modifier = Modifier.fillMaxWidth(), onClick = onEdit) {
-        Row(
-            Modifier.fillMaxWidth(),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            StoreVialImage(
-                productKey = row.peptide,
-                imageIndex = imageIndex,
-                modifier = Modifier.size(width = 48.dp, height = 66.dp)
-            )
-            Spacer(Modifier.width(12.dp))
-            Column(Modifier.weight(1f)) {
-                Text(
-                    row.peptide,
-                    fontWeight = FontWeight.ExtraBold,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis
+        Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+            Row(
+                Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                StoreVialImage(
+                    productKey = row.peptide,
+                    imageIndex = imageIndex,
+                    modifier = Modifier.size(width = 48.dp, height = 66.dp)
                 )
-                Text(
-                    DateFormat.getDateTimeInstance(
-                        DateFormat.MEDIUM,
-                        DateFormat.SHORT
-                    ).format(Date(row.scheduledAt)),
-                    color = if (row.enabled) ElectricCyan else MaterialTheme.colorScheme.onSurfaceVariant,
-                    style = MaterialTheme.typography.bodyMedium,
-                    fontWeight = FontWeight.Bold
-                )
-                Text(
-                    reminderRepeatLabel(row.repeatDays),
-                    color = ElectricViolet,
-                    style = MaterialTheme.typography.bodySmall
-                )
-                if (row.note.isNotBlank()) {
+                Spacer(Modifier.width(12.dp))
+                Column(Modifier.weight(1f)) {
                     Text(
-                        row.note,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        style = MaterialTheme.typography.bodySmall,
-                        maxLines = 2,
+                        row.peptide,
+                        fontWeight = FontWeight.ExtraBold,
+                        maxLines = 1,
                         overflow = TextOverflow.Ellipsis
                     )
+                    Text(
+                        DateFormat.getDateTimeInstance(
+                            DateFormat.MEDIUM,
+                            DateFormat.SHORT
+                        ).format(Date(row.scheduledAt)),
+                        color = if (row.enabled) ElectricCyan else MaterialTheme.colorScheme.onSurfaceVariant,
+                        style = MaterialTheme.typography.bodyMedium,
+                        fontWeight = FontWeight.Bold
+                    )
+                    Text(
+                        reminderRepeatLabel(row.repeatDays),
+                        color = ElectricViolet,
+                        style = MaterialTheme.typography.bodySmall
+                    )
+                    if (row.note.isNotBlank()) {
+                        Text(
+                            row.note,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            style = MaterialTheme.typography.bodySmall,
+                            maxLines = 2,
+                            overflow = TextOverflow.Ellipsis
+                        )
+                    }
                 }
+                Switch(
+                    checked = row.enabled,
+                    onCheckedChange = onToggle
+                )
             }
-            Switch(
-                checked = row.enabled,
-                onCheckedChange = onToggle
-            )
-            IconButton(onClick = onEdit) {
-                Icon(Icons.Outlined.Edit, contentDescription = t("Επεξεργασία"))
-            }
-            IconButton(onClick = onDelete) {
-                Icon(Icons.Outlined.Delete, contentDescription = t("Διαγραφή"))
+
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.End
+            ) {
+                TextButton(
+                    onClick = onEdit,
+                    colors = premiumTextButtonColors()
+                ) {
+                    Icon(
+                        Icons.Outlined.Edit,
+                        contentDescription = null,
+                        modifier = Modifier.size(18.dp)
+                    )
+                    Spacer(Modifier.width(4.dp))
+                    Text(t("Επεξεργασία"))
+                }
+                TextButton(
+                    onClick = onDelete,
+                    colors = premiumTextButtonColors()
+                ) {
+                    Icon(
+                        Icons.Outlined.Delete,
+                        contentDescription = null,
+                        modifier = Modifier.size(18.dp)
+                    )
+                    Spacer(Modifier.width(4.dp))
+                    Text(t("Διαγραφή"))
+                }
             }
         }
     }
@@ -466,7 +527,12 @@ private fun ReminderEditorDialog(
             Text(if (current == null) t("Νέα υπενθύμιση") else t("Επεξεργασία υπενθύμισης"))
         },
         text = {
-            Column(verticalArrangement = Arrangement.spacedBy(11.dp)) {
+            Column(
+                modifier = Modifier
+                    .heightIn(max = 520.dp)
+                    .verticalScroll(rememberScrollState()),
+                verticalArrangement = Arrangement.spacedBy(11.dp)
+            ) {
                 Text(
                     t("Καταχώρησε μόνο το δικό σου πλάνο. Δεν παρέχεται πρόταση δοσολογίας ή συχνότητας."),
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
