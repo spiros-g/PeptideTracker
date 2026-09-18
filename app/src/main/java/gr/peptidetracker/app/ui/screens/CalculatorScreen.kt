@@ -118,7 +118,7 @@ fun CalculatorScreen(
         mutableIntStateOf(if (defaultSyringeUnitsPerMl == 40) 40 else 100)
     }
     var syringeCapacity by remember(defaultSyringeUnitsPerMl) {
-        mutableIntStateOf(if (defaultSyringeUnitsPerMl == 40) 40 else 30)
+        mutableIntStateOf(if (defaultSyringeUnitsPerMl == 40) 12 else 30)
     }
     var vialAmount by remember { mutableStateOf("5") }
     var vialUnit by remember { mutableStateOf("mg") }
@@ -143,7 +143,7 @@ fun CalculatorScreen(
                 diluentMl = PeptideCalculator.format(it, 4)
             }
             syringeUnitsPerMl = if (preset.syringeUnitsPerMl == 40) 40 else 100
-            syringeCapacity = if (syringeUnitsPerMl == 40) 40 else 30
+            syringeCapacity = if (syringeUnitsPerMl == 40) 12 else 30
             output = emptyList()
             lastCalculation = null
             error = ""
@@ -319,7 +319,7 @@ fun CalculatorScreen(
                     selected = "U-" + syringeUnitsPerMl,
                     onSelected = {
                         syringeUnitsPerMl = if (it == "U-40") 40 else 100
-                        syringeCapacity = if (syringeUnitsPerMl == 40) 40 else 30
+                        syringeCapacity = if (syringeUnitsPerMl == 40) 12 else 30
                         clearResult()
                     }
                 )
@@ -330,11 +330,17 @@ fun CalculatorScreen(
                     style = MaterialTheme.typography.bodySmall
                 )
                 Spacer(Modifier.height(4.dp))
+                val capacityOptions = syringeCapacityOptions(syringeUnitsPerMl)
                 ChoiceRow(
-                    choices = if (syringeUnitsPerMl == 40) listOf("40") else listOf("30", "50", "100"),
-                    selected = syringeCapacity.toString(),
-                    onSelected = {
-                        syringeCapacity = it.toInt()
+                    choices = capacityOptions.map { it.label },
+                    selected = capacityOptions
+                        .firstOrNull { it.maxUnits == syringeCapacity }
+                        ?.label
+                        ?: capacityOptions.first().label,
+                    onSelected = { selectedLabel ->
+                        syringeCapacity = capacityOptions
+                            .first { it.label == selectedLabel }
+                            .maxUnits
                         clearResult()
                     }
                 )
@@ -822,6 +828,29 @@ private fun CalculatorStep(
     }
 }
 
+private data class SyringeCapacityOption(
+    val volumeMl: Double,
+    val maxUnits: Int,
+    val label: String
+)
+
+private fun syringeCapacityOptions(unitsPerMl: Int): List<SyringeCapacityOption> =
+    listOf(0.3, 0.5, 1.0).map { volumeMl ->
+        val maxUnits = (volumeMl * unitsPerMl).toInt()
+        SyringeCapacityOption(
+            volumeMl = volumeMl,
+            maxUnits = maxUnits,
+            label = formatSyringeVolume(maxUnits, unitsPerMl) + " mL · " + maxUnits + " U"
+        )
+    }
+
+private fun formatSyringeVolume(maxUnits: Int, unitsPerMl: Int): String =
+    String.format(
+        Locale.US,
+        "%.1f",
+        maxUnits.toDouble() / unitsPerMl.toDouble()
+    )
+
 @Composable
 private fun ChoiceRow(
     choices: List<String>,
@@ -971,7 +1000,9 @@ private fun ResultCard(
                     capacity = capacity
                 )
                 Text(
-                    t("Σύριγγα U-") + syringeUnitsPerMl + t(" · μέγιστη ένδειξη ") + capacity + " U",
+                    t("Σύριγγα U-") + syringeUnitsPerMl + " · " +
+                        formatSyringeVolume(capacity, syringeUnitsPerMl) + " mL · " +
+                        t("μέγιστη ένδειξη ") + capacity + " U",
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                     style = MaterialTheme.typography.bodySmall
                 )
