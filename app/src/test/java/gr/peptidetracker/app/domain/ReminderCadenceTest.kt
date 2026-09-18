@@ -21,6 +21,16 @@ class ReminderCadenceTest {
     }
 
     @Test
+    fun customThreeDayReminderAdvancesPastNow() {
+        val day = 24L * 60L * 60L * 1000L
+        val start = 1_000L
+        assertEquals(
+            start + 6L * day,
+            ReminderCadence.nextScheduledAt(start, 3, start + 4L * day)
+        )
+    }
+
+    @Test
     fun weeklyReminderKeepsSevenDayCadence() {
         val day = 24L * 60L * 60L * 1000L
         val start = 1_000L
