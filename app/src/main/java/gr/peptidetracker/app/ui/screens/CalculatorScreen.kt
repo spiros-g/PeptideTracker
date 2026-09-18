@@ -7,7 +7,6 @@ import androidx.compose.animation.expandVertically
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.shrinkVertically
-import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -24,10 +23,8 @@ import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
@@ -74,8 +71,6 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.window.Dialog
-import androidx.compose.ui.window.DialogProperties
 import gr.peptidetracker.app.data.LocalStore
 import gr.peptidetracker.app.data.SavedCalculationEntry
 import gr.peptidetracker.app.domain.PeptideCalculator
@@ -88,8 +83,10 @@ import gr.peptidetracker.app.ui.StoreVialImage
 import gr.peptidetracker.app.ui.premiumButtonColors
 import gr.peptidetracker.app.ui.premiumFilterChipColors
 import gr.peptidetracker.app.ui.premiumTextFieldColors
+import gr.peptidetracker.app.ui.components.PeptidePickerDialog
 import java.text.DateFormat
 import java.util.Date
+import java.util.Locale
 
 data class CalculatorPreset(
     val peptideName: String,
@@ -122,7 +119,7 @@ fun CalculatorScreen(
         mutableIntStateOf(if (defaultSyringeUnitsPerMl == 40) 40 else 100)
     }
     var syringeCapacity by remember(defaultSyringeUnitsPerMl) {
-        mutableIntStateOf(if (defaultSyringeUnitsPerMl == 40) 40 else 30)
+        mutableIntStateOf(if (defaultSyringeUnitsPerMl == 40) 12 else 30)
     }
     var vialAmount by remember { mutableStateOf("5") }
     var vialUnit by remember { mutableStateOf("mg") }
@@ -147,7 +144,7 @@ fun CalculatorScreen(
                 diluentMl = PeptideCalculator.format(it, 4)
             }
             syringeUnitsPerMl = if (preset.syringeUnitsPerMl == 40) 40 else 100
-            syringeCapacity = if (syringeUnitsPerMl == 40) 40 else 30
+            syringeCapacity = if (syringeUnitsPerMl == 40) 12 else 30
             output = emptyList()
             lastCalculation = null
             error = ""
@@ -323,7 +320,7 @@ fun CalculatorScreen(
                     selected = "U-" + syringeUnitsPerMl,
                     onSelected = {
                         syringeUnitsPerMl = if (it == "U-40") 40 else 100
-                        syringeCapacity = if (syringeUnitsPerMl == 40) 40 else 30
+                        syringeCapacity = if (syringeUnitsPerMl == 40) 12 else 30
                         clearResult()
                     }
                 )
@@ -334,11 +331,12 @@ fun CalculatorScreen(
                     style = MaterialTheme.typography.bodySmall
                 )
                 Spacer(Modifier.height(4.dp))
-                ChoiceRow(
-                    choices = if (syringeUnitsPerMl == 40) listOf("40") else listOf("30", "50", "100"),
-                    selected = syringeCapacity.toString(),
-                    onSelected = {
-                        syringeCapacity = it.toInt()
+                val capacityOptions = syringeCapacityOptions(syringeUnitsPerMl)
+                SyringeCapacityRow(
+                    options = capacityOptions,
+                    selectedUnits = syringeCapacity,
+                    onSelected = { option ->
+                        syringeCapacity = option.maxUnits
                         clearResult()
                     }
                 )
@@ -721,199 +719,6 @@ fun CalculatorScreen(
 }
 
 @Composable
-private fun PeptidePickerDialog(
-    selectedPeptide: String,
-    peptides: List<String>,
-    onDismiss: () -> Unit,
-    onSelect: (String) -> Unit
-) {
-    var query by remember { mutableStateOf("") }
-
-    val sortedPeptides = remember(peptides) {
-        peptides.distinct().sortedWith(String.CASE_INSENSITIVE_ORDER)
-    }
-    val filteredPeptides = remember(query, sortedPeptides) {
-        val normalized = query.trim()
-        if (normalized.isBlank()) {
-            sortedPeptides
-        } else {
-            sortedPeptides.filter { it.contains(normalized, ignoreCase = true) }
-        }
-    }
-    val selectedIndex = remember(selectedPeptide, sortedPeptides) {
-        sortedPeptides.indexOfFirst { it.equals(selectedPeptide, ignoreCase = true) }
-            .coerceAtLeast(0)
-    }
-    val listState = rememberLazyListState(initialFirstVisibleItemIndex = selectedIndex)
-
-    LaunchedEffect(query, filteredPeptides.size) {
-        if (filteredPeptides.isNotEmpty()) {
-            listState.scrollToItem(
-                if (query.isBlank()) selectedIndex.coerceAtMost(filteredPeptides.lastIndex) else 0
-            )
-        }
-    }
-
-    Dialog(
-        onDismissRequest = onDismiss,
-        properties = DialogProperties(usePlatformDefaultWidth = false)
-    ) {
-        Surface(
-            modifier = Modifier
-                .fillMaxWidth(0.92f)
-                .widthIn(max = 440.dp),
-            shape = RoundedCornerShape(28.dp),
-            color = MaterialTheme.colorScheme.surface,
-            tonalElevation = 8.dp,
-            shadowElevation = 18.dp,
-            border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant)
-        ) {
-            Column(
-                modifier = Modifier.padding(18.dp),
-                verticalArrangement = Arrangement.spacedBy(12.dp)
-            ) {
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Column(Modifier.weight(1f)) {
-                        Text(
-                            t("Επίλεξε πεπτίδιο"),
-                            style = MaterialTheme.typography.titleLarge,
-                            fontWeight = FontWeight.ExtraBold
-                        )
-                        Text(
-                            filteredPeptides.size.toString() + " " + t("πεπτίδια"),
-                            color = MaterialTheme.colorScheme.onSurfaceVariant,
-                            style = MaterialTheme.typography.bodySmall
-                        )
-                    }
-                    IconButton(onClick = onDismiss) {
-                        Icon(Icons.Rounded.Close, contentDescription = t("Κλείσιμο"))
-                    }
-                }
-
-                OutlinedTextField(
-                    value = query,
-                    onValueChange = { query = it },
-                    modifier = Modifier.fillMaxWidth(),
-                    singleLine = true,
-                    shape = RoundedCornerShape(18.dp),
-                    placeholder = { Text(t("Αναζήτηση πεπτιδίου")) },
-                    leadingIcon = {
-                        Icon(Icons.Rounded.Search, contentDescription = null)
-                    },
-                    trailingIcon = {
-                        if (query.isNotBlank()) {
-                            IconButton(onClick = { query = "" }) {
-                                Icon(
-                                    Icons.Rounded.Close,
-                                    contentDescription = t("Καθαρισμός")
-                                )
-                            }
-                        }
-                    },
-                    colors = premiumTextFieldColors()
-                )
-
-                Surface(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(360.dp),
-                    shape = RoundedCornerShape(20.dp),
-                    color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.24f),
-                    border = BorderStroke(
-                        1.dp,
-                        MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.75f)
-                    )
-                ) {
-                    if (filteredPeptides.isEmpty()) {
-                        Box(
-                            modifier = Modifier.fillMaxSize(),
-                            contentAlignment = Alignment.Center
-                        ) {
-                            Column(
-                                horizontalAlignment = Alignment.CenterHorizontally,
-                                verticalArrangement = Arrangement.spacedBy(8.dp)
-                            ) {
-                                Icon(
-                                    Icons.Rounded.Search,
-                                    contentDescription = null,
-                                    tint = MaterialTheme.colorScheme.onSurfaceVariant
-                                )
-                                Text(
-                                    t("Δεν βρέθηκαν πεπτίδια."),
-                                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                                )
-                            }
-                        }
-                    } else {
-                        LazyColumn(
-                            modifier = Modifier
-                                .fillMaxSize()
-                                .padding(6.dp),
-                            state = listState,
-                            verticalArrangement = Arrangement.spacedBy(4.dp)
-                        ) {
-                            items(
-                                items = filteredPeptides,
-                                key = { it }
-                            ) { name ->
-                                val selected = name.equals(
-                                    selectedPeptide,
-                                    ignoreCase = true
-                                )
-                                Surface(
-                                    modifier = Modifier
-                                        .fillMaxWidth()
-                                        .clip(RoundedCornerShape(14.dp))
-                                        .clickable { onSelect(name) },
-                                    shape = RoundedCornerShape(14.dp),
-                                    color = if (selected) {
-                                        MaterialTheme.colorScheme.primaryContainer
-                                    } else {
-                                        Color.Transparent
-                                    }
-                                ) {
-                                    Row(
-                                        modifier = Modifier
-                                            .fillMaxWidth()
-                                            .padding(horizontal = 14.dp, vertical = 12.dp),
-                                        verticalAlignment = Alignment.CenterVertically
-                                    ) {
-                                        Text(
-                                            name,
-                                            modifier = Modifier.weight(1f),
-                                            style = MaterialTheme.typography.bodyLarge,
-                                            fontWeight = if (selected) {
-                                                FontWeight.ExtraBold
-                                            } else {
-                                                FontWeight.SemiBold
-                                            },
-                                            maxLines = 1,
-                                            overflow = TextOverflow.Ellipsis
-                                        )
-                                        if (selected) {
-                                            Spacer(Modifier.width(8.dp))
-                                            Icon(
-                                                Icons.Rounded.Check,
-                                                contentDescription = null,
-                                                tint = MaterialTheme.colorScheme.primary,
-                                                modifier = Modifier.size(20.dp)
-                                            )
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-        }
-    }
-}
-
-@Composable
 private fun SavedCalculationCard(
     row: SavedCalculationEntry,
     onLoad: () -> Unit,
@@ -1015,6 +820,71 @@ private fun CalculatorStep(
                 }
             }
             content()
+        }
+    }
+}
+
+private data class SyringeCapacityOption(
+    val volumeMl: Double,
+    val maxUnits: Int
+)
+
+private fun syringeCapacityOptions(unitsPerMl: Int): List<SyringeCapacityOption> =
+    if (unitsPerMl == 40) {
+        listOf(
+            SyringeCapacityOption(0.3, 12),
+            SyringeCapacityOption(0.5, 20),
+            SyringeCapacityOption(1.0, 40)
+        )
+    } else {
+        listOf(
+            SyringeCapacityOption(0.3, 30),
+            SyringeCapacityOption(0.5, 50),
+            SyringeCapacityOption(1.0, 100)
+        )
+    }
+
+private fun formatSyringeVolume(maxUnits: Int, unitsPerMl: Int): String =
+    String.format(
+        Locale.US,
+        "%.1f",
+        maxUnits.toDouble() / unitsPerMl.toDouble()
+    )
+
+@Composable
+private fun SyringeCapacityRow(
+    options: List<SyringeCapacityOption>,
+    selectedUnits: Int,
+    onSelected: (SyringeCapacityOption) -> Unit
+) {
+    Row(
+        Modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.spacedBy(7.dp)
+    ) {
+        options.forEach { option ->
+            FilterChip(
+                selected = selectedUnits == option.maxUnits,
+                onClick = { onSelected(option) },
+                label = {
+                    Column(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalAlignment = Alignment.CenterHorizontally
+                    ) {
+                        Text(
+                            String.format(Locale.US, "%.1f mL", option.volumeMl),
+                            maxLines = 1,
+                            fontWeight = FontWeight.Bold
+                        )
+                        Text(
+                            option.maxUnits.toString() + " U",
+                            maxLines = 1,
+                            style = MaterialTheme.typography.labelSmall
+                        )
+                    }
+                },
+                modifier = Modifier.weight(1f),
+                colors = premiumFilterChipColors()
+            )
         }
     }
 }
@@ -1168,7 +1038,9 @@ private fun ResultCard(
                     capacity = capacity
                 )
                 Text(
-                    t("Σύριγγα U-") + syringeUnitsPerMl + t(" · μέγιστη ένδειξη ") + capacity + " U",
+                    t("Σύριγγα U-") + syringeUnitsPerMl + " · " +
+                        formatSyringeVolume(capacity, syringeUnitsPerMl) + " mL · " +
+                        t("μέγιστη ένδειξη ") + capacity + " U",
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                     style = MaterialTheme.typography.bodySmall
                 )

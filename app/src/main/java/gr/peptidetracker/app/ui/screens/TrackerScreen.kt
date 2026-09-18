@@ -51,8 +51,6 @@ import androidx.compose.material.icons.rounded.Save
 import androidx.compose.material.icons.rounded.WarningAmber
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
-import androidx.compose.material3.DropdownMenu
-import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -110,6 +108,7 @@ import gr.peptidetracker.app.ui.premiumButtonColors
 import gr.peptidetracker.app.ui.premiumFilterChipColors
 import gr.peptidetracker.app.ui.premiumTextButtonColors
 import gr.peptidetracker.app.ui.premiumTextFieldColors
+import gr.peptidetracker.app.ui.components.PeptidePickerDialog
 import java.text.DateFormat
 import java.text.SimpleDateFormat
 import java.util.Calendar
@@ -2008,7 +2007,7 @@ private fun LogEditorDialog(
                 ?: current?.amount?.substringBefore(" ")?.replace(',', '.')
                 ?: template?.amountValue?.let(::formatCompact)
                 ?: template?.amount?.substringBefore(" ")?.replace(',', '.')
-                ?: "100"
+                ?: ""
         )
     }
     var unit by remember(current) {
@@ -2017,7 +2016,7 @@ private fun LogEditorDialog(
                 ?: current?.amount?.substringAfter(" ", "")?.takeIf { it in listOf("mg", "mcg", "units") }
                 ?: template?.unit?.takeIf { it.isNotBlank() }
                 ?: template?.amount?.substringAfter(" ", "")?.takeIf { it in listOf("mg", "mcg", "units") }
-                ?: "mcg"
+                ?: "mg"
         )
     }
     var note by remember(current, template) { mutableStateOf(current?.note ?: template?.note.orEmpty()) }
@@ -2052,28 +2051,16 @@ private fun LogEditorDialog(
                     )
                 }
                 item {
-                    Box {
-                        OutlinedButton(
-                            onClick = { peptideMenu = true },
-                            modifier = Modifier.fillMaxWidth()
-                        ) {
-                            Text(peptide.ifBlank { t("Επίλεξε πεπτίδιο") }, maxLines = 1, overflow = TextOverflow.Ellipsis)
-                        }
-                        DropdownMenu(
-                            expanded = peptideMenu,
-                            onDismissRequest = { peptideMenu = false }
-                        ) {
-                            peptideNames.forEach { name ->
-                                DropdownMenuItem(
-                                    text = { Text(name) },
-                                    onClick = {
-                                        peptide = name
-                                        peptideMenu = false
-                                        subtractFromInventory = false
-                                    }
-                                )
-                            }
-                        }
+                    OutlinedButton(
+                        onClick = { peptideMenu = true },
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Text(
+                            peptide.ifBlank { t("Επίλεξε πεπτίδιο") },
+                            modifier = Modifier.weight(1f),
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis
+                        )
                     }
                 }
                 item {
@@ -2092,7 +2079,7 @@ private fun LogEditorDialog(
                         Modifier.fillMaxWidth(),
                         horizontalArrangement = Arrangement.spacedBy(6.dp)
                     ) {
-                        listOf("mcg", "mg", "units").forEach { item ->
+                        listOf("mg", "mcg", "units").forEach { item ->
                             FilterChip(
                                 selected = unit == item,
                                 onClick = {
@@ -2131,16 +2118,40 @@ private fun LogEditorDialog(
                         horizontalArrangement = Arrangement.spacedBy(8.dp)
                     ) {
                         OutlinedButton(
-                            onClick = { showDatePicker(context, timestamp) { timestamp = it } },
-                            modifier = Modifier.weight(1f)
+                            onClick = {
+                                showDatePicker(context, timestamp) { timestamp = it }
+                            },
+                            modifier = Modifier.weight(1.18f),
+                            contentPadding = PaddingValues(horizontal = 10.dp)
                         ) {
-                            Text(DateFormat.getDateInstance(DateFormat.SHORT).format(Date(timestamp)))
+                            Text(
+                                SimpleDateFormat(
+                                    "dd/MM/yyyy",
+                                    Locale.getDefault()
+                                ).format(Date(timestamp)),
+                                modifier = Modifier.fillMaxWidth(),
+                                maxLines = 1,
+                                softWrap = false,
+                                overflow = TextOverflow.Clip
+                            )
                         }
                         OutlinedButton(
-                            onClick = { showTimePicker(context, timestamp) { timestamp = it } },
-                            modifier = Modifier.weight(1f)
+                            onClick = {
+                                showTimePicker(context, timestamp) { timestamp = it }
+                            },
+                            modifier = Modifier.weight(0.82f),
+                            contentPadding = PaddingValues(horizontal = 10.dp)
                         ) {
-                            Text(DateFormat.getTimeInstance(DateFormat.SHORT).format(Date(timestamp)))
+                            Text(
+                                SimpleDateFormat(
+                                    "HH:mm",
+                                    Locale.getDefault()
+                                ).format(Date(timestamp)),
+                                modifier = Modifier.fillMaxWidth(),
+                                maxLines = 1,
+                                softWrap = false,
+                                overflow = TextOverflow.Clip
+                            )
                         }
                     }
                 }
@@ -2198,6 +2209,20 @@ private fun LogEditorDialog(
             }
         }
     )
+
+    if (peptideMenu) {
+        PeptidePickerDialog(
+            selectedPeptide = peptide,
+            peptides = peptideNames,
+            onDismiss = { peptideMenu = false },
+            onSelect = { selected ->
+                peptide = selected
+                peptideMenu = false
+                subtractFromInventory = false
+            }
+        )
+    }
+
 }
 
 @Composable
@@ -2265,27 +2290,16 @@ private fun InventoryEditorDialog(
                     .verticalScroll(rememberScrollState()),
                 verticalArrangement = Arrangement.spacedBy(10.dp)
             ) {
-                Box {
-                    OutlinedButton(
-                        onClick = { peptideMenu = true },
-                        modifier = Modifier.fillMaxWidth()
-                    ) {
-                        Text(peptide, maxLines = 1, overflow = TextOverflow.Ellipsis)
-                    }
-                    DropdownMenu(
-                        expanded = peptideMenu,
-                        onDismissRequest = { peptideMenu = false }
-                    ) {
-                        peptideNames.forEach { name ->
-                            DropdownMenuItem(
-                                text = { Text(name) },
-                                onClick = {
-                                    peptide = name
-                                    peptideMenu = false
-                                }
-                            )
-                        }
-                    }
+                OutlinedButton(
+                    onClick = { peptideMenu = true },
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Text(
+                        peptide.ifBlank { t("Επίλεξε πεπτίδιο") },
+                        modifier = Modifier.weight(1f),
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis
+                    )
                 }
                 OutlinedTextField(
                     value = vial,
@@ -2467,6 +2481,19 @@ private fun InventoryEditorDialog(
             }
         }
     )
+
+    if (peptideMenu) {
+        PeptidePickerDialog(
+            selectedPeptide = peptide,
+            peptides = peptideNames,
+            onDismiss = { peptideMenu = false },
+            onSelect = { selected ->
+                peptide = selected
+                peptideMenu = false
+            }
+        )
+    }
+
 }
 
 @Composable

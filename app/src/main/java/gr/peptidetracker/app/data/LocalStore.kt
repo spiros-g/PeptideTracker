@@ -21,7 +21,7 @@ data class TrackerEntry(
     val note: String,
     val createdAt: Long,
     val amountValue: Double? = null,
-    val unit: String = "",
+    val unit: String = "mg",
     val site: String = "",
     val inventoryId: Long? = null,
     val inventoryAppliedMg: Double? = null
@@ -238,7 +238,7 @@ class LocalStore(context: Context) {
         require(peptide.isNotBlank())
         require(amountValue > 0)
 
-        val normalizedUnit = unit.trim().ifBlank { "mcg" }
+        val normalizedUnit = unit.trim().ifBlank { "mg" }
         val amountMg = if (subtractFromInventory && inventoryId != null) {
             amountToMg(amountValue, normalizedUnit) ?: return false
         } else {
@@ -296,7 +296,7 @@ class LocalStore(context: Context) {
         require(peptide.isNotBlank())
         require(amountValue > 0)
 
-        val normalizedUnit = unit.trim().ifBlank { "mcg" }
+        val normalizedUnit = unit.trim().ifBlank { "mg" }
 
         return io {
             var saved = false

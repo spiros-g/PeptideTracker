@@ -1,5 +1,16 @@
 # Changelog
 
+## 4.8.3 — tracker selection and reconstitution polish
+
+- Replaced the Tracker usage-entry peptide dropdown with the same fixed-height searchable picker used by the Calculator.
+- Reused the shared picker in inventory and reminder editing, including the reminder recurrence selector, so legacy dropdown menus no longer appear in the main workflows.
+- Kept usage-entry and reminder date/time controls on one line with stable dd/MM/yyyy and HH:mm formatting.
+- Made mg the first/default quantity unit for new tracking entries and storage fallbacks.
+- New tracking entries leave Amount empty instead of carrying the old 100 mcg default into mg mode.
+- Reconstitution syringe capacity choices are 0.3 mL, 0.5 mL and 1.0 mL with matching U-100 (30/50/100 U) and U-40 (12/20/40 U) markings.
+- Added a reusable fixed-height selection picker component for future list selectors.
+- Increased app version to 4.8.3 (versionCode 36).
+
 ## 4.8.2 — calculator picker polish
 
 - Refined the peptide selector into a compact fixed-height searchable picker.
