@@ -47,36 +47,41 @@ import gr.peptidetracker.app.i18n.t
 import gr.peptidetracker.app.ui.premiumTextFieldColors
 
 @Composable
-fun PeptidePickerDialog(
-    selectedPeptide: String,
-    peptides: List<String>,
+fun SelectionPickerDialog(
+    title: String,
+    selectedValue: String,
+    options: List<String>,
+    searchable: Boolean = false,
+    searchPlaceholder: String = "",
+    emptyMessage: String = "",
+    counterSuffix: String? = null,
     onDismiss: () -> Unit,
     onSelect: (String) -> Unit
 ) {
     var query by remember { mutableStateOf("") }
 
-    val sortedPeptides = remember(peptides) {
-        peptides.distinct().sortedWith(String.CASE_INSENSITIVE_ORDER)
+    val normalizedOptions = remember(options) {
+        options.distinct()
     }
-    val filteredPeptides = remember(query, sortedPeptides) {
-        val normalized = query.trim()
-        if (normalized.isBlank()) {
-            sortedPeptides
+    val filteredOptions = remember(query, normalizedOptions, searchable) {
+        if (!searchable || query.isBlank()) {
+            normalizedOptions
         } else {
-            sortedPeptides.filter { it.contains(normalized, ignoreCase = true) }
+            normalizedOptions.filter { it.contains(query.trim(), ignoreCase = true) }
         }
     }
-    val selectedIndex = remember(selectedPeptide, sortedPeptides) {
-        sortedPeptides.indexOfFirst { it.equals(selectedPeptide, ignoreCase = true) }
-            .coerceAtLeast(0)
+    val selectedIndex = remember(selectedValue, normalizedOptions) {
+        normalizedOptions.indexOfFirst {
+            it.equals(selectedValue, ignoreCase = true)
+        }.coerceAtLeast(0)
     }
     val listState = rememberLazyListState(initialFirstVisibleItemIndex = selectedIndex)
 
-    LaunchedEffect(query, filteredPeptides.size) {
-        if (filteredPeptides.isNotEmpty()) {
+    LaunchedEffect(query, filteredOptions.size) {
+        if (filteredOptions.isNotEmpty()) {
             listState.scrollToItem(
-                if (query.isBlank()) {
-                    selectedIndex.coerceAtMost(filteredPeptides.lastIndex)
+                if (!searchable || query.isBlank()) {
+                    selectedIndex.coerceAtMost(filteredOptions.lastIndex)
                 } else {
                     0
                 }
@@ -111,15 +116,17 @@ fun PeptidePickerDialog(
                 ) {
                     Column(Modifier.weight(1f)) {
                         Text(
-                            t("Επίλεξε πεπτίδιο"),
+                            title,
                             style = MaterialTheme.typography.titleLarge,
                             fontWeight = FontWeight.ExtraBold
                         )
-                        Text(
-                            filteredPeptides.size.toString() + " " + t("πεπτίδια"),
-                            color = MaterialTheme.colorScheme.onSurfaceVariant,
-                            style = MaterialTheme.typography.bodySmall
-                        )
+                        if (!counterSuffix.isNullOrBlank()) {
+                            Text(
+                                filteredOptions.size.toString() + " " + counterSuffix,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                style = MaterialTheme.typography.bodySmall
+                            )
+                        }
                     }
                     IconButton(onClick = onDismiss) {
                         Icon(
@@ -129,31 +136,39 @@ fun PeptidePickerDialog(
                     }
                 }
 
-                OutlinedTextField(
-                    value = query,
-                    onValueChange = { query = it },
-                    modifier = Modifier.fillMaxWidth(),
-                    singleLine = true,
-                    shape = RoundedCornerShape(18.dp),
-                    placeholder = { Text(t("Αναζήτηση πεπτιδίου")) },
-                    leadingIcon = {
-                        Icon(
-                            Icons.Rounded.Search,
-                            contentDescription = null
-                        )
-                    },
-                    trailingIcon = {
-                        if (query.isNotBlank()) {
-                            IconButton(onClick = { query = "" }) {
-                                Icon(
-                                    Icons.Rounded.Close,
-                                    contentDescription = t("Καθαρισμός")
-                                )
+                if (searchable) {
+                    OutlinedTextField(
+                        value = query,
+                        onValueChange = { query = it },
+                        modifier = Modifier.fillMaxWidth(),
+                        singleLine = true,
+                        shape = RoundedCornerShape(18.dp),
+                        placeholder = {
+                            Text(
+                                searchPlaceholder.ifBlank {
+                                    t("Αναζήτηση")
+                                }
+                            )
+                        },
+                        leadingIcon = {
+                            Icon(
+                                Icons.Rounded.Search,
+                                contentDescription = null
+                            )
+                        },
+                        trailingIcon = {
+                            if (query.isNotBlank()) {
+                                IconButton(onClick = { query = "" }) {
+                                    Icon(
+                                        Icons.Rounded.Close,
+                                        contentDescription = t("Καθαρισμός")
+                                    )
+                                }
                             }
-                        }
-                    },
-                    colors = premiumTextFieldColors()
-                )
+                        },
+                        colors = premiumTextFieldColors()
+                    )
+                }
 
                 Surface(
                     modifier = Modifier
@@ -166,7 +181,7 @@ fun PeptidePickerDialog(
                         MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.75f)
                     )
                 ) {
-                    if (filteredPeptides.isEmpty()) {
+                    if (filteredOptions.isEmpty()) {
                         Box(
                             modifier = Modifier.fillMaxSize(),
                             contentAlignment = Alignment.Center
@@ -181,7 +196,9 @@ fun PeptidePickerDialog(
                                     tint = MaterialTheme.colorScheme.onSurfaceVariant
                                 )
                                 Text(
-                                    t("Δεν βρέθηκαν πεπτίδια."),
+                                    emptyMessage.ifBlank {
+                                        t("Δεν βρέθηκαν επιλογές.")
+                                    },
                                     color = MaterialTheme.colorScheme.onSurfaceVariant
                                 )
                             }
@@ -195,18 +212,18 @@ fun PeptidePickerDialog(
                             verticalArrangement = Arrangement.spacedBy(4.dp)
                         ) {
                             items(
-                                items = filteredPeptides,
+                                items = filteredOptions,
                                 key = { it }
-                            ) { name ->
-                                val selected = name.equals(
-                                    selectedPeptide,
+                            ) { option ->
+                                val selected = option.equals(
+                                    selectedValue,
                                     ignoreCase = true
                                 )
                                 Surface(
                                     modifier = Modifier
                                         .fillMaxWidth()
                                         .clip(RoundedCornerShape(14.dp))
-                                        .clickable { onSelect(name) },
+                                        .clickable { onSelect(option) },
                                     shape = RoundedCornerShape(14.dp),
                                     color = if (selected) {
                                         MaterialTheme.colorScheme.primaryContainer
@@ -224,7 +241,7 @@ fun PeptidePickerDialog(
                                         verticalAlignment = Alignment.CenterVertically
                                     ) {
                                         Text(
-                                            name,
+                                            option,
                                             modifier = Modifier.weight(1f),
                                             style = MaterialTheme.typography.bodyLarge,
                                             fontWeight = if (selected) {
@@ -253,4 +270,28 @@ fun PeptidePickerDialog(
             }
         }
     }
+}
+
+@Composable
+fun PeptidePickerDialog(
+    selectedPeptide: String,
+    peptides: List<String>,
+    onDismiss: () -> Unit,
+    onSelect: (String) -> Unit
+) {
+    val sortedPeptides = remember(peptides) {
+        peptides.distinct().sortedWith(String.CASE_INSENSITIVE_ORDER)
+    }
+
+    SelectionPickerDialog(
+        title = t("Επίλεξε πεπτίδιο"),
+        selectedValue = selectedPeptide,
+        options = sortedPeptides,
+        searchable = true,
+        searchPlaceholder = t("Αναζήτηση πεπτιδίου"),
+        emptyMessage = t("Δεν βρέθηκαν πεπτίδια."),
+        counterSuffix = t("πεπτίδια"),
+        onDismiss = onDismiss,
+        onSelect = onSelect
+    )
 }
