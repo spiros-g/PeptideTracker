@@ -1,6 +1,6 @@
 # Future AdMob / UMP setup
 
-The current Peptide Tracker GR beta intentionally does **not** include the Google Mobile Ads SDK, UMP SDK, AdMob App ID or ad-unit IDs.
+The current Peptide Tracker beta intentionally does **not** include the Google Mobile Ads SDK, UMP SDK, AdMob App ID or ad-unit IDs.
 
 Advertising should only be reintroduced as a complete production integration after the privacy policy, Google Play Health apps declaration and Data safety disclosures are finalized.
 
