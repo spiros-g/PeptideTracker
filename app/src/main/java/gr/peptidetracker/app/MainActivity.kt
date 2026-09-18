@@ -45,7 +45,7 @@ class MainActivity : FragmentActivity() {
                     onUpdatesOpened = { openUpdatesRequested = false }
                 )
             } else {
-                AppTheme {
+                AppTheme(themeMode = store.appTheme()) {
                     PremiumBackground {
                         AppLockScreen(onUnlock = ::requestUnlock)
                     }
