@@ -1417,7 +1417,7 @@ private fun StatisticsSection(
                                         .height(6.dp)
                                         .clip(RoundedCornerShape(99.dp)),
                                     color = ElectricCyan,
-                                    trackColor = Color.White.copy(alpha = 0.09f)
+                                    trackColor = MaterialTheme.colorScheme.surfaceVariant
                                 )
                             }
                         }
@@ -1554,31 +1554,41 @@ private fun SectionHero(
     onAdd: (() -> Unit)? = null
 ) {
     GlassCard(modifier = Modifier.fillMaxWidth()) {
-        Row(
-            Modifier.fillMaxWidth(),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Box(
-                Modifier
-                    .size(48.dp)
-                    .clip(RoundedCornerShape(16.dp))
-                    .background(accent.copy(alpha = 0.14f)),
-                contentAlignment = Alignment.Center
+        Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+            Row(
+                Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically
             ) {
-                Icon(icon, contentDescription = null, tint = accent)
-            }
-            Spacer(Modifier.width(12.dp))
-            Column(Modifier.weight(1f)) {
-                Text(title, style = MaterialTheme.typography.titleLarge)
-                Text(
-                    subtitle,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    style = MaterialTheme.typography.bodySmall
-                )
+                Box(
+                    Modifier
+                        .size(48.dp)
+                        .clip(RoundedCornerShape(16.dp))
+                        .background(accent.copy(alpha = 0.14f)),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Icon(icon, contentDescription = null, tint = accent)
+                }
+                Spacer(Modifier.width(12.dp))
+                Column(Modifier.weight(1f)) {
+                    Text(title, style = MaterialTheme.typography.titleLarge)
+                    Text(
+                        subtitle,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        style = MaterialTheme.typography.bodySmall
+                    )
+                }
             }
             if (buttonText != null && onAdd != null) {
-                Button(onClick = onAdd, colors = premiumButtonColors()) {
-                    Icon(Icons.Rounded.Add, contentDescription = null, modifier = Modifier.size(18.dp))
+                Button(
+                    onClick = onAdd,
+                    modifier = Modifier.fillMaxWidth(),
+                    colors = premiumButtonColors()
+                ) {
+                    Icon(
+                        Icons.Rounded.Add,
+                        contentDescription = null,
+                        modifier = Modifier.size(18.dp)
+                    )
                     Spacer(Modifier.width(5.dp))
                     Text(buttonText)
                 }
@@ -1619,55 +1629,78 @@ private fun LogCard(
     onDelete: () -> Unit
 ) {
     GlassCard(modifier = Modifier.fillMaxWidth(), onClick = onEdit) {
-        Row(verticalAlignment = Alignment.CenterVertically) {
-            StoreVialImage(
-                productKey = row.peptide,
-                imageIndex = imageIndex,
-                modifier = Modifier.size(width = 54.dp, height = 74.dp)
-            )
-            Spacer(Modifier.width(13.dp))
-            Column(Modifier.weight(1f)) {
-                Text(
-                    row.peptide,
-                    fontWeight = FontWeight.ExtraBold,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis
+        Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                StoreVialImage(
+                    productKey = row.peptide,
+                    imageIndex = imageIndex,
+                    modifier = Modifier.size(width = 54.dp, height = 74.dp)
                 )
-                Text(row.amount, color = ElectricCyan, fontWeight = FontWeight.Bold)
-                if (row.site.isNotBlank()) {
+                Spacer(Modifier.width(13.dp))
+                Column(Modifier.weight(1f)) {
                     Text(
-                        t("Σημείο: ") + row.site,
-                        color = ElectricViolet,
-                        style = MaterialTheme.typography.bodySmall
-                    )
-                }
-                if (row.note.isNotBlank()) {
-                    Text(
-                        row.note,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        style = MaterialTheme.typography.bodySmall,
-                        maxLines = 2,
+                        row.peptide,
+                        fontWeight = FontWeight.ExtraBold,
+                        maxLines = 1,
                         overflow = TextOverflow.Ellipsis
                     )
+                    Text(row.amount, color = ElectricCyan, fontWeight = FontWeight.Bold)
+                    if (row.site.isNotBlank()) {
+                        Text(
+                            t("Σημείο: ") + row.site,
+                            color = ElectricViolet,
+                            style = MaterialTheme.typography.bodySmall
+                        )
+                    }
+                    if (row.note.isNotBlank()) {
+                        Text(
+                            row.note,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            style = MaterialTheme.typography.bodySmall,
+                            maxLines = 2,
+                            overflow = TextOverflow.Ellipsis
+                        )
+                    }
+                    Text(
+                        DateFormat.getDateTimeInstance(
+                            DateFormat.SHORT,
+                            DateFormat.SHORT
+                        ).format(Date(row.createdAt)),
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        style = MaterialTheme.typography.labelSmall
+                    )
                 }
-                Text(
-                    DateFormat.getDateTimeInstance(DateFormat.SHORT, DateFormat.SHORT).format(Date(row.createdAt)),
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    style = MaterialTheme.typography.labelSmall
-                )
             }
-            IconButton(onClick = onRepeat) {
-                Icon(Icons.Rounded.Replay, contentDescription = t("Επανάληψη καταγραφής"))
-            }
-            IconButton(onClick = onEdit) {
-                Icon(Icons.Outlined.Edit, contentDescription = t("Επεξεργασία"))
-            }
-            IconButton(onClick = onDelete) {
-                Icon(
-                    Icons.Outlined.Delete,
-                    contentDescription = t("Διαγραφή"),
-                    tint = MaterialTheme.colorScheme.onSurfaceVariant
-                )
+
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.End
+            ) {
+                TextButton(onClick = onRepeat, colors = premiumTextButtonColors()) {
+                    Icon(
+                        Icons.Rounded.Replay,
+                        contentDescription = null,
+                        modifier = Modifier.size(18.dp)
+                    )
+                    Spacer(Modifier.width(4.dp))
+                    Text(t("Επανάληψη"))
+                }
+                TextButton(onClick = onEdit, colors = premiumTextButtonColors()) {
+                    Icon(
+                        Icons.Outlined.Edit,
+                        contentDescription = null,
+                        modifier = Modifier.size(18.dp)
+                    )
+                    Spacer(Modifier.width(4.dp))
+                    Text(t("Επεξεργασία"))
+                }
+                IconButton(onClick = onDelete) {
+                    Icon(
+                        Icons.Outlined.Delete,
+                        contentDescription = t("Διαγραφή"),
+                        tint = MaterialTheme.colorScheme.error
+                    )
+                }
             }
         }
     }
