@@ -730,36 +730,27 @@ private fun PeptidePickerDialog(
     var query by remember { mutableStateOf("") }
 
     val sortedPeptides = remember(peptides) {
-        peptides
-            .distinct()
-            .sortedWith(String.CASE_INSENSITIVE_ORDER)
+        peptides.distinct().sortedWith(String.CASE_INSENSITIVE_ORDER)
     }
     val filteredPeptides = remember(query, sortedPeptides) {
         val normalized = query.trim()
         if (normalized.isBlank()) {
             sortedPeptides
         } else {
-            sortedPeptides.filter { name ->
-                name.contains(normalized, ignoreCase = true)
-            }
+            sortedPeptides.filter { it.contains(normalized, ignoreCase = true) }
         }
     }
     val selectedIndex = remember(selectedPeptide, sortedPeptides) {
         sortedPeptides.indexOfFirst { it.equals(selectedPeptide, ignoreCase = true) }
             .coerceAtLeast(0)
     }
-    val listState = rememberLazyListState(
-        initialFirstVisibleItemIndex = selectedIndex
-    )
+    val listState = rememberLazyListState(initialFirstVisibleItemIndex = selectedIndex)
 
     LaunchedEffect(query, filteredPeptides.size) {
         if (filteredPeptides.isNotEmpty()) {
-            val target = if (query.isBlank()) {
-                selectedIndex.coerceAtMost(filteredPeptides.lastIndex)
-            } else {
-                0
-            }
-            listState.scrollToItem(target)
+            listState.scrollToItem(
+                if (query.isBlank()) selectedIndex.coerceAtMost(filteredPeptides.lastIndex) else 0
+            )
         }
     }
 
@@ -773,16 +764,13 @@ private fun PeptidePickerDialog(
                 .widthIn(max = 440.dp),
             shape = RoundedCornerShape(28.dp),
             color = MaterialTheme.colorScheme.surface,
-            tonalElevation = 10.dp,
-            shadowElevation = 20.dp,
-            border = BorderStroke(
-                1.dp,
-                MaterialTheme.colorScheme.outlineVariant
-            )
+            tonalElevation = 8.dp,
+            shadowElevation = 18.dp,
+            border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant)
         ) {
             Column(
                 modifier = Modifier.padding(18.dp),
-                verticalArrangement = Arrangement.spacedBy(14.dp)
+                verticalArrangement = Arrangement.spacedBy(12.dp)
             ) {
                 Row(
                     modifier = Modifier.fillMaxWidth(),
@@ -795,16 +783,13 @@ private fun PeptidePickerDialog(
                             fontWeight = FontWeight.ExtraBold
                         )
                         Text(
-                            t("Αναζήτησε και επίλεξε από τη λίστα."),
+                            filteredPeptides.size.toString() + " " + t("πεπτίδια"),
                             color = MaterialTheme.colorScheme.onSurfaceVariant,
                             style = MaterialTheme.typography.bodySmall
                         )
                     }
                     IconButton(onClick = onDismiss) {
-                        Icon(
-                            Icons.Rounded.Close,
-                            contentDescription = t("Κλείσιμο")
-                        )
+                        Icon(Icons.Rounded.Close, contentDescription = t("Κλείσιμο"))
                     }
                 }
 
@@ -814,13 +799,9 @@ private fun PeptidePickerDialog(
                     modifier = Modifier.fillMaxWidth(),
                     singleLine = true,
                     shape = RoundedCornerShape(18.dp),
-                    label = { Text(t("Αναζήτηση πεπτιδίου")) },
-                    placeholder = { Text(t("Γράψε όνομα πεπτιδίου")) },
+                    placeholder = { Text(t("Αναζήτηση πεπτιδίου")) },
                     leadingIcon = {
-                        Icon(
-                            Icons.Rounded.Search,
-                            contentDescription = null
-                        )
+                        Icon(Icons.Rounded.Search, contentDescription = null)
                     },
                     trailingIcon = {
                         if (query.isNotBlank()) {
@@ -835,89 +816,92 @@ private fun PeptidePickerDialog(
                     colors = premiumTextFieldColors()
                 )
 
-                if (filteredPeptides.isEmpty()) {
-                    Box(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .height(220.dp),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Text(
-                            t("Δεν βρέθηκαν πεπτίδια."),
-                            color = MaterialTheme.colorScheme.onSurfaceVariant,
-                            style = MaterialTheme.typography.bodyMedium
-                        )
-                    }
-                } else {
-                    LazyColumn(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .heightIn(min = 220.dp, max = 390.dp),
-                        state = listState,
-                        verticalArrangement = Arrangement.spacedBy(6.dp)
-                    ) {
-                        items(
-                            items = filteredPeptides,
-                            key = { it }
-                        ) { name ->
-                            val selected = name.equals(
-                                selectedPeptide,
-                                ignoreCase = true
-                            )
-                            Surface(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .clip(RoundedCornerShape(16.dp))
-                                    .clickable { onSelect(name) },
-                                shape = RoundedCornerShape(16.dp),
-                                color = if (selected) {
-                                    MaterialTheme.colorScheme.primaryContainer
-                                } else {
-                                    MaterialTheme.colorScheme.surfaceVariant.copy(
-                                        alpha = 0.44f
-                                    )
-                                },
-                                border = BorderStroke(
-                                    1.dp,
-                                    if (selected) {
-                                        MaterialTheme.colorScheme.primary.copy(
-                                            alpha = 0.55f
-                                        )
-                                    } else {
-                                        MaterialTheme.colorScheme.outlineVariant.copy(
-                                            alpha = 0.65f
-                                        )
-                                    }
-                                )
+                Surface(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(360.dp),
+                    shape = RoundedCornerShape(20.dp),
+                    color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.24f),
+                    border = BorderStroke(
+                        1.dp,
+                        MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.75f)
+                    )
+                ) {
+                    if (filteredPeptides.isEmpty()) {
+                        Box(
+                            modifier = Modifier.fillMaxSize(),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Column(
+                                horizontalAlignment = Alignment.CenterHorizontally,
+                                verticalArrangement = Arrangement.spacedBy(8.dp)
                             ) {
-                                Row(
+                                Icon(
+                                    Icons.Rounded.Search,
+                                    contentDescription = null,
+                                    tint = MaterialTheme.colorScheme.onSurfaceVariant
+                                )
+                                Text(
+                                    t("Δεν βρέθηκαν πεπτίδια."),
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                                )
+                            }
+                        }
+                    } else {
+                        LazyColumn(
+                            modifier = Modifier
+                                .fillMaxSize()
+                                .padding(6.dp),
+                            state = listState,
+                            verticalArrangement = Arrangement.spacedBy(4.dp)
+                        ) {
+                            items(
+                                items = filteredPeptides,
+                                key = { it }
+                            ) { name ->
+                                val selected = name.equals(
+                                    selectedPeptide,
+                                    ignoreCase = true
+                                )
+                                Surface(
                                     modifier = Modifier
                                         .fillMaxWidth()
-                                        .padding(
-                                            horizontal = 14.dp,
-                                            vertical = 13.dp
-                                        ),
-                                    verticalAlignment = Alignment.CenterVertically
+                                        .clip(RoundedCornerShape(14.dp))
+                                        .clickable { onSelect(name) },
+                                    shape = RoundedCornerShape(14.dp),
+                                    color = if (selected) {
+                                        MaterialTheme.colorScheme.primaryContainer
+                                    } else {
+                                        Color.Transparent
+                                    }
                                 ) {
-                                    Text(
-                                        name,
-                                        modifier = Modifier.weight(1f),
-                                        style = MaterialTheme.typography.bodyLarge,
-                                        fontWeight = if (selected) {
-                                            FontWeight.ExtraBold
-                                        } else {
-                                            FontWeight.SemiBold
-                                        },
-                                        maxLines = 1,
-                                        overflow = TextOverflow.Ellipsis
-                                    )
-                                    if (selected) {
-                                        Spacer(Modifier.width(10.dp))
-                                        Icon(
-                                            Icons.Rounded.Check,
-                                            contentDescription = null,
-                                            tint = MaterialTheme.colorScheme.primary
+                                    Row(
+                                        modifier = Modifier
+                                            .fillMaxWidth()
+                                            .padding(horizontal = 14.dp, vertical = 12.dp),
+                                        verticalAlignment = Alignment.CenterVertically
+                                    ) {
+                                        Text(
+                                            name,
+                                            modifier = Modifier.weight(1f),
+                                            style = MaterialTheme.typography.bodyLarge,
+                                            fontWeight = if (selected) {
+                                                FontWeight.ExtraBold
+                                            } else {
+                                                FontWeight.SemiBold
+                                            },
+                                            maxLines = 1,
+                                            overflow = TextOverflow.Ellipsis
                                         )
+                                        if (selected) {
+                                            Spacer(Modifier.width(8.dp))
+                                            Icon(
+                                                Icons.Rounded.Check,
+                                                contentDescription = null,
+                                                tint = MaterialTheme.colorScheme.primary,
+                                                modifier = Modifier.size(20.dp)
+                                            )
+                                        }
                                     }
                                 }
                             }
