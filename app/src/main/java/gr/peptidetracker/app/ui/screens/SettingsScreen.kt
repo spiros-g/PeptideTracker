@@ -221,6 +221,10 @@ fun SettingsScreen(
         }
 
         item {
+            SettingsSectionTitle(t("Εμφάνιση & γλώσσα"))
+        }
+
+        item {
             GlassCard(modifier = Modifier.fillMaxWidth()) {
                 Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
                     Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
@@ -245,7 +249,9 @@ fun SettingsScreen(
                     }
 
                     Row(
-                        modifier = Modifier.fillMaxWidth(),
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .horizontalScroll(rememberScrollState()),
                         horizontalArrangement = Arrangement.spacedBy(8.dp)
                     ) {
                         listOf(
@@ -263,13 +269,69 @@ fun SettingsScreen(
                                     }
                                 },
                                 label = { Text(label) },
-                                modifier = Modifier.weight(1f),
                                 colors = premiumFilterChipColors()
                             )
                         }
                     }
                 }
             }
+        }
+
+        item {
+            GlassCard(modifier = Modifier.fillMaxWidth()) {
+                Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                        Icon(
+                            Icons.Rounded.Palette,
+                            contentDescription = null,
+                            tint = ElectricViolet,
+                            modifier = Modifier.size(22.dp)
+                        )
+                        Column(Modifier.weight(1f)) {
+                            Text(
+                                t("Θέμα εφαρμογής"),
+                                fontWeight = FontWeight.ExtraBold,
+                                style = MaterialTheme.typography.titleMedium
+                            )
+                            Text(
+                                t("Ακολούθησε το σύστημα ή επίλεξε σταθερά φωτεινό ή σκοτεινό θέμα."),
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                style = MaterialTheme.typography.bodySmall
+                            )
+                        }
+                    }
+
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .horizontalScroll(rememberScrollState()),
+                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        listOf(
+                            "system" to t("Σύστημα"),
+                            "dark" to t("Σκοτεινό"),
+                            "light" to t("Φωτεινό")
+                        ).forEach { (code, label) ->
+                            FilterChip(
+                                selected = appTheme == code,
+                                onClick = {
+                                    if (appTheme != code) {
+                                        appTheme = code
+                                        store.setAppTheme(code)
+                                        (context as? Activity)?.recreate()
+                                    }
+                                },
+                                label = { Text(label) },
+                                colors = premiumFilterChipColors()
+                            )
+                        }
+                    }
+                }
+            }
+        }
+
+        item {
+            SettingsSectionTitle(t("Εφαρμογή"))
         }
 
         item {
@@ -339,6 +401,10 @@ fun SettingsScreen(
                     }
                 }
             }
+        }
+
+        item {
+            SettingsSectionTitle(t("Ιδιωτικότητα & ασφάλεια"))
         }
 
         item {
