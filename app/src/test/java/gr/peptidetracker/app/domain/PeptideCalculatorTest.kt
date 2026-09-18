@@ -34,6 +34,39 @@ class PeptideCalculatorTest {
         assertEquals(0.05, reverse.volumeMl, 0.000001)
         assertEquals(250.0, reverse.amountMcg, 0.000001)
     }
+    @Test fun standardSyringeVolumesMatchU100AndU40Markings() {
+        assertEquals(
+            0.3,
+            PeptideCalculator.reverse(10.0, 1.0, 30.0, 100).volumeMl,
+            0.000001
+        )
+        assertEquals(
+            0.5,
+            PeptideCalculator.reverse(10.0, 1.0, 50.0, 100).volumeMl,
+            0.000001
+        )
+        assertEquals(
+            1.0,
+            PeptideCalculator.reverse(10.0, 1.0, 100.0, 100).volumeMl,
+            0.000001
+        )
+        assertEquals(
+            0.3,
+            PeptideCalculator.reverse(10.0, 1.0, 12.0, 40).volumeMl,
+            0.000001
+        )
+        assertEquals(
+            0.5,
+            PeptideCalculator.reverse(10.0, 1.0, 20.0, 40).volumeMl,
+            0.000001
+        )
+        assertEquals(
+            1.0,
+            PeptideCalculator.reverse(10.0, 1.0, 40.0, 40).volumeMl,
+            0.000001
+        )
+    }
+
     @Test fun rejectsInvalidValues() {
         assertThrows(IllegalArgumentException::class.java) { PeptideCalculator.dose(10.0, 0.0, 1.0, true, 100) }
     }
