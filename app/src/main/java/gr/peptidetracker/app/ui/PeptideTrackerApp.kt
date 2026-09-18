@@ -149,7 +149,7 @@ fun PeptideTrackerApp(
         }
     }
 
-    AppTheme {
+    AppTheme(themeMode = store.appTheme()) {
         PremiumBackground {
             if (showOnboarding) {
                 OnboardingScreen(
