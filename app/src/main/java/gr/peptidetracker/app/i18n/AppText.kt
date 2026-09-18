@@ -435,5 +435,8 @@ private val uiEnglishTranslations = mapOf(
     "Η περίμετρος μέσης πρέπει να είναι θετικός αριθμός." to "Waist circumference must be a positive number.",
     "Χρειάζεται τουλάχιστον ένα φιαλίδιο." to "At least one vial is required.",
     "Περισσότερες ενέργειες" to "More actions",
-    "Το Peptide Tracker δεν αποστέλλει τις καταγραφές σου σε δικό του server. Εξωτερικοί σύνδεσμοι ανοίγουν εκτός εφαρμογής και δεν περιλαμβάνουν δεδομένα του tracker." to "Peptide Tracker does not send your records to its own server. External links open outside the app and do not include tracker data."
+    "Το Peptide Tracker δεν αποστέλλει τις καταγραφές σου σε δικό του server. Εξωτερικοί σύνδεσμοι ανοίγουν εκτός εφαρμογής και δεν περιλαμβάνουν δεδομένα του tracker." to "Peptide Tracker does not send your records to its own server. External links open outside the app and do not include tracker data.",
+    "Αναζήτησε και επίλεξε από τη λίστα." to "Search and select from the list.",
+    "Γράψε όνομα πεπτιδίου" to "Type a peptide name",
+    "Δεν βρέθηκαν πεπτίδια." to "No peptides found."
 )

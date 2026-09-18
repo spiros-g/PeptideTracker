@@ -1,5 +1,15 @@
 # Changelog
 
+## 4.8.1 — searchable peptide picker
+
+- Replaced the calculator's oversized peptide dropdown with a fixed, polished picker.
+- Added a persistent search field with instant filtering.
+- Added a bounded scrollable peptide list that works cleanly on mobile screens.
+- Highlights the currently selected peptide and keeps it in view when the picker opens.
+- Added proper empty-search state and Greek/English picker copy.
+- Increased app version to 4.8.1 (versionCode 34).
+
+
 ## 4.8.0 — multilingual cleanup
 
 - Rebranded user-facing names from Peptide Tracker GR to Peptide Tracker while preserving the Android application ID for upgrade compatibility.
