@@ -8,16 +8,17 @@ Native, offline-first Android application in Greek, built with Kotlin, Jetpack C
 - Reconstitution and mathematical amount-to-volume / reverse calculators for U-100 and U-40 syringes.
 - Usage log with monthly calendar view, repeat-last workflow, delete undo and statistics.
 - Inventory with sealed / active / empty state, remaining amount, reconstitution data, lot, vendor/source, purchase date, expiry and notes.
+- Home-screen visibility for expired inventory and inventory expiring within 30 days.
 - Reversible inventory accounting for linked usage logs.
 - Body-weight / waist progress tracking.
-- User-defined reminders with one-time, daily and 7-day recurrence plus 15-minute snooze.
+- User-defined reminders with one-time or flexible 1–30 day recurrence options plus 15-minute snooze.
 - Optional private notification mode.
 - Optional biometric / device-credential app lock.
 - Custom peptide names for tracking without generating scientific claims.
 - Room database with non-destructive migration from legacy SharedPreferences data.
 - JSON backup / restore with preview plus password-encrypted AES-GCM backup.
 - CSV history export.
-- GitHub Actions validation: unit tests, Android lint and debug APK build.
+- GitHub Actions validation on main and pull requests: unit tests, Android lint, debug APK build and release-variant compilation.
 
 The calculator performs mathematical conversions only. The app does not recommend doses, treatment protocols or personalized medical decisions.
 
