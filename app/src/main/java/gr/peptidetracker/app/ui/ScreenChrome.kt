@@ -40,8 +40,8 @@ fun PremiumTopBar(
             IconButton(
                 onClick = onBack,
                 modifier = Modifier
-                    .size(42.dp)
-                    .background(Color.White.copy(alpha = 0.08f), CircleShape)
+                    .size(48.dp)
+                    .background(MaterialTheme.colorScheme.onSurface.copy(alpha = 0.08f), CircleShape)
             ) {
                 Icon(
                     Icons.AutoMirrored.Rounded.ArrowBack,
@@ -76,8 +76,8 @@ fun PremiumTopBar(
             IconButton(
                 onClick = onAction,
                 modifier = Modifier
-                    .size(42.dp)
-                    .background(Color.White.copy(alpha = 0.08f), CircleShape)
+                    .size(48.dp)
+                    .background(MaterialTheme.colorScheme.onSurface.copy(alpha = 0.08f), CircleShape)
             ) {
                 Icon(
                     actionIcon,
