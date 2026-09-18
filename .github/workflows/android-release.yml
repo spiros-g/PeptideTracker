@@ -61,6 +61,8 @@ jobs:
           KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
         run: |
           printf '%s' "$KEYSTORE_BASE64" | base64 --decode > release.keystore
+          echo "3fa085332a7c94ee843c17afab98183636e504e68052a2745aec8c6dc518f922  release.keystore" | sha256sum -c -
+          keytool -list -keystore release.keystore -storepass "$STORE_PASSWORD" -alias "$KEY_ALIAS" >/dev/null
           cat > keystore.properties <<EOF
           storeFile=${{ github.workspace }}/release.keystore
           storePassword=$STORE_PASSWORD
