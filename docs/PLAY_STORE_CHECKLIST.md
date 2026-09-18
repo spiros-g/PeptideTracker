@@ -26,6 +26,7 @@
 - Confirm store text does not imply diagnosis, treatment or personalized dosage recommendations.
 - Add final screenshots, feature graphic, category and support contact.
 - Test multiple Android versions, screen sizes and large-font accessibility.
+- Run a successful local build and commit the generated Room schema JSON under app/schemas.
 - Test legacy-data-to-Room migration using a copy of real pre-Room data.
 - Test plain/encrypted backup restore and reminder rescheduling.
 - Review every peptide profile and its displayed review date before submission.
