@@ -1,5 +1,7 @@
 package gr.peptidetracker.app.data
 
+import gr.peptidetracker.app.i18n.t
+
 import android.Manifest
 import android.app.Notification
 import android.app.NotificationChannel
@@ -50,10 +52,10 @@ class UpdateNotificationWorker(
         manager.createNotificationChannel(
             NotificationChannel(
                 CHANNEL_ID,
-                "Ενημερώσεις εφαρμογής",
+                t("Ενημερώσεις εφαρμογής"),
                 NotificationManager.IMPORTANCE_DEFAULT
             ).apply {
-                description = "Ειδοποιήσεις για νέες εκδόσεις του Peptide Tracker"
+                description = t("Ειδοποιήσεις για νέες εκδόσεις του Peptide Tracker")
             }
         )
 
@@ -70,8 +72,8 @@ class UpdateNotificationWorker(
 
         val notification = Notification.Builder(applicationContext, CHANNEL_ID)
             .setSmallIcon(R.drawable.ic_launcher_monochrome)
-            .setContentTitle("Νέα έκδοση Peptide Tracker")
-            .setContentText("Η έκδοση " + update.version + " είναι διαθέσιμη για ενημέρωση.")
+            .setContentTitle(t("Νέα έκδοση Peptide Tracker"))
+            .setContentText(t("Η έκδοση ") + update.version + t(" είναι διαθέσιμη για ενημέρωση."))
             .setContentIntent(pendingIntent)
             .setAutoCancel(true)
             .setOnlyAlertOnce(true)
