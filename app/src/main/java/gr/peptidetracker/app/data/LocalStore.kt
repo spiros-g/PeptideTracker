@@ -6,6 +6,7 @@ import androidx.room.Ignore
 import androidx.room.PrimaryKey
 import gr.peptidetracker.app.domain.InventoryLedger
 import gr.peptidetracker.app.domain.ReminderCadence
+import gr.peptidetracker.app.i18n.setLanguageOverride
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
 import org.json.JSONArray
@@ -111,6 +112,10 @@ class LocalStore(context: Context) {
     private val dao = database.dao()
 
     init {
+        setLanguageOverride(
+            prefs.getString(KEY_APP_LANGUAGE, LANGUAGE_SYSTEM)
+                ?.takeUnless { it == LANGUAGE_SYSTEM }
+        )
         migrateLegacyToRoomIfNeeded()
     }
 
@@ -127,6 +132,17 @@ class LocalStore(context: Context) {
     fun setDefaultSyringeUnitsPerMl(value: Int) {
         require(value == 40 || value == 100)
         prefs.edit().putInt("default_syringe_units_per_ml", value).apply()
+    }
+
+    fun appLanguage(): String =
+        prefs.getString(KEY_APP_LANGUAGE, LANGUAGE_SYSTEM)
+            ?.takeIf { it == LANGUAGE_SYSTEM || it == "el" || it == "en" }
+            ?: LANGUAGE_SYSTEM
+
+    fun setAppLanguage(value: String) {
+        require(value == LANGUAGE_SYSTEM || value == "el" || value == "en")
+        prefs.edit().putString(KEY_APP_LANGUAGE, value).apply()
+        setLanguageOverride(value.takeUnless { it == LANGUAGE_SYSTEM })
     }
 
     fun onboardingComplete() = prefs.getBoolean("onboarding_complete", false)
@@ -1254,6 +1270,8 @@ class LocalStore(context: Context) {
         const val KEY_PRE_RESTORE_BACKUP = "pre_restore_backup_json"
         const val KEY_ROOM_MIGRATED = "room_migrated_v1"
         const val KEY_LAST_UPDATE_CHECK_AT = "last_update_check_at"
+        const val KEY_APP_LANGUAGE = "app_language"
+        const val LANGUAGE_SYSTEM = "system"
         const val UPDATE_CHECK_INTERVAL_MS = 24L * 60L * 60L * 1000L
     }
 }
