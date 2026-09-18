@@ -13,7 +13,9 @@ data class AppUpdateInfo(
     val releaseName: String,
     val releaseNotes: String,
     val releaseUrl: String,
-    val apkUrl: String?
+    val apkUrl: String?,
+    val apkSha256: String?,
+    val apkSizeBytes: Long?
 )
 
 object GitHubUpdateChecker {
@@ -34,7 +36,6 @@ object GitHubUpdateChecker {
 
             try {
                 if (connection.responseCode !in 200..299) return@runCatching null
-
                 val raw = connection.inputStream.bufferedReader().use { it.readText() }
                 val release = JSONObject(raw)
                 if (release.optBoolean("draft", false) || release.optBoolean("prerelease", false)) {
@@ -48,12 +49,16 @@ object GitHubUpdateChecker {
 
                 val assets = release.optJSONArray("assets")
                 var apkUrl: String? = null
+                var apkSha256: String? = null
+                var apkSizeBytes: Long? = null
                 if (assets != null) {
                     for (index in 0 until assets.length()) {
                         val asset = assets.optJSONObject(index) ?: continue
                         val name = asset.optString("name")
                         if (name.endsWith(".apk", ignoreCase = true)) {
                             apkUrl = asset.optString("browser_download_url").takeIf { it.isNotBlank() }
+                            apkSha256 = normalizeSha256(asset.optString("digest"))
+                            apkSizeBytes = asset.optLong("size").takeIf { it > 0L }
                             if (apkUrl != null) break
                         }
                     }
@@ -64,7 +69,9 @@ object GitHubUpdateChecker {
                     releaseName = release.optString("name").ifBlank { tag },
                     releaseNotes = release.optString("body").trim().take(1_500),
                     releaseUrl = release.optString("html_url"),
-                    apkUrl = apkUrl
+                    apkUrl = apkUrl,
+                    apkSha256 = apkSha256,
+                    apkSizeBytes = apkSizeBytes
                 )
             } finally {
                 connection.disconnect()
@@ -75,9 +82,7 @@ object GitHubUpdateChecker {
     fun shouldUseGitHubUpdates(context: Context): Boolean {
         val installer = runCatching {
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
-                context.packageManager
-                    .getInstallSourceInfo(context.packageName)
-                    .installingPackageName
+                context.packageManager.getInstallSourceInfo(context.packageName).installingPackageName
             } else {
                 @Suppress("DEPRECATION")
                 context.packageManager.getInstallerPackageName(context.packageName)
@@ -91,13 +96,19 @@ object GitHubUpdateChecker {
         val candidateParts = numericVersion(candidate)
         val currentParts = numericVersion(current)
         val length = maxOf(candidateParts.size, currentParts.size)
-
         for (index in 0 until length) {
             val next = candidateParts.getOrElse(index) { 0 }
             val installed = currentParts.getOrElse(index) { 0 }
             if (next != installed) return next > installed
         }
         return false
+    }
+
+    internal fun normalizeSha256(value: String): String? {
+        val normalized = value.trim().removePrefix("sha256:").lowercase()
+        return normalized.takeIf {
+            it.length == 64 && it.all { char -> char in '0'..'9' || char in 'a'..'f' }
+        }
     }
 
     private fun numericVersion(value: String): List<Int> =
