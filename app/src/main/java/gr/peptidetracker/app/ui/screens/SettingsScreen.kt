@@ -911,6 +911,6 @@ private fun SettingsSectionTitle(title: String) {
         color = MaterialTheme.colorScheme.primary,
         style = MaterialTheme.typography.labelLarge,
         fontWeight = FontWeight.ExtraBold,
-        modifier = Modifier.padding(horizontal = 4.dp, top = 2.dp)
+        modifier = Modifier.padding(start = 4.dp, top = 2.dp, end = 4.dp)
     )
 }
